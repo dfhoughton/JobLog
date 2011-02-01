@@ -1,0 +1,62 @@
+JobClock
+========
+
+The JobClock project aims to create a collection of command line utilities all
+of which serve an identical function: to maintain and extract information from
+a log of daily activities. Each utility will be written in a diferent language
+and will pass a common set of spec tests. The purpose of this, aside from creating
+a handy utility, is to teach me languages I don't know or don't know very well.
+I am going to start with Perl because I already know Perl and why not? After that
+I'll do Java, which I also know well. After that I'll move through the following
+in no particular order:
+
+* Python
+* Ruby
+* Haskell
+* Scala
+* C++
+* Lua
+
+History
+-------
+
+About 7 years ago I wrote the initial draft of this application in Perl. At the
+time I was working for a company that lived off government grants. We needed to
+keep track of what time was spent working on which grant. Most of my co-workers
+did this with a pencil and paper or some sort of spreadsheet, but I found this
+annoying so I hacked out a little utility that allowed me to type
+
+clock -g EVIL_GRANT starting work on library X
+
+When I started working on library X for evil grant EVIL_GRANT. When I changed
+tasks I would type the appropriate thing on the command line and a new line was
+added to my log. At the end of the day I would type something like
+
+clock --done
+
+And the last open task would be marked as closed. There was more to it than this,
+but these were the basic operations.
+
+When it came time to submit the paperwork for the various grants I would type something
+like
+
+clock --csv=hours.csv Jan 1 - Jan 31
+
+and the relevant portion of the log would be converted into a table that I could
+import into a spreadsheet program for cutting and pasting into the paperwork.
+
+This utility acquired a little featuritis as time went by and it grew organically
+into something a little difficult to tinker with. I decided some time ago that I should
+start from scratch and rewrite it with a more optimal design. I figured while I was
+at it I could replicate the work in other languages as a learning exercise. And if
+I rewrote it in Java I could easily add on a GUI and package it up in a jar so that
+less technically tolerant people such as my wife and other friends could use it without
+worrying about the command line. I may add GUIs for the other languages, too, once they
+all pass the spec tests, but I make no guarantees about that.
+
+License
+-------
+Everything is licensed under LGPLv3.
+
+Copyright(©) 2011 David F. Houghton
+dfhoughton at gmail dot com
