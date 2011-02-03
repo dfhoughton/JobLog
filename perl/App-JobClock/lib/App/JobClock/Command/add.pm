@@ -1,5 +1,6 @@
 package App::JobClock::Command::add;
 use App::JobClock -command;
+use Modern::Perl;
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
@@ -27,6 +28,13 @@ sub options {
             'tag|t=s@',
 'tag the event; multiple tags are acceptable; e.g., -t foo -t bar -t quux',
         ],
+        [
+            'clear-tags|T',
+            'inherit no tags from preceding event; '
+              . 'this is equivalent to -t ""; '
+              . 'this option has no effect if any tag is specified',
+        ],
+
     );
 }
 

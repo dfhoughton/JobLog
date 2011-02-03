@@ -141,6 +141,7 @@ TODO provide the BNF grammar used in time parsing
 =head1 License etc.
 
  Author        David Houghton
+               dfhoughton at gmail dot com
  Copyright (c) 2011
  License       Perl_5
 

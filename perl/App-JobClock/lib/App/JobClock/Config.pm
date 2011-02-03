@@ -148,4 +148,9 @@ sub _param {
     }
 }
 
+# editing program
+sub editor {
+    return $ENV{EDITOR()};
+}
+
 1;
