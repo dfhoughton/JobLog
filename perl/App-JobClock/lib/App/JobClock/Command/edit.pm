@@ -3,7 +3,7 @@ use App::JobClock -command;
 use Modern::Perl;
 use Class::Autouse qw{
   App::JobClock::Config
-  App::JobClock::LogLine
+  App::JobClock::Log::Line
   FileHandle
 };
 use autouse 'File::Temp'  => qw(tempfile);

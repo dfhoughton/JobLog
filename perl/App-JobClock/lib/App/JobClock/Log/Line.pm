@@ -6,10 +6,10 @@ use Modern::Perl;
 # not using Moose to keep CLI snappy
 
 # to_string method for convenience
-use overload '""' => sub { $_[0]->{text} };
+use overload '""' => \&to_string;
 
 # some global variables for use in BNF regex
-our ( $date, @tags, $description, $is_beginning );
+our ( $date, @tags, @description, $is_beginning );
 
 # log line parser
 my $re = qr{
@@ -18,41 +18,26 @@ my $re = qr{
      (?<ts> \d{4}+\s\d++\s\d++\s\d++\s\d++\s\d++ (?{$date = $^N}) )
      (?<non_ts> (?&done) (?{$is_beginning = undef})| (?&event) (?{$is_beginning = 1}))
      (?<done> DONE)
-     (?<event> (?&tags) : (?&description))
+     (?<event> (?&tags) : (?&descriptions))
      (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)
      (?<tag> ([^\s:\\]|(?&escaped))++ (?{push @tags, $^N}))
      (?<escaped> \\.)
-     (?<description> .+ (?{$description = $^N}))
+     (?<descriptions> (?:(?&description)(;(?&description))*+)?)
+     (?<description> ([^;\\]|(?&escaped))++ (?{push @description, $^N}))
     )
 }xi;
 
 # for composing a log line out of a hash of attributes
 sub new {
     my ( undef, %opts ) = @_;
+
     # TODO validate %opts
     my $self = bless \%opts;
-    if ( $self->is_event ) {
-        my $time = $self->time;
-        my $text = join ' ', $time->year, $time->month, $time->day, $time->hour,
-          $time->minute, $time->second;
-        $text .= ':';
+    if ($self->is_beginning) {
         $self->tags ||= [];
-        $text .= join ' ', map { _escape($_) } @{ $self->tags };
-        $text .= ':';
-        $self->description ||= '';
-        $text .= $self->description;
-        $self->text = $text;
-    }
-    else if ( $self->is_comment ) {
-        $self->text = '# ' . $self->comment;
+        $self->description ||= [];
     }
     return $self;
-}
-
-# escape tag text
-sub _escape {
-    $_[0] =~ s/([:\\\s])/\\$1/g;
-    $_[0];
 }
 
 # for parsing a line in an existing log
@@ -77,13 +62,53 @@ sub parse {
         );
         $obj->{time} = $date;
         if ($is_beginning) {
-            $obj->{tags}        = [@tags];
-            $obj->{description} = $description;
+            $obj->{tags}        = [ map { s/\\(.)/$1/g; $_ } @tags ];
+            $obj->{description} = [ map { s/\\(.)/$1/g; $_ } @description ];
         }
         return $obj;
     }
     $obj->{malformed} = 1;
     return $obj;
+}
+
+sub clone {
+    my ($self) = @_;
+    my $clone = bless {};
+    if ( $self->is_malformed ) {
+        $clone->{malformed} = 1;
+        $clone->text = $self->text;
+    }
+    else if ( $self->is_event ) {
+        $clone->time = $self->time->clone;
+        if ( $self->is_beginning ) {
+            $clone->tags        = [ @{ $self->tags } ];
+            $clone->description = [ @{ $self->description } ];
+        }
+    } else {
+        $clone->comment = $self->comment if $self->is_comment;
+        $clone->text = $self->text if exists $self->{text};
+    }
+}
+
+sub to_string {
+    my ($self) = @_;
+    return $self->{text} if exists $self->{text};
+    if ( $self->is_event ) {
+        my $time = $self->time;
+        my $text = join ' ', $time->year, $time->month, $time->day, $time->hour,
+          $time->minute, $time->second;
+        $text .= ':';
+        $self->tags ||= [];
+        $text .= join ' ', map { s/([:\\\s])/\\$1/g; $_ } @{ $self->tags };
+        $text .= ':';
+        $self->description ||= [];
+        $text .= join ';' map { s/([;\\])/\\$1/g; $_ } @{ $self->description };
+        $self->text = $text;
+    }
+    else if ( $self->is_comment ) {
+        $self->text = '# ' . $self->comment;
+    }
+    return $self->{text};
 }
 
 # a bunch of attributes, here for convenience
