@@ -1,5 +1,5 @@
-package App::JobClock::Command::summary;
-use App::JobClock -command;
+package App::JobLog::Command::summary;
+use App::JobLog -command;
 use Modern::Perl;
 
 sub execute {
@@ -17,7 +17,7 @@ sub abstract { 'list tasks with certain properties in a particular time range' }
 sub overview {
     [ abstract() ],
       [
-"use @{[App::JobClock::Command::info->name]} for further details regarding time expressions"
+"use @{[App::JobLog::Command::info->name]} for further details regarding time expressions"
       ];
 }
 

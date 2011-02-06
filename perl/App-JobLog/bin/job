@@ -1,5 +1,5 @@
 #!/usr/bin/perl
 eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
     if 0; # not running under some shell
-use App::JobClock;
-App::JobClock->run;
+use App::JobLog;
+App::JobLog->run;

@@ -1,4 +1,4 @@
-package App::JobClock::Command;
+package App::JobLog::Command;
 use App::Cmd::Setup -command;
 use Modern::Perl;
 

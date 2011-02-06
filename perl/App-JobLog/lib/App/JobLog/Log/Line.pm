@@ -1,4 +1,4 @@
-package App::JobClock::Log::Line;
+package App::JobLog::Log::Line;
 use Class::Autouse qw{DateTime};
 use Modern::Perl;
 
@@ -151,11 +151,11 @@ __END__
 
 =head1 NAME
 
-App::JobClock::Log::Line - My author was too lazy to write an abstract
+App::JobLog::Log::Line - My author was too lazy to write an abstract
 
 =head1 SYNOPSIS
 
-  my $object = App::JobClock::Log::Line->new(
+  my $object = App::JobLog::Log::Line->new(
       foo  => 'bar',
       flag => 1,
   );
@@ -170,15 +170,15 @@ The author was too lazy to write a description.
 
 =head2 new
 
-  my $object = App::JobClock::Log::Line->new(
+  my $object = App::JobLog::Log::Line->new(
       foo => 'bar',
   );
 
-The C<new> constructor lets you create a new B<App::JobClock::Log::Line> object.
+The C<new> constructor lets you create a new B<App::JobLog::Log::Line> object.
 
 So no big surprises there...
 
-Returns a new B<App::JobClock::Log::Line> or dies on error.
+Returns a new B<App::JobLog::Log::Line> or dies on error.
 
 =head2 dummy
 

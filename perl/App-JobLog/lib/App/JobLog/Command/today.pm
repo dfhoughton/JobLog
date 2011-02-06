@@ -1,6 +1,6 @@
-package App::JobClock::Command::today;
-use App::JobClock -command;
-use App::JobClock::Command::summary;
+package App::JobLog::Command::today;
+use App::JobLog -command;
+use App::JobLog::Command::summary;
 use Class::Autouse qw{DateTime};
 use Modern::Perl;
 
@@ -8,7 +8,7 @@ sub execute {
     my ( $self, $opt, $args ) = @_;
 
     # display everything done today
-    'App::JobClock::Command::summary'->execute( $opt, 'today' );
+    'App::JobLog::Command::summary'->execute( $opt, 'today' );
     if ( exists $opt->{finished} ) {
 
         # adjust options
@@ -26,7 +26,7 @@ sub _when_finished {
     my ( $start, $opt ) = @_;
 
     my $remaining =
-      'App::JobClock::Command::summary'->execute( $opt, "$start - today" );
+      'App::JobLog::Command::summary'->execute( $opt, "$start - today" );
     if ( $remaining == 0 ) {
         print "you are just now done\n";
     }

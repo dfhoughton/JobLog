@@ -1,6 +1,6 @@
 package;
 
-# ABSTRACT: basically adds an end time to App::JobClock::Log::Line events
+# ABSTRACT: basically adds an end time to App::JobLog::Log::Line events
 
 use Modern::Perl;
 use Class::Autouse qw{Date::Time};
@@ -52,11 +52,11 @@ __END__
 
 =head1 NAME
 
-App::JobClock::Log::Event - My author was too lazy to write an abstract
+App::JobLog::Log::Event - My author was too lazy to write an abstract
 
 =head1 SYNOPSIS
 
-  my $object = App::JobClock::Log::Event->new(
+  my $object = App::JobLog::Log::Event->new(
       foo  => 'bar',
       flag => 1,
   );
@@ -71,15 +71,15 @@ The author was too lazy to write a description.
 
 =head2 new
 
-  my $object = App::JobClock::Log::Event->new(
+  my $object = App::JobLog::Log::Event->new(
       foo => 'bar',
   );
 
-The C<new> constructor lets you create a new B<App::JobClock::Log::Event> object.
+The C<new> constructor lets you create a new B<App::JobLog::Log::Event> object.
 
 So no big surprises there...
 
-Returns a new B<App::JobClock::Log::Event> or dies on error.
+Returns a new B<App::JobLog::Log::Event> or dies on error.
 
 =head2 dummy
 

@@ -1,10 +1,11 @@
-package App::JobClock::Command::info;
-use App::JobClock -command;
-use App::JobClock::Constants qw(EDITOR DIRECTORY);
+package App::JobLog::Command::info;
+use App::JobLog -command;
+use App::JobLog::Constants qw(EDITOR DIRECTORY);
 use autouse 'File::Temp' => qw(tempfile);
 use autouse 'Pod::Usage' => qw(pod2usage);
+use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 
-$App::JobClock::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
+$App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
 
 use Modern::Perl;
 
@@ -12,25 +13,25 @@ sub execute {
     my ($self) = @_;
 
     my ( $fh, $fn ) = tempfile( UNLINK => 1 );
-    ( my $executable = $0 ) =~ s!.*/!!;
+    my $executable = prog_name($0);
     print $fh <<END;
-=head1 Job Clock 
+=head1 Job Log 
 
 work log management
 
-version $App::JobClock::Command::info::VERSION
+version $App::JobLog::Command::info::VERSION
 
 This application allows one to keep a simple, human readable log
-of one's activities. B<Job Clock> also facilitates searching, summarizing,
+of one's activities. B<Job Log> also facilitates searching, summarizing,
 and extracting information from this log as needed.
 
 =head1 Usage
 
-B<Job Clock> keeps a log of events. If you begin a new task you type
+B<Job Log> keeps a log of events. If you begin a new task you type
 
-   $executable @{[App::JobClock::Command::add->name]} what I am doing now
+   $executable @{[App::JobLog::Command::add->name]} what I am doing now
 
-and it appends the following, modulo changes in time, to @{[App::JobClock::Config->log]}:
+and it appends the following, modulo changes in time, to @{[App::JobLog::Config->log]}:
 
    2011 2 1 15 19 12::what I am doing now
 
@@ -39,7 +40,7 @@ The portion after the second colon is your description of the event. The portion
 colons, here blank, is a list of space-delimited tags one can use to categorize events. For
 instance, if you were performing this task for Acme Widgets you might have typed
 
-   $executable @{[App::JobClock::Command::add->name]} -t "Acme Widgets" what I am doing now
+   $executable @{[App::JobLog::Command::add->name]} -t "Acme Widgets" what I am doing now
 
 producing
 
@@ -50,7 +51,7 @@ the character after it -- I<\\>, I<:>, or a whitespace character.
 
 You may tag an event multiple times. E.g.,
 
-   $executable @{[App::JobClock::Command::add->name]} -t "Acme Widgets" -t foo -t bar what I am doing now
+   $executable @{[App::JobLog::Command::add->name]} -t "Acme Widgets" -t foo -t bar what I am doing now
 
 producing
 
@@ -61,8 +62,8 @@ For readability it is probably best to avoid spaces in tags.
 Since one usually works on a particular project for an extended period of time, if you specify no tags
 the event is given the same tags as the preceding event. For example,
 
-   $executable @{[App::JobClock::Command::add->name]} -t foo what I am doing now
-   $executable @{[App::JobClock::Command::add->name]} now something else
+   $executable @{[App::JobLog::Command::add->name]} -t foo what I am doing now
+   $executable @{[App::JobLog::Command::add->name]} now something else
 
 would produce something like
 
@@ -71,7 +72,7 @@ would produce something like
 
 When you are done with the last task of the day, or your stop to take a break, you type
 
-   $executable @{[App::JobClock::Command::done->name]}
+   $executable @{[App::JobLog::Command::done->name]}
 
 which adds something like
 
@@ -82,7 +83,7 @@ to appear similar since it serves a similar function.
 
 When you come back to work you can type
 
-   $executable @{[App::JobClock::Command::resume->name]}
+   $executable @{[App::JobLog::Command::resume->name]}
 
 to add a new line to the log with the same description and tags as the last task you began.
 
@@ -90,31 +91,31 @@ TODO talk about summary and obtaining full list of commands
 
 B<TIP:> any unambigous prefix of a command will do. All the following are equivalent:
 
-@{[join "\n", map {"   $executable $_ doing something"} $self->_unambiguous_prefixes(App::JobClock::Command::add->name)]}
+@{[join "\n", map {"   $executable $_ doing something"} $self->_unambiguous_prefixes(App::JobLog::Command::add->name)]}
 
 =head1 Environment Variables
 
-B<Job Clock> may be configured in part by two environment variables:
+B<Job Log> may be configured in part by two environment variables:
 
 =over 8
 
 =item @{[DIRECTORY]}
 
-By default B<Job Clock> keeps the log and all other files in a hidden directory called .jobclock in your home
+By default B<Job Log> keeps the log and all other files in a hidden directory called .joblog in your home
 directory. If @{[DIRECTORY]} is set, however, it will keep this files here.
 
 =item @{[EDITOR]}
 
-To use B<Job Clock>'s B<@{[App::JobClock::Command::edit->name]}> function you must specify a text editor. The
+To use B<Job Log>'s B<@{[App::JobLog::Command::edit->name]}> function you must specify a text editor. The
 @{[EDITOR]} environment variable defines the editor you wish to use.
 
 =back
 
-All other configuration is done through the B<@{[App::JobClock::Command::configure->name]}> command.
+All other configuration is done through the B<@{[App::JobLog::Command::configure->name]}> command.
 
 =head1 Date Grammar
 
-B<Job Clock> goes to considerable trouble to interpret whatever time expressions you might throw at it.
+B<Job Log> goes to considerable trouble to interpret whatever time expressions you might throw at it.
 For example, it understands all of the following:
 
    1
@@ -153,7 +154,7 @@ END
 
 sub usage_desc { '%c ' . __PACKAGE__->name }
 
-sub abstract { 'describe job clock' }
+sub abstract { 'describe job log' }
 
 # obtain all the 
 sub _unambiguous_prefixes {

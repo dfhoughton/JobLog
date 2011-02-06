@@ -1,5 +1,5 @@
-package App::JobClock::Command::modify;
-use App::JobClock -command;
+package App::JobLog::Command::modify;
+use App::JobLog -command;
 use Modern::Perl;
 
 sub execute {

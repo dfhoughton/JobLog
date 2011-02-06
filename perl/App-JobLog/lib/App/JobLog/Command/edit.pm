@@ -1,9 +1,9 @@
-package App::JobClock::Command::edit;
-use App::JobClock -command;
+package App::JobLog::Command::edit;
+use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw{
-  App::JobClock::Config
-  App::JobClock::Log::Line
+  App::JobLog::Config
+  App::JobLog::Log::Line
   FileHandle
 };
 use autouse 'File::Temp'  => qw(tempfile);
@@ -12,8 +12,8 @@ use autouse 'Digest::MD5' => qw(md5);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
-    if ( my $editor = App::JobClock::Config->editor ) {
-        if ( my $log = App::JobClock::Config->log ) {
+    if ( my $editor = App::JobLog::Config->editor ) {
+        if ( my $log = App::JobLog::Config->log ) {
             my ( $fh, $fn ) = tempfile;
             binmode $fh;
             copy( $log, $fh );

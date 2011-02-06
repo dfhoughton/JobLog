@@ -1,5 +1,5 @@
-package App::JobClock::Config;
-use App::JobClock::Constants;
+package App::JobLog::Config;
+use App::JobLog::Constants;
 use Modern::Perl;
 use Class::Autouse qw{File::HomeDir File::Spec Config::Tiny FileHandle};
 use autouse 'File::Path' => qw(mkpath);
@@ -21,12 +21,12 @@ sub init_file {
             my $executable = abs_path($0);
 
             # to protect against refactoring
-            my $command = App::JobClock::Command::info->name;
+            my $command = App::JobLog::Command::info->name;
             print $fh <<END;
 
-Job Clock
+Job Log
 
-This directory holds files used by Job Clock to maintain
+This directory holds files used by Job Log to maintain
 a work log. For more details type
 
 $executable $command
@@ -44,7 +44,7 @@ our $dir;
 
 sub dir {
     $dir ||= $ENV{ DIRECTORY() };
-    $dir ||= File::Spec->catfile( File::HomeDir->my_home, '.jobclock' );
+    $dir ||= File::Spec->catfile( File::HomeDir->my_home, '.joblog' );
     return $dir;
 }
 

@@ -1,14 +1,14 @@
-package App::JobClock::Vacation::Day;
+package App::JobLog::Vacation::Day;
 
 =pod
 
 =head1 NAME
 
-App::JobClock::Vacation::Day - My author was too lazy to write an abstract
+App::JobLog::Vacation::Day - My author was too lazy to write an abstract
 
 =head1 SYNOPSIS
 
-  my $object = App::JobClock::Vacation::Day->new(
+  my $object = App::JobLog::Vacation::Day->new(
       foo  => 'bar',
       flag => 1,
   );
@@ -33,15 +33,15 @@ our $VERSION = '0.01';
 
 =head2 new
 
-  my $object = App::JobClock::Vacation::Day->new(
+  my $object = App::JobLog::Vacation::Day->new(
       foo => 'bar',
   );
 
-The C<new> constructor lets you create a new B<App::JobClock::Vacation::Day> object.
+The C<new> constructor lets you create a new B<App::JobLog::Vacation::Day> object.
 
 So no big surprises there...
 
-Returns a new B<App::JobClock::Vacation::Day> or dies on error.
+Returns a new B<App::JobLog::Vacation::Day> or dies on error.
 
 =cut
 

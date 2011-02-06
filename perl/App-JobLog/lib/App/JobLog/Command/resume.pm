@@ -1,5 +1,5 @@
-package App::JobClock::Command::resume;
-use App::JobClock -command;
+package App::JobLog::Command::resume;
+use App::JobLog -command;
 use Modern::Perl;
 
 sub execute {

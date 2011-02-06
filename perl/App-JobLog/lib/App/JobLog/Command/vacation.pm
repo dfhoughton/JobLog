@@ -1,6 +1,6 @@
-package App::JobClock::Command::vacation;
+package App::JobLog::Command::vacation;
 use Modern::Perl;
-use App::JobClock -command;
+use App::JobLog -command;
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

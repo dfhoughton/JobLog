@@ -1,17 +1,17 @@
-package App::JobClock::Vacation;
+package App::JobLog::Vacation;
 
 # ABSTRACT: controller for the vacation model
 
 use Modern::Perl;
-use App::JobClock::Config;
-use  App::JobClock::Log::Event;
-use  App::JobClock::Log::Line;
+use App::JobLog::Config;
+use  App::JobLog::Log::Event;
+use  App::JobLog::Log::Line;
 use autouse 'Data::Dump'  => qw(dump);
 use Class::Autouse qw{FileHandle};
 
 sub new {
-    if (-e App::JobClock::Config->vacation) {
-        return do App::JobClock::Config->vacation;
+    if (-e App::JobLog::Config->vacation) {
+        return do App::JobLog::Config->vacation;
     }
     return bless { changed => 0};
 }
@@ -23,11 +23,11 @@ sub close {
         if (@{$self->{data}}) {
             # something to save
             $self->{changed} = 0;
-            my $fh = FileHandle->new(App::JobClock::Config->vacation, 'w');
+            my $fh = FileHandle->new(App::JobLog::Config->vacation, 'w');
             print $fh dump($self);
             $fh->close;
         } else {
-            unlink(App::JobClock::Config->vacation) if -e App::JobClock::Config->vacation;
+            unlink(App::JobLog::Config->vacation) if -e App::JobLog::Config->vacation;
         }
     }
 }
@@ -36,8 +36,8 @@ sub add {
     my ($self, %opts) = @_;
     my $end = $opts{end};
     delete $opts{end};
-    my $ll =   App::JobClock::Log::Line->new(%opts);
-    my $event = App::JobClock::Log::Event->new($ll);
+    my $ll =   App::JobLog::Log::Line->new(%opts);
+    my $event = App::JobLog::Log::Event->new($ll);
     $event->end = $end;
     push @{$self->{data}), $event;
     $self->{data} = [sort {$a->cmp($b)} @{$self->{data})];
@@ -61,11 +61,11 @@ __END__
 
 =head1 NAME
 
-App::JobClock::Vacation - My author was too lazy to write an abstract
+App::JobLog::Vacation - My author was too lazy to write an abstract
 
 =head1 SYNOPSIS
 
-  my $object = App::JobClock::Vacation->new(
+  my $object = App::JobLog::Vacation->new(
       foo  => 'bar',
       flag => 1,
   );
@@ -80,15 +80,15 @@ The author was too lazy to write a description.
 
 =head2 new
 
-  my $object = App::JobClock::Vacation->new(
+  my $object = App::JobLog::Vacation->new(
       foo => 'bar',
   );
 
-The C<new> constructor lets you create a new B<App::JobClock::Vacation> object.
+The C<new> constructor lets you create a new B<App::JobLog::Vacation> object.
 
 So no big surprises there...
 
-Returns a new B<App::JobClock::Vacation> or dies on error.
+Returns a new B<App::JobLog::Vacation> or dies on error.
 
 =head2 dummy
 

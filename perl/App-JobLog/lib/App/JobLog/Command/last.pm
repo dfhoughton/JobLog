@@ -1,5 +1,5 @@
-package App::JobClock::Command::last;
-use App::JobClock -command;
+package App::JobLog::Command::last;
+use App::JobLog -command;
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

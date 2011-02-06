@@ -1,26 +1,26 @@
-package App::JobClock::Command::configure;
-use App::JobClock -command;
+package App::JobLog::Command::configure;
+use App::JobLog -command;
 use Modern::Perl;
-use App::JobClock::Constants qw(PERIOD PRECISION HOURS);
-use Class::Autouse qw{App::JobClock::Config};
+use App::JobLog::Constants qw(PERIOD PRECISION HOURS);
+use Class::Autouse qw{App::JobLog::Config};
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
     _list_params() if $opt->{list};
     if ( exists $opt->{precision} ) {
-        my $precision = App::JobClock::Config->precision( $opt->{precision} );
+        my $precision = App::JobLog::Config->precision( $opt->{precision} );
         say "precision set to $precision";
     }
     if ( exists $opt->{'start-pay-period'} ) {
     }
     if ( exists $opt->{'length-pay-period'} ) {
-        my $length_pp = App::JobClock::Config->pay_period_length(
+        my $length_pp = App::JobLog::Config->pay_period_length(
             $opt->{'length-pay-period'} );
         say "length of pay period in days set to $length_pp";
     }
     if ( exists $opt->{'day-length'} ) {
         my $day_length =
-          App::JobClock::Config->day_length( $opt->{'day-length'} );
+          App::JobLog::Config->day_length( $opt->{'day-length'} );
         say "length of work day set to $day_length";
     }
 }
@@ -66,7 +66,7 @@ sub _list_params {
     my ( $l1, $l2, %h ) = ( 0, 0 );
     for my $method (@params) {
         my $l     = length $method;
-        my $value = App::JobClock::Config->$method;
+        my $value = App::JobLog::Config->$method;
         $value = 'not defined' unless defined $value;
         $l1         = $l if $l > $l1;
         $l          = length $value;

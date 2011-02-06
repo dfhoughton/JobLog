@@ -1,4 +1,4 @@
-package App::JobClock::Constants;
+package App::JobLog::Constants;
 use Modern::Perl;
 
 # Put these in their own module so they can be available in sub-modules.

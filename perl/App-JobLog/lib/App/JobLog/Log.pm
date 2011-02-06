@@ -1,4 +1,4 @@
-package App::JobClock::Log;
+package App::JobLog::Log;
 
 
 use 5.006;
@@ -31,11 +31,11 @@ __END__
 
 =head1 NAME
 
-App::JobClock::Log - My author was too lazy to write an abstract
+App::JobLog::Log - My author was too lazy to write an abstract
 
 =head1 SYNOPSIS
 
-  my $object = App::JobClock::Log->new(
+  my $object = App::JobLog::Log->new(
       foo  => 'bar',
       flag => 1,
   );
@@ -50,15 +50,15 @@ The author was too lazy to write a description.
 
 =head2 new
 
-  my $object = App::JobClock::Log->new(
+  my $object = App::JobLog::Log->new(
       foo => 'bar',
   );
 
-The C<new> constructor lets you create a new B<App::JobClock::Log> object.
+The C<new> constructor lets you create a new B<App::JobLog::Log> object.
 
 So no big surprises there...
 
-Returns a new B<App::JobClock::Log> or dies on error.
+Returns a new B<App::JobLog::Log> or dies on error.
 
 =head2 dummy
 
