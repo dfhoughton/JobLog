@@ -3,7 +3,7 @@ package;
 # ABSTRACT: basically adds an end time to App::JobLog::Log::Line events
 
 use Modern::Perl;
-use Class::Autouse qw{Date::Time};
+use Class::Autouse qw{DateTime};
 
 
 sub new {
@@ -25,11 +25,11 @@ sub end : lvalue {
 # for sorting
 sub cmp {
     my ($self, $other) = @_;
-    my $comparison = Date::Time->compare($self->start, $other->start);
+    my $comparison = DateTime->compare($self->start, $other->start);
     unless ($comparison) {
         if ($self->is_closed) {
             if ($other->is_closed) {
-                return Date::Time->compare($self->end, $other->end);
+                return DateTime->compare($self->end, $other->end);
             } else {
                 return 1;
             }

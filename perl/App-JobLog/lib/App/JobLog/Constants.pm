@@ -22,9 +22,9 @@ use constant HOURS => 8;
 # environment variables
 
 # identifies text editor to use to edit log
-use constant EDITOR => 'JOB_CLOCK_EDITOR';
+use constant EDITOR => 'JOB_LOG_EDITOR';
 
 # identifies directory to write files into
-use constant DIRECTORY => 'JOB_CLOCK_DIRECTORY';
+use constant DIRECTORY => 'JOB_LOG_DIRECTORY';
 
 1;

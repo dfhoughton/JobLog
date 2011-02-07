@@ -1,8 +1,8 @@
 package App::JobLog::Command::info;
 use App::JobLog -command;
 use App::JobLog::Constants qw(EDITOR DIRECTORY);
-use autouse 'File::Temp' => qw(tempfile);
-use autouse 'Pod::Usage' => qw(pod2usage);
+use autouse 'File::Temp'                => qw(tempfile);
+use autouse 'Pod::Usage'                => qw(pod2usage);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
@@ -10,12 +10,87 @@ $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically 
 use Modern::Perl;
 
 sub execute {
-    my ($self) = @_;
-
+    my ( $self, $opt, $args ) = @_;
     my ( $fh, $fn ) = tempfile( UNLINK => 1 );
     my $executable = prog_name($0);
+    my $text =
+        $self->_header($executable)
+      . $self->_basic_usage($executable)
+      . $self->_footer($executable);
+    my @options = ( -verbose => 2, -exitval => 0, -input => $fn );
+    given ( $opt->verbosity ) {
+        when ('verbose') {
+            $text =
+                $self->_header($executable)
+              . $self->_body($executable)
+              . $self->_footer($executable)
+        }
+        when ('quiet') {
+            $text = $self->_header($executable) . $self->_footer($executable);
+            push @options, -noperldoc => 1;
+        }
+        default { push @options, -noperldoc => 1 }
+    }
+
     print $fh <<END;
-=head1 Job Log 
+$text
+=cut
+END
+    $fh->close;
+    pod2usage(@options);
+}
+
+sub usage_desc { '%c ' . __PACKAGE__->name }
+
+sub abstract { 'describe job log' }
+
+sub options {
+    return (
+        [
+            "verbosity" => hidden => {
+                one_of => [
+                    [ 'quiet|q'       => 'minimal documentation' ],
+                    [ 'verbose|man|v' => 'extensive documentation in pager' ],
+                ],
+            }
+        ]
+    );
+}
+
+# obtain all the
+sub _unambiguous_prefixes {
+    my ( $self, $command ) = @_;
+
+    # borrowing this from App::Cmd::Command::commands
+    my @commands =
+      map { ( $_->command_names )[0] } $self->app->command_plugins;
+    my %counts;
+    for my $cmd (@commands) {
+        for my $prefix ( _prefixes($cmd) ) {
+            $counts{$prefix}++;
+        }
+    }
+    my @prefixes;
+    for my $prefix ( _prefixes($command) ) {
+        push @prefixes, $prefix if $counts{$prefix} == 1;
+    }
+    return @prefixes;
+}
+
+# obtain all the prefixes of a word
+sub _prefixes {
+    my $cmd = shift;
+    my @prefixes;
+    for ( my ( $i, $lim ) = ( 0, length $cmd ) ; $i < $lim ; ++$i ) {
+        push @prefixes, substr $cmd, 0, $lim - $i;
+    }
+    return @prefixes;
+}
+
+sub _header {
+    my ( $self, $executable ) = (@_);
+    return <<END;
+=head1 Job Log
 
 work log management
 
@@ -24,7 +99,18 @@ version $App::JobLog::Command::info::VERSION
 This application allows one to keep a simple, human readable log
 of one's activities. B<Job Log> also facilitates searching, summarizing,
 and extracting information from this log as needed.
+END
+}
 
+sub _body {
+    my ( $self, $executable ) = (@_);
+    return $self->_basic_usage($executable) . $self->_advanced_usage();
+}
+
+sub _basic_usage {
+    my ( $self, $executable ) = (@_);
+    return <<END;
+    
 =head1 Usage
 
 B<Job Log> keeps a log of events. If you begin a new task you type
@@ -92,7 +178,13 @@ TODO talk about summary and obtaining full list of commands
 B<TIP:> any unambigous prefix of a command will do. All the following are equivalent:
 
 @{[join "\n", map {"   $executable $_ doing something"} $self->_unambiguous_prefixes(App::JobLog::Command::add->name)]}
+END
+}
 
+sub _advanced_usage {
+    my ( $self, $executable ) = (@_);
+    return <<END;
+    
 =head1 Environment Variables
 
 B<Job Log> may be configured in part by two environment variables:
@@ -138,52 +230,20 @@ Every expression represents an interval of time. It either names an interval or 
 the beginning of one interval to the end of another.
 
 TODO provide the BNF grammar used in time parsing
+END
+}
 
+sub _footer {
+    my ( $self, $executable ) = (@_);
+    return <<END;
+    
 =head1 License etc.
 
  Author        David Houghton
                dfhoughton at gmail dot com
  Copyright (c) 2011
  License       Perl_5
-
-=cut
 END
-    $fh->close;
-    pod2usage( -verbose => 2, -exitval => 0, -input => $fn );
-}
-
-sub usage_desc { '%c ' . __PACKAGE__->name }
-
-sub abstract { 'describe job log' }
-
-# obtain all the 
-sub _unambiguous_prefixes {
-    my ( $self, $command ) = @_;
-
-    # borrowing this from App::Cmd::Command::commands
-    my @commands =
-      map { ( $_->command_names )[0] } $self->app->command_plugins;
-    my %counts;
-    for my $cmd (@commands) {
-        for my $prefix ( _prefixes($cmd) ) {
-            $counts{$prefix}++;
-        }
-    }
-    my @prefixes;
-    for my $prefix ( _prefixes($command) ) {
-        push @prefixes, $prefix if $counts{$prefix} == 1;
-    }
-    return @prefixes;
-}
-
-# obtain all the prefixes of a word
-sub _prefixes {
-    my $cmd = shift;
-    my @prefixes;
-    for ( my ( $i, $lim ) = ( 0, length $cmd ) ; $i < $lim ; ++$i ) {
-        push @prefixes, substr $cmd, 0, $lim - $i;
-    }
-    return @prefixes;
 }
 
 1;
