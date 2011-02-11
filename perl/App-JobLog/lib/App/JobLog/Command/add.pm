@@ -1,6 +1,7 @@
 package App::JobLog::Command::add;
 use App::JobLog -command;
 use Modern::Perl;
+use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
@@ -12,14 +13,17 @@ sub usage_desc { '%c ' . __PACKAGE__->name . ' <description of event>' }
 
 sub abstract { 'log an event' }
 
-sub overview {
-    [ abstract() ],
-      [ 'basic example: ' . __PACKAGE__->name . ' munging the widget' ],
-      [
-'all arguments that are not parameter values are concatenated as a description of the event'
-      ],
-      ['logging an event simultaneously marks the end of the previous event'],
-      ['events may be tagged to mark such things as client, grant, or project'];
+sub full_description {
+    <<END;
+Log an event. E.g.,
+
+  @{[prog_name($0)]} @{[__PACKAGE__->name]} munging the widget
+
+All arguments that are not parameter values are concatenated as a description
+of the event. Logging an event simultaneously marks the end of the previous
+event. Events may be tagged to mark such things as client, grant, or 
+project.
+END
 }
 
 sub options {

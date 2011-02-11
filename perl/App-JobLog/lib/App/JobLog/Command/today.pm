@@ -65,8 +65,12 @@ sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
 
 sub abstract { 'what has happened today' }
 
-sub overview {
-    [ abstract() ], ['basically a specialized variant of summary command'];
+sub full_description {
+    <<END;
+List what has happened today.
+
+This is basically a specialized variant of the @{[App::JobLog::Command::summary->name]} command.
+END
 }
 
 sub options {

@@ -12,30 +12,79 @@ use overload '""' => \&to_string;
 our ( $date, @tags, @description, $is_beginning );
 
 # log line parser
-my $re = qr{
+our $re = qr{
     ^ (?&ts) : (?&non_ts) $
     (?(DEFINE)
-     (?<ts> \d{4}+\s\d++\s\d++\s\d++\s\d++\s\d++ (?{$date = $^N}) )
+     (?<ts> (\d{4}+\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{$date = $^N}) )
      (?<non_ts> (?&done) (?{$is_beginning = undef})| (?&event) (?{$is_beginning = 1}))
      (?<done> DONE)
      (?<event> (?&tags) : (?&descriptions))
      (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)
-     (?<tag> ([^\s:\\]|(?&escaped))++ (?{push @tags, $^N}))
+     (?<tag> ((?:[^\s:\\]|(?&escaped))++) (?{push @tags, $^N}))
      (?<escaped> \\.)
-     (?<descriptions> (?:(?&description)(;(?&description))*+)?)
-     (?<description> ([^;\\]|(?&escaped))++ (?{push @description, $^N}))
+     (?<descriptions> (?: (?&description) (?: ; (?&description) )*+ )? )
+     (?<description> ((?:[^;\\]|(?&escaped))++) (?{push @description, $^N}))
     )
 }xi;
 
 # for composing a log line out of a hash of attributes
 sub new {
-    my ( undef, %opts ) = @_;
+    my ( undef, @args ) = @_;
+    my %opts = @args;
 
-    # TODO validate %opts
-    my $self = bless \%opts;
-    if ($self->is_beginning) {
-        $self->tags ||= [];
-        $self->description ||= [];
+    # validate %opts
+    my $self = bless {};
+    if ( exists $opts{comment} ) {
+        $self->{comment} = $opts{comment};
+        delete $opts{comment};
+        die 'inconsistent arguments: ' . join( ', ', @args ) if keys %opts;
+    }
+    elsif ( exists $opts{done} ) {
+        my $time = $opts{time};
+        die "invalid value for time: $time"
+          if $time && ref $time ne 'DateTime';
+        $self->{time} = $time || DateTime->now;
+        $self->{done} = 1;
+        delete $opts{done};
+        delete $opts{time};
+        die 'inconsistent arguments: ' . join( ', ', @args ) if keys %opts;
+    }
+    elsif ( exists $opts{time} ) {
+        my $time = $opts{time};
+        die "invalid value for time: $time"
+          if $time && ref $time ne 'DateTime';
+        $self->{time} = $time;
+        my $tags = $opts{tags};
+        die 'invalid value for tags: ' . $tags
+          if defined $tags && ref $tags ne 'ARRAY';
+        unless ($tags) {
+            $tags = [];
+            $self->{tags_unspecified} = 1;
+        }
+        $self->{tags} = $tags;
+        my $description = $opts{description};
+        if ( my $type = ref $description ) {
+            die 'invalid type for description: ' . $type
+              unless $type eq 'ARRAY';
+            $self->{description} = $description;
+        }
+        elsif ( defined $description ) {
+            $description = [$description];
+        }
+        else {
+            $description = [];
+        }
+        $self->{description} = $description;
+        delete $opts{time};
+        delete $opts{tags};
+        delete $opts{description};
+        die 'inconsistent arguments: ' . join( ', ', @args ) if keys %opts;
+    }
+    elsif ( exists $opts{text} ) {
+        die 'text lines in log must be blank' if $opts{text} =~ /\S/;
+        $self->{text} = $opts{text} . '';
+        delete $opts{text};
+        die 'inconsistent arguments: ' . join( ', ', @args ) if keys %opts;
     }
     return $self;
 }
@@ -44,14 +93,19 @@ sub new {
 sub parse {
     my ( undef, $text ) = @_;
     my $obj = bless { text => $text };
-    if ( $text =~ /^\s*(?:#\s*+(.*?)\s*)$/ ) {
-        $obj->{comment} = $1 if defined $1;
+    if ( $text =~ /^\s*(?:#\s*+(.*?)\s*)?$/ ) {
+        if ( defined $1 ) {
+            $obj->{comment} = $1;
+            delete $obj->{text};
+        }
         return $obj;
     }
-    $is_beginning = 1;
-    @tags         = ();
+    local ( $date, @tags, @description, $is_beginning );
     if ( $text =~ $re ) {
-        my @time = split / /, $date;
+
+        # must use to_string to obtain text
+        delete $obj->{text};
+        my @time = split /\s++/, $date;
         $date = DateTime->new(
             year   => $time[0],
             month  => $time[1],
@@ -62,12 +116,18 @@ sub parse {
         );
         $obj->{time} = $date;
         if ($is_beginning) {
-            $obj->{tags}        = [ map { s/\\(.)/$1/g; $_ } @tags ];
+            my %tags = map { $_ => 1 } @tags;
+            $obj->{tags}        = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
             $obj->{description} = [ map { s/\\(.)/$1/g; $_ } @description ];
+        }
+        else {
+            $obj->{done} = 1;
         }
         return $obj;
     }
-    $obj->{malformed} = 1;
+    else {
+        $obj->{malformed} = 1;
+    }
     return $obj;
 }
 
@@ -78,16 +138,18 @@ sub clone {
         $clone->{malformed} = 1;
         $clone->text = $self->text;
     }
-    else if ( $self->is_event ) {
+    elsif ( $self->is_event ) {
         $clone->time = $self->time->clone;
         if ( $self->is_beginning ) {
             $clone->tags        = [ @{ $self->tags } ];
             $clone->description = [ @{ $self->description } ];
         }
-    } else {
-        $clone->comment = $self->comment if $self->is_comment;
-        $clone->text = $self->text if exists $self->{text};
     }
+    else {
+        $clone->comment = $self->comment if $self->is_comment;
+        $clone->text    = $self->text    if exists $self->{text};
+    }
+    return $clone;
 }
 
 sub to_string {
@@ -95,20 +157,34 @@ sub to_string {
     return $self->{text} if exists $self->{text};
     if ( $self->is_event ) {
         my $time = $self->time;
-        my $text = join ' ', $time->year, $time->month, $time->day, $time->hour,
-          $time->minute, $time->second;
+        my $text = $self->time_stamp;
         $text .= ':';
-        $self->tags ||= [];
-        $text .= join ' ', map { s/([:\\\s])/\\$1/g; $_ } @{ $self->tags };
-        $text .= ':';
-        $self->description ||= [];
-        $text .= join ';' map { s/([;\\])/\\$1/g; $_ } @{ $self->description };
-        $self->text = $text;
+        if ( $self->is_beginning ) {
+            $self->tags ||= [];
+            my %tags = map { $_ => 1 } @{ $self->tags };
+            $text .= join ' ', map { s/([:\\\s])/\\$1/g; $_ } sort keys %tags;
+            $text .= ':';
+            $self->description ||= [];
+            $text .= join ';',
+              map { ( my $d = $_ ) =~ s/([;\\])/\\$1/g; $d }
+              @{ $self->description };
+        }
+        else {
+            $text .= 'DONE';
+        }
+        return $text;
     }
-    else if ( $self->is_comment ) {
-        $self->text = '# ' . $self->comment;
+    elsif ( $self->is_comment ) {
+        return '# ' . $self->comment;
     }
-    return $self->{text};
+}
+
+sub time_stamp {
+    my ( $self, $time ) = @_;
+    $time ||= $self->time;
+    return sprintf '%d %2s %2s %2s %2s %2s', $time->year, $time->month,
+      $time->day,    $time->hour,
+      $time->minute, $time->second;
 }
 
 # a bunch of attributes, here for convenience
@@ -135,11 +211,46 @@ sub description : lvalue {
 
 # a bunch of tests
 
-sub is_malformed { exists $_[0]->{malformed} }
-sub is_beginning { exists $_[0]->{tags} }
-sub is_end       { $_[0]->is_event && !$_[0]->is_beginning }
-sub is_event     { exists $_[0]->{time} }
-sub is_comment   { exists $_[0]->{comment} }
+sub is_malformed     { exists $_[0]->{malformed} }
+sub is_beginning     { exists $_[0]->{tags} }
+sub is_end           { $_[0]->{done} }
+sub is_event         { exists $_[0]->{time} }
+sub is_comment       { exists $_[0]->{comment} }
+sub tags_unspecified { $_[0]->{tags_unspecified} }
+
+sub is_blank {
+    !( $_[0]->is_malformed || $_[0]->is_comment || $_[0]->is_event );
+}
+
+# some useful methods
+
+sub comment_out {
+    my ($self) = @_;
+    my $text = $self->to_string;
+    delete $self->{$_} for keys %$self;
+    $self->{comment} = $text;
+    return $self;
+}
+
+sub all_tags {
+    my ( $self, @tags ) = @_;
+    return undef unless $self->tags;
+    my %tags = map { $_ => 1 } @{ $self->{tags} };
+    for my $tag (@tags) {
+        return undef unless $tags{$tag};
+    }
+    return 1;
+}
+
+sub exists_tag {
+    my ( $self, @tags ) = @_;
+    return undef unless $self->tags;
+    my %tags = map { $_ => 1 } @{ $self->{tags} };
+    for my $tag (@tags) {
+        return 1 if $tags{$tag};
+    }
+    return undef;
+}
 
 1;
 

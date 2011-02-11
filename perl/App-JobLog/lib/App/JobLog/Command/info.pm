@@ -4,6 +4,9 @@ use App::JobLog::Constants qw(EDITOR DIRECTORY);
 use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'Pod::Usage'                => qw(pod2usage);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
+use autouse 'Carp'                      => qw(carp);
+use autouse 'App::JobLog::Config' => qw(log);
+use Class::Autouse qw(Config File::Spec);
 
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
 
@@ -23,7 +26,13 @@ sub execute {
             $text =
                 $self->_header($executable)
               . $self->_body($executable)
-              . $self->_footer($executable)
+              . $self->_footer($executable);
+            my $perldoc =
+              File::Spec->catfile( $Config::Config{scriptdir}, 'perldoc' );
+            unless ( -e $perldoc ) {
+                carp 'Cannot find perldoc. Text will not be paged.';
+                push @options, -noperldoc => 1;
+            }
         }
         when ('quiet') {
             $text = $self->_header($executable) . $self->_footer($executable);
@@ -43,6 +52,12 @@ END
 sub usage_desc { '%c ' . __PACKAGE__->name }
 
 sub abstract { 'describe job log' }
+
+sub full_description {
+    <<END
+Describes application and provides usage information.
+END
+}
 
 sub options {
     return (
@@ -117,7 +132,7 @@ B<Job Log> keeps a log of events. If you begin a new task you type
 
    $executable @{[App::JobLog::Command::add->name]} what I am doing now
 
-and it appends the following, modulo changes in time, to @{[App::JobLog::Config->log]}:
+and it appends the following, modulo changes in time, to @{[log]}:
 
    2011 2 1 15 19 12::what I am doing now
 
@@ -191,15 +206,15 @@ B<Job Log> may be configured in part by two environment variables:
 
 =over 8
 
-=item @{[DIRECTORY]}
+=item @{[DIRECTORY()]}
 
 By default B<Job Log> keeps the log and all other files in a hidden directory called .joblog in your home
-directory. If @{[DIRECTORY]} is set, however, it will keep this files here.
+directory. If @{[DIRECTORY()]} is set, however, it will keep this files here.
 
-=item @{[EDITOR]}
+=item @{[EDITOR()]}
 
 To use B<Job Log>'s B<@{[App::JobLog::Command::edit->name]}> function you must specify a text editor. The
-@{[EDITOR]} environment variable defines the editor you wish to use.
+@{[EDITOR()]} environment variable defines the editor you wish to use.
 
 =back
 

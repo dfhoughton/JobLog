@@ -1,16 +1,35 @@
 package App::JobLog::Config;
-use App::JobLog::Constants;
-use Modern::Perl;
-use Class::Autouse qw{File::HomeDir File::Spec Config::Tiny FileHandle};
+use App::JobLog::Constants qw(EDITOR DIRECTORY PRECISION PERIOD HOURS);
+use Class::Autouse qw{
+  File::HomeDir
+  File::Spec
+  Config::Tiny
+  FileHandle
+  App::JobLog::Command::info
+};
 use autouse 'File::Path' => qw(mkpath);
 use autouse 'Cwd'        => qw(abs_path);
+require Exporter;
+our @ISA       = qw(Exporter);
+our @EXPORT_OK = qw(
+  dir
+  editor
+  init_file
+  log
+  pay_period_length
+  precision
+  readme
+  start_pay_period
+  vacation
+);
+use Modern::Perl;
 
 # manages configuration
 
 # ensures that the working directory and the README file exist before
 # we try to create or modify any files in the working directory
 sub init_file {
-    my ( undef, $path ) = @_;
+    my ($path) = @_;
     unless ( -e $path ) {
         my ( $volume, $directories, $file ) = File::Spec->splitpath($path);
         my $dir = File::Spec->catfile( $volume, $directories );
@@ -40,7 +59,7 @@ END
 }
 
 # working directory
-our $dir;
+my $dir;
 
 sub dir {
     $dir ||= $ENV{ DIRECTORY() };
@@ -49,7 +68,7 @@ sub dir {
 }
 
 # log file
-our $log;
+my $log;
 
 sub log {
     $log ||= File::Spec->catfile( dir(), 'log' );
@@ -57,7 +76,7 @@ sub log {
 }
 
 # readme file
-our $readme;
+my $readme;
 
 sub readme {
     $readme ||= File::Spec->catfile( dir(), 'README' );
@@ -65,7 +84,7 @@ sub readme {
 }
 
 # configuration file for basic parameters
-our $config_file;
+my $config_file;
 
 sub _config_file {
     $config_file ||= File::Spec->catfile( dir(), 'config.ini' );
@@ -73,7 +92,7 @@ sub _config_file {
 }
 
 # file recording vacation times
-our $vacation_file;
+my $vacation_file;
 
 sub vacation {
     $vacation_file ||= File::Spec->catfile( dir(), 'vacation' );
@@ -81,11 +100,11 @@ sub vacation {
 }
 
 # configuration object and whether any changes need to be written to this file
-our ( $config, $config_changed );
+my ( $config, $config_changed );
 
 END {
     if ($config_changed) {
-        __PACKAGE__->init_file( _config_file() );
+        init_file( _config_file() );
         $config->write( _config_file() );
     }
 }
@@ -100,23 +119,23 @@ sub _config {
 }
 
 sub precision {
-    my ( undef, $value ) = @_;
-    return _param( 'precision', PRECISION, $value );
+    my ($value) = @_;
+    return _param( 'precision', PRECISION(), $value );
 }
 
 sub day_length {
-    my ( undef, $value ) = @_;
-    return _param( 'day-length', HOURS, $value );
+    my ($value) = @_;
+    return _param( 'day-length', HOURS(), $value );
 }
 
 sub pay_period_length {
-    my ( undef, $value ) = @_;
-    return _param( 'pay-period-length', PERIOD, $value );
+    my ($value) = @_;
+    return _param( 'pay-period-length', PERIOD(), $value );
 }
 
 # returns DateTime representing start date of pay period or null if none is defined
 sub start_pay_period {
-    my ( undef, $value ) = @_;
+    my ($value) = @_;
     require DateTime;
     if ( ref $value eq 'DateTime' ) {
         $value = sprintf '%d %d %d', $value->year, $value->month, $value->day;
@@ -150,7 +169,7 @@ sub _param {
 
 # editing program
 sub editor {
-    return $ENV{EDITOR()};
+    return $ENV{ EDITOR() };
 }
 
 1;

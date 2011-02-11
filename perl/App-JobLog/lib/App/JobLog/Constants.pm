@@ -1,12 +1,12 @@
 package App::JobLog::Constants;
+
+require Exporter;
+our @ISA       = qw(Exporter);
+our @EXPORT_OK = qw(EDITOR DIRECTORY PRECISION PERIOD HOURS);
+
 use Modern::Perl;
 
 # Put these in their own module so they can be available in sub-modules.
-
-use Exporter::Tidy
-  default       => [qw(:all)],
-  env_vars      => [qw(EDITOR DIRECTORY)],
-  configuration => [qw(PRECISION PERIOD HOURS)];
 
 # configuration
 

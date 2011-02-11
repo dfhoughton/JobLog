@@ -12,4 +12,11 @@ sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
 
 sub abstract { 'resume last closed task' }
 
+sub full_description {
+    <<END
+Starts a new task with an identical description and tags to the last
+task closed.
+END
+}
+
 1;

@@ -4,48 +4,51 @@ package App::JobLog::Vacation;
 
 use Modern::Perl;
 use App::JobLog::Config;
-use  App::JobLog::Log::Event;
-use  App::JobLog::Log::Line;
-use autouse 'Data::Dump'  => qw(dump);
+use App::JobLog::Log::Event;
+use App::JobLog::Log::Line;
+use autouse 'Data::Dump' => qw(dump);
 use Class::Autouse qw{FileHandle};
 
 sub new {
-    if (-e App::JobLog::Config->vacation) {
+    if ( -e App::JobLog::Config->vacation ) {
         return do App::JobLog::Config->vacation;
     }
-    return bless { changed => 0};
+    return bless { changed => 0 };
 }
 
 # save any changes
 sub close {
     my ($self) = @_;
-    if ($self->{changed}) {
-        if (@{$self->{data}}) {
+    if ( $self->{changed} ) {
+        if ( @{ $self->{data} } ) {
+
             # something to save
             $self->{changed} = 0;
-            my $fh = FileHandle->new(App::JobLog::Config->vacation, 'w');
+            my $fh = FileHandle->new( App::JobLog::Config->vacation, 'w' );
             print $fh dump($self);
             $fh->close;
-        } else {
-            unlink(App::JobLog::Config->vacation) if -e App::JobLog::Config->vacation;
+        }
+        else {
+            unlink( App::JobLog::Config->vacation )
+              if -e App::JobLog::Config->vacation;
         }
     }
 }
 
 sub add {
-    my ($self, %opts) = @_;
+    my ( $self, %opts ) = @_;
     my $end = $opts{end};
     delete $opts{end};
-    my $ll =   App::JobLog::Log::Line->new(%opts);
+    my $ll    = App::JobLog::Log::Line->new(%opts);
     my $event = App::JobLog::Log::Event->new($ll);
     $event->end = $end;
-    push @{$self->{data}), $event;
-    $self->{data} = [sort {$a->cmp($b)} @{$self->{data})];
+    push @{ $self->{data} }, $event;
+    $self->{data} = [ sort { $a->cmp($b) } @{ $self->{data} } ];
     $self->{changed} = 1;
 }
 
-sub delete {
-    my ($self, $index) = @_;
+sub remove {
+    my ( $self, $index ) = @_;
     die "vacation date index must be non-negative" if $index < 0;
     my $data = $self->{data};
     die "unknown vacation date" unless $data && @$data > $index;

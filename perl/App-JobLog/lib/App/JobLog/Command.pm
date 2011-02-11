@@ -1,18 +1,45 @@
 package App::JobLog::Command;
 use App::Cmd::Setup -command;
 use Modern::Perl;
+use autouse 'Text::Wrap' => qw(fill);
 
 sub opt_spec {
     my ( $class, $app ) = @_;
-    my @overview = $class->overview;
-    push @overview, [] if @overview;
-    my @options = $class->options($app);
-    push @overview, @options, [] if @options;
-    return ( @overview, [ 'help' => "this usage screen" ] );
+
+    # my @overview = $class->overview;
+    # push @overview, [] if @overview;
+    # my @options = $class->options($app);
+    # push @overview, @options, [] if @options;
+    # return ( @overview, [ 'help' => "this usage screen" ] );
+    return ( $class->options($app), [ 'help' => "this usage screen" ] );
 }
 
-# override this in subclasses for more detailed descriptions or to eliminate them altogether
-sub overview { [ (shift)->abstract ] }
+# makes sure everything has some sort of description
+sub description {
+    my ($self) = @_;
+
+    # abstract provides default text
+    my $desc = $self->full_description;
+    unless ($desc) {
+        ( $desc = $self->abstract ) =~ s/^\s++|\s++$//g;
+
+        # ensure initial capitalization
+        $desc =~ s/^(\p{Ll})/uc $1/e;
+
+        # add sentence-terminal punctuation as necessary
+        $desc =~ s/(\w)$/$1./;
+    }
+
+    # make sure things are wrapped nicely
+    $desc = fill '', '', $desc;
+
+    # space between description and options text
+    $desc .= "\n";
+    return $desc;
+}
+
+# override to make full description
+sub _description { }
 
 sub validate_args {
     my ( $self, $opt, $args ) = @_;

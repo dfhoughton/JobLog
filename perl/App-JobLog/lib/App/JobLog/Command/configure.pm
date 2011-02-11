@@ -14,8 +14,8 @@ sub execute {
     if ( exists $opt->{'start-pay-period'} ) {
     }
     if ( exists $opt->{'length-pay-period'} ) {
-        my $length_pp = App::JobLog::Config->pay_period_length(
-            $opt->{'length-pay-period'} );
+        my $length_pp =
+          App::JobLog::Config->pay_period_length( $opt->{'length-pay-period'} );
         say "length of pay period in days set to $length_pp";
     }
     if ( exists $opt->{'day-length'} ) {
@@ -36,7 +36,7 @@ sub options {
             'decimal places of precision in display of time; '
               . 'e.g., --precision = 1; '
               . 'default is '
-              . PRECISION
+              . PRECISION()
         ],
         [
             'start-pay-period|s=s',
@@ -48,11 +48,11 @@ sub options {
             'length-pay-period|l=i',
             'the length of the pay period in days; e.g., --pp-length= 7;
               default is '
-              . PERIOD
+              . PERIOD()
         ],
         [
             'day-length|d=f',
-            'length of workday; ' . 'e.g., -d 7.5; ' . 'default is ' . HOURS
+            'length of workday; ' . 'e.g., -d 7.5; ' . 'default is ' . HOURS()
         ],
         [ 'list|l', 'list all configuration parameters' ],
     );
