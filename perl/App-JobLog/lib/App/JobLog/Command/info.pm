@@ -1,4 +1,7 @@
 package App::JobLog::Command::info;
+
+# ABSTRACT: provides general App::JobLog information
+
 use App::JobLog -command;
 use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'Pod::Usage'                => qw(pod2usage);

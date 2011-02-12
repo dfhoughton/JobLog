@@ -1,4 +1,7 @@
 package App::JobLog::Command::add;
+
+# ABSTRACT: log an event
+
 use App::JobLog -command;
 use Modern::Perl;
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);

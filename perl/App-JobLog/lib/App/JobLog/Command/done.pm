@@ -1,4 +1,7 @@
 package App::JobLog::Command::done;
+
+# ABSTRACT: close last open event
+
 use App::JobLog -command;
 use Modern::Perl;
 

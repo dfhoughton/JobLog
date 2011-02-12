@@ -1,4 +1,7 @@
 package App::JobLog::Config;
+
+# ABSTRACT: central depot for App::JobLog configuration parameters and controller allowing their modification
+
 use Class::Autouse qw{
   File::HomeDir
   File::Spec

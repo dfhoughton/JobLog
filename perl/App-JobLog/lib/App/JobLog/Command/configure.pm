@@ -1,4 +1,7 @@
 package App::JobLog::Command::configure;
+
+# ABSTRACT: observe or modify App::JobLog configuration
+
 use App::JobLog -command;
 use Modern::Perl;
 use App::JobLog::Config qw(PERIOD PRECISION HOURS);

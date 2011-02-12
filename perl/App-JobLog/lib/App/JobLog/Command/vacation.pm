@@ -1,4 +1,7 @@
 package App::JobLog::Command::vacation;
+
+# ABSTRACT: controller for vacation dates
+
 use Modern::Perl;
 use App::JobLog -command;
 

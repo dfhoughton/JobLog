@@ -1,4 +1,7 @@
 package App::JobLog::Command::today;
+
+# ABSTRACT: show what has happened today
+
 use App::JobLog -command;
 use App::JobLog::Command::summary;
 use Class::Autouse qw{DateTime};

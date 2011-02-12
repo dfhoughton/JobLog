@@ -1,4 +1,7 @@
 package App::JobLog::Command;
+
+# ABSTRACT: common functionality of App::JobLog commands
+
 use App::Cmd::Setup -command;
 use Modern::Perl;
 use autouse 'Text::Wrap' => qw(fill);

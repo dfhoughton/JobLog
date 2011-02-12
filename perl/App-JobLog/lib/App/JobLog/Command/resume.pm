@@ -1,4 +1,7 @@
 package App::JobLog::Command::resume;
+
+# ABSTRACT: resume last closed task
+
 use App::JobLog -command;
 use Modern::Perl;
 

@@ -1,4 +1,7 @@
 package App::JobLog::Command::last;
+
+# ABSTRACT: show details of last recorded event
+
 use App::JobLog -command;
 
 sub execute {

@@ -4,8 +4,7 @@
 
 use Modern::Perl;
 use File::Temp ();
-use App::JobLog::Constants qw(DIRECTORY);
-use App::JobLog::Config qw(log);
+use App::JobLog::Config qw(log DIRECTORY);
 use App::JobLog::Log::Line;
 use App::JobLog::Log;
 use DateTime;

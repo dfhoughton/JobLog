@@ -1,4 +1,7 @@
 package App::JobLog::Command::modify;
+
+# ABSTRACT: modify currently open event
+
 use App::JobLog -command;
 use Modern::Perl;
 

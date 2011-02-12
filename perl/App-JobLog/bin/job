@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # PODNAME: job
+# ABSTRACT: the tiny script that sets it all going
 eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
     if 0; # not running under some shell
 use App::JobLog;

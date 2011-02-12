@@ -1,4 +1,7 @@
 package App::JobLog::Command::edit;
+
+# ABSTRACT: edit the log
+
 use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw{

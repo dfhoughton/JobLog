@@ -1,5 +1,7 @@
 package App::JobLog::Log;
 
+# ABSTRACT: the code that lets us interact with the log
+
 use Modern::Perl;
 use App::JobLog::Config qw(log init_file);
 use App::JobLog::Log::Line;
@@ -66,7 +68,7 @@ sub all_events {
 # and every ending follows a beginning
 sub validate {
     my ($self) = @_;
-    my ( $i, $previous_event );
+    my ( $i, $previous_event ) = (0);
     while ( my $line = $self->[IO][$i] ) {
         my $ll = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_malformed ) {
