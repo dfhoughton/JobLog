@@ -1,4 +1,7 @@
 package App::JobLog::Command::summary;
+
+# ABSTRACT: show what you did during a particular period
+
 use App::JobLog -command;
 use Modern::Perl;
 
@@ -51,3 +54,14 @@ sub validate {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
+
+=cut

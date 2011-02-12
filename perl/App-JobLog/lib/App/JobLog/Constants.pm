@@ -1,5 +1,7 @@
 package App::JobLog::Constants;
 
+# ABSTRACT: a bunch of constants shared among modules; destined to be put in App::JobLog::Config
+
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(EDITOR DIRECTORY PRECISION PERIOD HOURS);

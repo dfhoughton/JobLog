@@ -7,10 +7,10 @@ use Class::Autouse qw{
   App::JobLog::Log::Line
   FileHandle
 };
-use autouse 'File::Temp'          => qw(tempfile);
-use autouse 'File::Copy'          => qw(copy);
-use autouse 'Digest::MD5'         => qw(md5);
-use autouse 'App::JobLog::Config' => qw(editor log);
+use autouse 'File::Temp'                => qw(tempfile);
+use autouse 'File::Copy'                => qw(copy);
+use autouse 'Digest::MD5'               => qw(md5);
+use autouse 'App::JobLog::Config'       => qw(editor log);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 
 sub execute {
@@ -101,3 +101,14 @@ sub validate {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
+
+=cut

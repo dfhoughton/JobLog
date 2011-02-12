@@ -1,4 +1,7 @@
 package App::JobLog::Log::Line;
+
+# ABSTRACT: encapsulates one line of log text
+
 use Class::Autouse qw{DateTime};
 use Modern::Perl;
 
@@ -254,53 +257,13 @@ sub exists_tag {
 
 1;
 
-# TODO edit the boilerplate below
-
 __END__
 
 =pod
 
-=head1 NAME
-
-App::JobLog::Log::Line - My author was too lazy to write an abstract
-
-=head1 SYNOPSIS
-
-  my $object = App::JobLog::Log::Line->new(
-      foo  => 'bar',
-      flag => 1,
-  );
-  
-  $object->dummy;
-
 =head1 DESCRIPTION
 
-The author was too lazy to write a description.
-
-=head1 METHODS
-
-=head2 new
-
-  my $object = App::JobLog::Log::Line->new(
-      foo => 'bar',
-  );
-
-The C<new> constructor lets you create a new B<App::JobLog::Log::Line> object.
-
-So no big surprises there...
-
-Returns a new B<App::JobLog::Log::Line> or dies on error.
-
-=head2 dummy
-
-This method does something... apparently.
-
-=head1 SUPPORT
-
-No support is available
-
-=head1 AUTHOR
-
-Copyright 2010 Anonymous.
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
 
 =cut

@@ -1,5 +1,7 @@
 package App::JobLog::Vacation::Day;
 
+# ABSTRACT: still working on this
+
 =pod
 
 =head1 NAME
@@ -26,8 +28,6 @@ The author was too lazy to write a description.
 use 5.006;
 use strict;
 use warnings;
-
-our $VERSION = '0.01';
 
 =pod
 

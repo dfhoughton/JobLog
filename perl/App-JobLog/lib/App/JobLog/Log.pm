@@ -11,7 +11,7 @@ use Class::Autouse qw(App::JobLog::Log::Event);
 
 # some stuff useful for searching log
 use constant WINDOW   => 30;
-use constant LOW_LIM  => 1 / 5;
+use constant LOW_LIM  => 1 / 7;
 use constant HIGH_LIM => 1 - LOW_LIM;
 
 # some indices
@@ -344,6 +344,13 @@ sub append_event {
     if ( $current->is_event ) {
         my ( $previous, $last_index ) = $self->last_event;
         if ($previous) {
+
+            # validation to prevent inconsistency
+            die
+              'attempting to append event to log younger than last event in log'
+              if $current->cmp($previous) < 0;
+
+            # apply default tags
             $current->tags = $previous->tags if $current->tags_unspecified;
             if ( $previous->is_closed
                 && _different_day( $previous->end, $current->time )
@@ -397,7 +404,7 @@ sub _different_day {
 # force all changes to be written to log
 sub close {
     my ($self) = @_;
-    my $io = shift @$self;
+    my $io = $self->[IO];
     $io->close if $io && $io->is_open;
 }
 
@@ -407,54 +414,9 @@ __END__
 
 =pod
 
-=head1 NAME
-
-App::JobLog::Log - My author was too lazy to write an abstract
-
-=head1 SYNOPSIS
-
-  my $object = App::JobLog::Log->new(
-      foo  => 'bar',
-      flag => 1,
-  );
-  
-  $object->dummy;
-
 =head1 DESCRIPTION
 
-The author was too lazy to write a description.
-
-=head1 METHODS
-
-=head2 new
-
-  my $object = App::JobLog::Log->new(
-      foo => 'bar',
-  );
-
-The C<new> constructor lets you create a new B<App::JobLog::Log> object.
-
-So no big surprises there...
-
-Returns a new B<App::JobLog::Log> or dies on error.
-
-=head2 dummy
-
-This method does something... apparently.
-
-=head1 SUPPORT
-
-No support is available
-
-=head1 AUTHOR
-
-David Houghton <dfhoughton@gmail.com>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is copyright (c) 2011 by David Houghton.
-
-This is free software; you can redistribute it and/or modify it under
-the same terms as the Perl 5 programming language system itself.
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
 
 =cut

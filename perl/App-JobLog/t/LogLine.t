@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# ABSTRACT: checks sanity of App::JobLog::Log::Line
+
 use 5.006;
 use strict;
 use warnings;

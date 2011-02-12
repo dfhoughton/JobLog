@@ -14,15 +14,44 @@ use File::Spec;
 use IO::All -utf8;
 
 use Test::More;
+use Test::Fatal;
 
 # create a working directory
 my $dir = File::Temp->newdir();
 $ENV{ DIRECTORY() } = $dir;
 
+subtest 'empty log' => sub {
+    my $log  = App::JobLog::Log->new;
+    my $date = DateTime->new( year => 2011, month => 1, day => 1 );
+    my $end  = $date->clone->add( days => 1 )->subtract( seconds => 1 );
+    is(
+        exception {
+            my $events = $log->find_events( $date, $end );
+            ok( @$events == 0, 'no events in empty log' );
+        },
+        undef,
+        'no error thrown with empty log',
+    );
+    is(
+        exception {
+            $log->append_event( time => $date, description => 'test event' );
+            $log->close;
+            my $events = $log->find_events( $date, $end );
+            ok( @$events == 1, 'added event appears in empty log' );
+        },
+        undef,
+        'added event to empty log'
+    );
+    $log->close;
+    $log = App::JobLog::Log->new;
+    my $events = $log->find_events( $date, $end );
+    ok( @$events == 1, 'event preserved after closing log' );
+};
+
 for my $size (qw(tiny small normal big)) {
 
     # copy log data over
-    my $file = File::Spec->catfile( 'data', "$size.log" );
+    my $file = File::Spec->catfile( 't', 'data', "$size.log" );
     my $io = io $file;
     $io > io log;
 
@@ -78,11 +107,6 @@ for my $size (qw(tiny small normal big)) {
                     ok( ref $tags eq 'ARRAY', 'obtained tags' );
                     if ($tags) {
                         ok( @$tags, 'tags found for event' );
-                        unless ( $tags->[0] == @$events ) {
-                            print $ts, ' found ',
-                              scalar(@$events) . ' wanted ' . $tags->[0] . "\n";
-                            print $_->data, "\n" for @$events;
-                        }
                         ok( $tags->[0] == @$events,
                             'correct number of events for day' );
                     }
@@ -92,9 +116,6 @@ for my $size (qw(tiny small normal big)) {
                 }
             }
             else {
-                unless ( @$events == 0 ) {
-                    print $ts, "\n";
-                }
                 ok( @$events == 0, 'day absent from log contains no events' );
             }
         }

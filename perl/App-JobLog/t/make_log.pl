@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# ABSTRACT: generates data for testing (recursive, since uses some of modules to test; best to eyeball data)
+
 use Modern::Perl;
 use File::Temp ();
 use App::JobLog::Constants qw(DIRECTORY);

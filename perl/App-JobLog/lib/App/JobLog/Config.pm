@@ -1,5 +1,4 @@
 package App::JobLog::Config;
-use App::JobLog::Constants qw(EDITOR DIRECTORY PRECISION PERIOD HOURS);
 use Class::Autouse qw{
   File::HomeDir
   File::Spec
@@ -21,8 +20,30 @@ our @EXPORT_OK = qw(
   readme
   start_pay_period
   vacation
+  EDITOR 
+  DIRECTORY 
+  PRECISION 
+  PERIOD 
+  HOURS
 );
 use Modern::Perl;
+
+# default precision
+use constant PRECISION => 2;
+
+# default pay period
+use constant PERIOD => 14;
+
+# hours worked in day
+use constant HOURS => 8;
+
+# environment variables
+
+# identifies text editor to use to edit log
+use constant EDITOR => 'JOB_LOG_EDITOR';
+
+# identifies directory to write files into
+use constant DIRECTORY => 'JOB_LOG_DIRECTORY';
 
 # manages configuration
 
@@ -173,3 +194,14 @@ sub editor {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
+
+=cut
