@@ -5,8 +5,7 @@ use strict;
 use warnings;
 
 use File::Temp ();
-use App::JobLog::Constants qw(DIRECTORY);
-use App::JobLog::Config qw(log);
+use App::JobLog::Config qw(log DIRECTORY);
 use App::JobLog::Log::Line;
 use App::JobLog::Log;
 use DateTime;
@@ -46,6 +45,29 @@ subtest 'empty log' => sub {
     $log = App::JobLog::Log->new;
     my $events = $log->find_events( $date, $end );
     ok( @$events == 1, 'event preserved after closing log' );
+};
+
+subtest 'log validation' => sub {
+
+    # copy log data over
+    my $file = File::Spec->catfile( 't', 'data', 'invalid.log' );
+    my $io = io $file;
+    $io > io log;
+    my $log = App::JobLog::Log->new;
+    $log->validate;
+    my $text = io(log)->slurp;
+    ok( index( $text, <<END) > -1, 'found misplaced "DONE"' );
+# ERROR; task end without corresponding beginning
+# 2011  1  1  4 14 15:DONE
+END
+    ok( index( $text, <<END) > -1, 'found malformed line' );
+# ERROR; malformed line
+# 2011  1  1 12 47 25:malformed line
+END
+    ok( index( $text, <<END) > -1, 'found events out of order' );
+# ERROR; dates out of order
+# 2011  1  1 13 43  4::out of order
+END
 };
 
 for my $size (qw(tiny small normal big)) {

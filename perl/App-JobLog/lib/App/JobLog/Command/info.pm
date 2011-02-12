@@ -1,11 +1,10 @@
 package App::JobLog::Command::info;
 use App::JobLog -command;
-use App::JobLog::Constants qw(EDITOR DIRECTORY);
 use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'Pod::Usage'                => qw(pod2usage);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 use autouse 'Carp'                      => qw(carp);
-use autouse 'App::JobLog::Config' => qw(log);
+use autouse 'App::JobLog::Config' => qw(log EDITOR DIRECTORY);
 use Class::Autouse qw(Config File::Spec);
 
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this

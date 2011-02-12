@@ -1,7 +1,6 @@
 package App::JobLog::Command::edit;
 use App::JobLog -command;
 use Modern::Perl;
-use App::JobLog::Constants qw(EDITOR);
 use Class::Autouse qw{
   App::JobLog::Config
   App::JobLog::Log::Line
@@ -10,7 +9,7 @@ use Class::Autouse qw{
 use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'File::Copy'                => qw(copy);
 use autouse 'Digest::MD5'               => qw(md5);
-use autouse 'App::JobLog::Config'       => qw(editor log);
+use autouse 'App::JobLog::Config'       => qw(editor log EDITOR);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 
 sub execute {

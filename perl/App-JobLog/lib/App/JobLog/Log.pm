@@ -11,7 +11,7 @@ use Class::Autouse qw(App::JobLog::Log::Event);
 
 # some stuff useful for searching log
 use constant WINDOW   => 30;
-use constant LOW_LIM  => 1 / 7;
+use constant LOW_LIM  => 1 / 10;
 use constant HIGH_LIM => 1 - LOW_LIM;
 
 # some indices
@@ -70,7 +70,7 @@ sub validate {
     while ( my $line = $self->[IO][$i] ) {
         my $ll = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_malformed ) {
-            carp "line $i -- '$line' -- is malformed; commenting out";
+            print STDERR "line $i -- '$line' -- is malformed; commenting out\n";
             splice @{ $self->[IO] }, $i, 0,
               App::JobLog::Log::Line->new( comment => 'ERROR; malformed line' );
             $self->[IO][ ++$i ] = $ll->comment_out;
@@ -79,16 +79,16 @@ sub validate {
             if ($previous_event) {
                 if ( DateTime->compare( $previous_event->time, $ll->time ) > 0 )
                 {
-                    carp
-"line $i -- '$line' -- is out of order relative to the last event; commenting out";
+                    print STDERR
+"line $i -- '$line' -- is out of order relative to the last event; commenting out\n";
                     splice @{ $self->[IO] }, $i, 0,
                       App::JobLog::Log::Line->new(
                         comment => 'ERROR; dates out of order' );
                     $self->[IO][ ++$i ] = $ll->comment_out;
                 }
                 elsif ( $previous_event->is_end && $ll->is_end ) {
-                    carp
-"line $i -- '$line' -- specifies the end of a task not yet begun; commenting out";
+                    print STDERR
+"line $i -- '$line' -- specifies the end of a task not yet begun; commenting out\n";
                     splice @{ $self->[IO] }, $i, 0,
                       App::JobLog::Log::Line->new( comment =>
                           'ERROR; task end without corresponding beginning' );
@@ -99,8 +99,8 @@ sub validate {
                 }
             }
             elsif ( $ll->is_end ) {
-                carp
-"line $i -- '$line' -- specifies the end of a task not yet begun; commenting out";
+                print STDERR
+"line $i -- '$line' -- specifies the end of a task not yet begun; commenting out\n";
                 splice @{ $self->[IO] }, $i, 0,
                   App::JobLog::Log::Line->new( comment =>
                       'ERROR; task end without corresponding beginning' );
@@ -242,10 +242,17 @@ sub find_events {
 
     # otherwise, do binary search for first event in range
     my ( $et, $eb ) = ( $start_event->start, $end_event->start );
+    my $previous_index;
   OUTER: while (1) {
         return $self->_scan_from( $top, $start, $end )
           if $bottom - $top + 1 <= WINDOW / 2;
         my $index = _estimate_index( $top, $bottom, $et, $eb, $start );
+        if ( defined $previous_index && $previous_index == $index ) {
+
+            # search was too clever by half; we've entered an infinite loop
+            return $self->_scan_from( $top, $start, $end );
+        }
+        $previous_index = $index;
         my $event;
         for my $i ( $index .. $#$io ) {
             my $line = $io->[$i];

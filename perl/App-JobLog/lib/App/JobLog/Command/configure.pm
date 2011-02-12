@@ -1,8 +1,7 @@
 package App::JobLog::Command::configure;
 use App::JobLog -command;
 use Modern::Perl;
-use App::JobLog::Constants qw(PERIOD PRECISION HOURS);
-use Class::Autouse qw{App::JobLog::Config};
+use App::JobLog::Config qw(PERIOD PRECISION HOURS);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
