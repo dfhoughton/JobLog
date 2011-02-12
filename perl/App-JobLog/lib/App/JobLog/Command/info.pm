@@ -7,12 +7,14 @@ use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'Pod::Usage'                => qw(pod2usage);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 use autouse 'Carp'                      => qw(carp);
-use autouse 'App::JobLog::Config' => qw(log EDITOR DIRECTORY);
+use autouse 'App::JobLog::Config'       => qw(log EDITOR DIRECTORY);
 use Class::Autouse qw(Config File::Spec);
 
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
 
 use Modern::Perl;
+
+# using quasi-pod -- == instead of = -- to make this work with Pod::Weaver
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
@@ -43,10 +45,12 @@ sub execute {
         default { push @options, -noperldoc => 1 }
     }
 
-    print $fh <<END;
+    $text = <<END;
 $text
-=cut
+==cut
 END
+    $text =~ s/^==(\w)/=$1/gm;
+    print $fh $text;
     $fh->close;
     pod2usage(@options);
 }
@@ -107,7 +111,7 @@ sub _prefixes {
 sub _header {
     my ( $self, $executable ) = (@_);
     return <<END;
-=head1 Job Log
+==head1 Job Log
 
 work log management
 
@@ -128,7 +132,7 @@ sub _basic_usage {
     my ( $self, $executable ) = (@_);
     return <<END;
     
-=head1 Usage
+==head1 Usage
 
 B<Job Log> keeps a log of events. If you begin a new task you type
 
@@ -202,27 +206,27 @@ sub _advanced_usage {
     my ( $self, $executable ) = (@_);
     return <<END;
     
-=head1 Environment Variables
+==head1 Environment Variables
 
 B<Job Log> may be configured in part by two environment variables:
 
-=over 8
+==over 8
 
-=item @{[DIRECTORY()]}
+==item @{[DIRECTORY()]}
 
 By default B<Job Log> keeps the log and all other files in a hidden directory called .joblog in your home
 directory. If @{[DIRECTORY()]} is set, however, it will keep this files here.
 
-=item @{[EDITOR()]}
+==item @{[EDITOR()]}
 
 To use B<Job Log>'s B<@{[App::JobLog::Command::edit->name]}> function you must specify a text editor. The
 @{[EDITOR()]} environment variable defines the editor you wish to use.
 
-=back
+==back
 
 All other configuration is done through the B<@{[App::JobLog::Command::configure->name]}> command.
 
-=head1 Date Grammar
+==head1 Date Grammar
 
 B<Job Log> goes to considerable trouble to interpret whatever time expressions you might throw at it.
 For example, it understands all of the following:
@@ -254,7 +258,7 @@ sub _footer {
     my ( $self, $executable ) = (@_);
     return <<END;
     
-=head1 License etc.
+==head1 License etc.
 
  Author        David Houghton
                dfhoughton at gmail dot com
