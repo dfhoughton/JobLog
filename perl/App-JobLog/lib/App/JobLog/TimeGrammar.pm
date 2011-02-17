@@ -34,8 +34,8 @@ use Modern::Perl;
 use DateTime;
 use Carp 'croak';
 require Exporter;
-our @ISA       = qw(Exporter);
-our @EXPORT_OK = qw(parse is_fixed);
+our @ISA    = qw(Exporter);
+our @EXPORT = qw(parse);
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing
@@ -61,7 +61,9 @@ but otherwise you should leave it alone.
 
 =cut
 
-sub present_date :lvalue { $today }
+sub present_date : lvalue {
+    $today;
+}
 
 # cache local time zone, again for efficiency and to facilitate
 # testing
@@ -79,7 +81,9 @@ use C<present_date> to set the present moment to C<undef>).
 
 =cut
 
-sub time_zone :lvalue { $tz }
+sub time_zone : lvalue {
+    $tz;
+}
 
 # static maps for translating month and day names to numbers
 my ( %month_abbr, %day_abbr );
