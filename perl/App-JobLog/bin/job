@@ -1,7 +1,34 @@
 #!/usr/bin/perl
 # PODNAME: job
-# ABSTRACT: the tiny script that sets it all going
+
+# ABSTRACT: log what you do
+
 eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+    if 0; # (improbably) not running under some shell
 use App::JobLog;
 App::JobLog->run;
+
+=head1 SYNOPSIS
+
+  job add Doing something important.
+  job add -t goof Doing something less important.
+  job done
+  ...
+  job resume
+  job done
+  job a Gathering primroses.
+
+=head1 DESCRIPTION
+
+This script facilitates keeping track of your time by entering
+when you start and finish things into a plain text log. You can
+categorize activities with tags. You can produce digests of your
+activities in particular periods. You can keep track of your
+vacation and hours off. You can determine when you've put in your
+8 hours for the day or 40 hours for the week.
+
+For more information try the C<help> or C<info> commands. E.g.,
+
+  job help
+
+=cut

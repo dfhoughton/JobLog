@@ -41,7 +41,6 @@ subtest 'empty log' => sub {
         undef,
         'added event to empty log'
     );
-    $log->close;
     $log = App::JobLog::Log->new;
     my $events = $log->find_events( $date, $end );
     ok( @$events == 1, 'event preserved after closing log' );

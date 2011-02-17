@@ -267,4 +267,55 @@ sub _footer {
 END
 }
 
+# the complete bnf diagram for time grammar
+sub _bnf {
+return <<END;
+              <expression> = s* <span> s*
+                    <span> = <date> [ <span_divider> <date> ]
+ 
+                      <at> = "at" | "@"
+                 <at_time> = [ s* [ <at> s* ] <time> ]
+              <at_time_on> = [ <at> s ] <time> s "on" s
+               <beginning> = "beg" [ "in" [ "ning" ] ]
+                    <date> = <numeric> | <verbal>
+               <day_first> = d{1,2} s <month>
+                 <divider> = "-" | "/" | "."
+                 <dm_full> = d{1,2} s <month> , s d{4}
+                     <dom> = d{1,2}
+                    <full> = <at_time_on> <full_no_time> | <full_no_time> <at_time>
+              <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
+            <full_no_time> = <dm_full> | <md_full>
+            <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
+                     <iso> = d{4} ( <divider> ) d{1,2} \\1 d{1,2}
+                      <md> = d{1,2} <divider> d{1,2}
+                 <md_full> = <month> s d{1,2} , s d{4}
+          <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
+  <modifiable_day_no_time> = [ <modifier> s ] <weekday>
+        <modifiable_month> = [ <month_modifier> s ] <month>
+         <modified_period> = <period_modifier> s ( "week" | "month" | <pay> )
+                <modifier> = "last" | "this" 
+                   <month> = <full_month> | <short_month> 
+               <month_day> = <at_time_on> <month_day_no_time> | <month_day_no_time> <at_time>
+       <month_day_no_time> = <month_first> | <day_first>
+             <month_first> = <month> s d{1,2}
+          <month_modifier> = <modifier> | <termini> [ s "of" ]
+            <named_period> = <modifiable_day> | <modifiable_month> | <modified_period> 
+                 <numeric> = <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
+         <numeric_no_time> = <us> | <iso> | <md> | <dom>
+                     <pay> = "pay" | "pp" | "pay" s* "period"
+         <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
+         <relative_period> = <at_time_on> <relative_period_no_time> | <relative_period_no_time> <at_time>
+ <relative_period_no_time> = "yesterday" | "today"
+             <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
+           <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
+            <span_divider> = s* ( "-"+ | ( "through" | "thru" | "to" | "til" [ "l" ] | "until" ) ) s*
+                 <termini> = [ "the" s ] ( <beginning> | "end" )
+                    <time> = d{1,2} [ : d{2} [ : d{2} ] ] [ s* <time_suffix> ]
+             <time_suffix> = ( "a" | "p" ) ( "m" | ".m." )
+                      <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
+                  <verbal> = <named_period> | <relative_period> | <month_day> | <full>  
+                 <weekday> = <full_weekday> | <short_weekday>
+END
+}
+
 1;

@@ -191,6 +191,127 @@ sub find_events {
 
     # matters are simple if what we want is at the start of the log
     if ($c1) {
+        my ( $line, $previous, @events );
+        while ( my $line = $io->getline ) {
+            chomp $line;
+            my $ll = App::JobLog::Log::Line->parse($line);
+            if ( $ll->is_event ) {
+                if ( DateTime->compare( $ll->time, $end ) >= 0 ) {
+                    $previous->end = $end if $previous->is_open;
+                    last;
+                }
+                if ( $previous && $previous->is_open ) {
+                    $previous->end = $ll->time;
+                }
+                if ( $ll->is_beginning ) {
+                    $previous = App::JobLog::Log::Event->new($ll);
+                    push @events, $previous;
+                }
+            }
+        }
+        return \@events;
+    }
+
+    # matters are likewise simple if what we want is at the end of the log
+    if ($c2) {
+
+        # must restart io
+        $io = $self->[IO] = io log;
+        $io->backwards;
+        my ( $line, $previous, @events );
+        while ( my $line = $io->getline ) {
+            chomp $line;
+            my $ll = App::JobLog::Log::Line->parse($line);
+            if ( $ll->is_event ) {
+                my $e;
+                if ( $ll->is_beginning ) {
+                    $e = App::JobLog::Log::Event->new($ll);
+                    $e->end = $previous->time if $previous;
+                    unshift @events, $e;
+                }
+                if ( DateTime->compare( $ll->time, $start ) <= 0 ) {
+                    $e->start = $start if $e;
+                    last;
+                }
+                $previous = $ll;
+            }
+        }
+        return \@events;
+    }
+
+    # otherwise, do binary search for first event in range
+    my ( $et, $eb ) = ( $start_event->start, $end_event->start );
+    my $previous_index;
+  OUTER: while (1) {
+        return $self->_scan_from( $top, $start, $end )
+          if $bottom - $top + 1 <= WINDOW / 2;
+        my $index = _estimate_index( $top, $bottom, $et, $eb, $start );
+        if ( defined $previous_index && $previous_index == $index ) {
+
+            # search was too clever by half; we've entered an infinite loop
+            return $self->_scan_from( $top, $start, $end );
+        }
+        $previous_index = $index;
+        my $event;
+        for my $i ( $index .. $#$io ) {
+            my $line = $io->[$i];
+            my $ll   = App::JobLog::Log::Line->parse($line);
+            if ( $ll->is_beginning ) {
+                given ( DateTime->compare( $ll->time, $start ) ) {
+                    when ( $_ < 0 ) {
+                        $top = $i;
+                        $et  = $ll->time;
+                        next OUTER;
+                    }
+                    when ( $_ > 0 ) {
+                        $bottom = $i;
+                        $eb     = $ll->time;
+                        next OUTER;
+                    }
+                    default {
+
+                        # found beginning!!
+                        # this should happen essentially never
+                        return $self->_scan_from( $i, $start, $end );
+                    }
+                };
+            }
+        }
+    }
+}
+
+# find moment immediately before moment specified
+# returns event and index
+sub _find_previous {
+    my ( $self, $start, $end ) = @_;
+    my $io = $self->[IO];
+    my ( $end_event, $bottom, $start_event, $top ) =
+      ( $self->last_event, $self->first_event );
+
+    # if the log is empty, return empty list
+    return () unless $start_event && $end_event;
+
+    # if the log concerns events before the time in question, return empty list
+    return ()
+      unless $end_event->is_open
+          || DateTime->compare( $start, $end_event->end ) < 0;
+
+    # if it concerns events after; return last event and index
+    return ( $end_event, $bottom )
+      if DateTime->compare( $start_event->start, $end ) > 0;
+
+    # narrow time range to that in log
+    my $c1 = DateTime->compare( $start, $start_event->start ) <= 0;
+    my $c2 =
+      $end_event->is_open
+      ? DateTime->compare( $end, $end_event->start ) >= 0
+      : DateTime->compare( $end, $end_event->end ) >= 0;
+    return $self->all_events if $c1 && $c2;
+    $start = $start_event->start if $c1;
+    $end   = $end_event->end     if $c2;
+
+    # matters are simple if what we want is at the start of the log
+    if ($c1) {
 
         # not sure whether this is necessary
         $io = $self->[IO] = io log;
@@ -400,6 +521,7 @@ sub append_event {
         }
     }
     $io->append($current)->append("\n");
+    $io->close;    # flush contents
     return $duration;
 }
 
