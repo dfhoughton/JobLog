@@ -714,7 +714,7 @@ sub before_now {
     ( $h1, $h2 ) =
       ( decontextualized_date( $h1, 1 ), decontextualized_date($h2) );
     $h2 = adjust_weekday( $h2, $now ) unless ref $h2 eq 'DateTime';
-    $h1 = adjust_weekday( $h1, $h2 )  unless ref $h1 eq 'DateTime';
+    $h1 = adjust_weekday( $h1, $now ) unless ref $h1 eq 'DateTime';
     while ( DateTime->compare( $now, $h2 ) < 0 ) {
         $h2->subtract( $u2 => 1 );
     }
@@ -770,7 +770,7 @@ sub is_fixed {
 # fetch cached current moment
 sub today {
     $today //= DateTime->today( time_zone => tz() );
-    return $today;
+    return $today->clone;
 }
 
 # fetch the current time zone
