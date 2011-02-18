@@ -33,6 +33,7 @@ produces
 use Modern::Perl;
 use DateTime;
 use Carp 'croak';
+use autouse 'App::JobLog::Config' => qw(log DIRECTORY);
 require Exporter;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(parse);
@@ -103,7 +104,7 @@ my $re = qr{
 
      (?<at> at | @ )
 
-     (?<at_time> (?: \s*+ (?:(?&at) \s*+)? (?&time))? )
+     (?<at_time> (?: (?: \s++ | \s*+ (?&at) \s*+ ) (?&time))? )
 
      (?<at_time_on> (?:(?&at) \s++)? (?&time) \s++ on \s++ )
 
@@ -216,7 +217,7 @@ my $re = qr{
 
      (?<pay> pay | pp | pay \s*+ period )
 
-     (?<relative_period> (?&at_time_on) (?&relative_period_no_time) | (?&relative_period_no_time) (?&at_time))
+     (?<relative_period> (?:(?&at) \s*+)? (?&time) \s++ (?&relative_period_no_time) | (?&relative_period_no_time) (?&at_time))
 
      (?<relative_period_no_time> ( yesterday | today ) (?{ $buffer{day} = $^N }))
 
@@ -252,7 +253,7 @@ my $re = qr{
       (\d{1,2}) (?{ $b1 = $^N })
       \s++
       ((?&month)) (?{ $b2 = $^N })
-      , \s++
+      ,? \s++
       (\d{4})
       (?{
        $buffer{year}  = $^N;
@@ -801,7 +802,8 @@ them is minimized.
 If the time expression provides no time of day, such as 8:00, it is assumed that the first moment
 intended is the first second of the first day and the last moment is the last second of the second
 day. If no second date is provided the endpoint of the interval will be the last moment of the single
-date specified.
+date specified. If a larger time period such as week, month, or year is specified, e.g., 'last week', the
+first moment is the first second in the period and the last moment is the last second.
 
 If you wish to parse a single date, not an interval, you can ignore the second date, though you should
 check the third value returned by C<parse>, whether an interval was parsed.
@@ -819,13 +821,13 @@ to facilitate finding them.
                     <span> = <date> [ <span_divider> <date> ]
  
                       <at> = "at" | "@"
-                 <at_time> = [ s* [ <at> s* ] <time> ]
+                 <at_time> = [ ( s | s* <at> s* ) <time> ]
               <at_time_on> = [ <at> s ] <time> s "on" s
                <beginning> = "beg" [ "in" [ "ning" ] ]
                     <date> = <numeric> | <verbal>
                <day_first> = d{1,2} s <month>
                  <divider> = "-" | "/" | "."
-                 <dm_full> = d{1,2} s <month> , s d{4}
+                 <dm_full> = d{1,2} s <month> [ "," ] s d{4}
                      <dom> = d{1,2}
                     <full> = <at_time_on> <full_no_time> | <full_no_time> <at_time>
               <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
@@ -833,7 +835,7 @@ to facilitate finding them.
             <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
                      <iso> = d{4} ( <divider> ) d{1,2} \1 d{1,2}
                       <md> = d{1,2} <divider> d{1,2}
-                 <md_full> = <month> s d{1,2} , s d{4}
+                 <md_full> = <month> s d{1,2} "," s d{4}
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
   <modifiable_day_no_time> = [ <modifier> s ] <weekday>
         <modifiable_month> = [ <month_modifier> s ] <month>
@@ -849,7 +851,7 @@ to facilitate finding them.
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
-         <relative_period> = <at_time_on> <relative_period_no_time> | <relative_period_no_time> <at_time>
+         <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time>
  <relative_period_no_time> = "yesterday" | "today"
              <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
            <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
