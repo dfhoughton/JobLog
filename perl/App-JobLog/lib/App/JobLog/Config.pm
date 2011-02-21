@@ -22,11 +22,12 @@ our @EXPORT_OK = qw(
   precision
   readme
   start_pay_period
+  sunday_begins_week
   vacation
-  EDITOR 
-  DIRECTORY 
-  PRECISION 
-  PERIOD 
+  EDITOR
+  DIRECTORY
+  PRECISION
+  PERIOD
   HOURS
 );
 use Modern::Perl;
@@ -39,6 +40,10 @@ use constant PERIOD => 14;
 
 # hours worked in day
 use constant HOURS => 8;
+
+# whether Sunday is the first day of the week
+# otherwise it's Monday, as in DateTime
+use constant SUNDAY_BEGINS_WEEK => 1;
 
 # environment variables
 
@@ -144,17 +149,22 @@ sub _config {
 
 sub precision {
     my ($value) = @_;
-    return _param( 'precision', PRECISION(), $value );
+    return _param( 'precision', PRECISION, $value );
 }
 
 sub day_length {
     my ($value) = @_;
-    return _param( 'day-length', HOURS(), $value );
+    return _param( 'day-length', HOURS, $value );
 }
 
 sub pay_period_length {
     my ($value) = @_;
-    return _param( 'pay-period-length', PERIOD(), $value );
+    return _param( 'pay-period-length', PERIOD, $value );
+}
+
+sub sunday_begins_week {
+    my ($value) = @_;
+    return _param( 'sunday-begins-week', SUNDAY_BEGINS_WEEK, $value );
 }
 
 # returns DateTime representing start date of pay period or null if none is defined
@@ -181,7 +191,9 @@ sub _param {
     my $config = _config();
     my $value  = $config->{all}->{$param};
     if ( defined $new_value ) {
-        return $new_value if $new_value eq $default && !defined $value;
+        if ( defined $default && $new_value eq $default && !defined $value ) {
+            return $new_value;
+        }
         return $value if defined $value && $value eq $new_value;
         $config_changed = 1;
         return $config->{all}->{$param} = $new_value;

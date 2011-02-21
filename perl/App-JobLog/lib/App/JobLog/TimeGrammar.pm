@@ -33,7 +33,13 @@ produces
 use Modern::Perl;
 use DateTime;
 use Carp 'croak';
-use autouse 'App::JobLog::Config' => qw(log DIRECTORY);
+use autouse 'App::JobLog::Config' => qw(
+  log
+  sunday_begins_week
+  pay_period_length
+  start_pay_period
+  DIRECTORY
+);
 require Exporter;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(parse);
@@ -109,7 +115,7 @@ my $re = qr{
      (?<at_time_on> (?:(?&at) \s++)? (?&time) \s++ on \s++ )
 
      (?<date>
-      (?{ ($b1, $b2) = (); $time_buffer = undef })
+      (?{ (%buffer, $b1, $b2, $time_buffer) = ()})
       (?: (?&numeric) | (?&verbal) )
       (?{ $buffer{time} = $time_buffer if $time_buffer })
      )
@@ -131,11 +137,19 @@ my $re = qr{
 
      (?<time_suffix> [ap] (?:m|\.m\.))
 
-     (?<numeric> (?: (?&at_time_on) (?&numeric_no_time) | (?&numeric_no_time) (?&at_time))
+     (?<numeric> 
+      (?:
+       (?&year)
+       |
+       (?&at_time_on) (?&numeric_no_time)
+       |
+       (?&numeric_no_time) (?&at_time))
       (?{ $buffer{type} = 'numeric' })
      )
+     
+     (?<year> (?{ %buffer = () }) (\d{4}) (?{ $buffer{year} = $^N }) ) 
 
-     (?<numeric_no_time> (?&us) | (?&iso) | (?&md) | (?&dom) )
+     (?<numeric_no_time> (?{ %buffer = () }) (?&us) | (?&iso) | (?&md) | (?&dom) )
 
      (?<us>
       (\d{1,2}) (?{ $b1 = $^N })
@@ -183,7 +197,7 @@ my $re = qr{
       (?{ $buffer{type} = 'verbal' })
      )
 
-     (?<named_period> (?&modifiable_day) | (?&modifiable_month) | (?&modified_period) )
+     (?<named_period> (?&modifiable_day) | (?&modifiable_month) | (?&modifiable_period) )
 
      (?<modifiable_day> (?&at_time_on) (?&modifiable_day_no_time) | (?&modifiable_day_no_time) (?&at_time))
 
@@ -205,12 +219,12 @@ my $re = qr{
       })
      )
 
-     (?<modified_period>
-       ((?&period_modifier)) (?{ $b1 = $^N })
-       \s++
-       ( week | month | (?&pay) )
+     (?<modifiable_period>
+       (?{ $b1 = undef })
+       (?:((?&period_modifier)) \s*+  (?{ $b1 = $^N }))?
+       ((?&period))
        (?{
-	$buffer{modifier} = $b1;
+	$buffer{modifier} = $b1 if $b1;
 	$buffer{period}   = $^N;
        })
      )
@@ -290,6 +304,8 @@ my $re = qr{
      (?<modifier> last | this )
 
      (?<period_modifier> (?&modifier) | (?&termini) (?: \s++ of (?: \s++ the )? )? )
+     
+     (?<period> week | month | year | (?&pay) )
 
      (?<month_modifier> (?&modifier) | (?&termini) (?: \s++ of )? )
 
@@ -342,6 +358,7 @@ sub parse {
             %t2    = ( hour => 23, minute => 59, second => 59 );
             $count = 1;
         }
+        infer_modifier( $h1, $h2 );
         my ( $s1, $s2 ) = ( $t1{suffix}, $t2{suffix} );
         delete $t1{suffix}, delete $t2{suffix};
         if ( is_fixed($h1) ) {
@@ -376,6 +393,14 @@ sub parse {
         return $h1, $h2, $count == 2;
     }
     croak "cannot parse \"$phrase\" as a date expression";
+}
+
+# if the sole expression is a unit identifier, infer the modifier 'this'
+sub infer_modifier {
+    my ( $h1, $h2 ) = @_;
+    if ( keys %$h1 == 2 && keys %$h2 == 2 && $h1->{period} && $h2->{period} ) {
+        $h1->{modifier} = $h2->{modifier} = 'this';
+    }
 }
 
 # pulls time expression -- 11:00 am, e.g. -- out of hash and converts it
@@ -433,11 +458,11 @@ sub fixed_end {
         $h1 = fix_date( $h1, 1 );
     }
     else {
-        my $unit = time_unit($h1);
+        my ( $unit, $amt ) = time_unit($h1);
         $h1 = decontextualized_date( $h1, 1 );
         if ( ref $h1 eq 'DateTime' ) {
             while ( DateTime->compare( $h1, $h2 ) > 0 ) {
-                $h1->subtract( $unit => 1 );
+                $h1->subtract( $unit => $amt );
             }
         }
         else {
@@ -471,15 +496,15 @@ sub time_unit {
     else {
         if ( my $period = $h->{period} ) {
             given ($period) {
-                when ('mon') { return 'months' }
-                when ('wee') { return 'weeks' }
-                when ('pay') { croak 'payperiods not yet implemented' }
+                when ('mon') { return 'months' => 1 }
+                when ('wee') { return 'weeks'  => 1 }
+                when ('pay') { return 'days'   => pay_period_length() }
             }
         }
         else {
-            return 'years' if exists $h->{month};
-            return 'weeks' if exists $h->{day};
-            return 'months';
+            return 'years' => 1 if exists $h->{month};
+            return 'weeks' => 1 if exists $h->{day};
+            return 'months' => 1;
         }
     }
 }
@@ -492,12 +517,11 @@ sub fixed_start {
         $h2 = fix_date($h2);
     }
     else {
-        my $unit = time_unit($h2);
+        my ( $unit, $amt ) = time_unit($h2);
         $h2 = decontextualized_date($h2);
         $h2 = adjust_weekday( $h2, $h1 ) unless ref $h2 eq 'DateTime';
-        while ( DateTime->compare( $h1, $h2 ) > 0 ) {
-            $h2->add( $unit => 1 );
-        }
+        $h2->subtract( $unit => $amt ) while $h2 > $h1;
+        $h2->add( $unit => $amt );
     }
     return ( $h1, $h2 );
 }
@@ -521,9 +545,19 @@ sub decontextualized_date {
             }
             when ('wee') {
                 $date->truncate( to => 'week' );
+                $date->subtract( days => 1 ) if sunday_begins_week;
                 $date->add( weeks => 1 ) unless $is_start;
             }
-            when ('pay') { croak 'pay period translation not yet implemented' }
+            when ('pay') {
+                my $days =
+                  $date->subtract_datetime(start_pay_period)->in_units('days');
+                $days %= pay_period_length;
+                $date->subtract( days => $days );
+                $date->add( days => pay_period_length ) unless $is_start;
+            }
+            default {
+                croak 'DEBUG'
+            }
         }
         $date->subtract( days => 1 ) unless $is_start;
         return $date;
@@ -611,9 +645,22 @@ sub fix_date {
                     }
                     when ('wee') {
                         $date->truncate( to => 'week' );
+                        $date->subtract( days => 1 ) if sunday_begins_week();
                         $date->add( weeks => 1 ) unless $is_start;
                     }
-                    when ('pay') { croak 'pay period not yet handled' }
+                    when ('yea') {
+                        $date->truncate( to => 'year' );
+                        $date->add( years => 1 ) unless $is_start;
+                    }
+                    when ('pay') {
+                        my $days =
+                          $date->subtract_datetime(start_pay_period)
+                          ->in_units('days');
+                        $days %= pay_period_length;
+                        $date->subtract( days => $days );
+                        $date->add( days => pay_period_length )
+                          unless $is_start;
+                    }
                 }
                 $date->subtract( days => 1 ) unless $is_start;
             }
@@ -630,6 +677,7 @@ sub fix_date {
                     }
                     when ('wee') {
                         $date->truncate( to => 'week' );
+                        $date->subtract( days => 1 ) if sunday_begins_week();
                         if ($is_start) {
                             $date->subtract( weeks => 1 );
                         }
@@ -637,7 +685,28 @@ sub fix_date {
                             $date->subtract( days => 1 );
                         }
                     }
-                    when ('pay') { croak 'pay period not yet handled' }
+                    when ('yea') {
+                        $date->truncate( to => 'year' );
+                        if ($is_start) {
+                            $date->subtract( years => 1 );
+                        }
+                        else {
+                            $date->subtract( days => 1 );
+                        }
+                    }
+                    when ('pay') {
+                        my $days =
+                          $date->subtract_datetime(start_pay_period)
+                          ->in_units('days');
+                        $days %= pay_period_length;
+                        $date->subtract( days => $days );
+                        if ($is_start) {
+                            $date->subtract( days => pay_period_length );
+                        }
+                        else {
+                            $date->subtract( days => 1 );
+                        }
+                    }
                 }
             }
             return $date;
@@ -710,16 +779,16 @@ sub init_hash {
 sub before_now {
     my ( $h1, $h2 ) = @_;
     my $now = today();
-    my ( $u1, $u2 ) = ( time_unit($h1), time_unit($h2) );
+    my ( $u1, $amt1, $u2, $amt2 ) = ( time_unit($h1), time_unit($h2) );
     ( $h1, $h2 ) =
       ( decontextualized_date( $h1, 1 ), decontextualized_date($h2) );
     $h2 = adjust_weekday( $h2, $now ) unless ref $h2 eq 'DateTime';
     $h1 = adjust_weekday( $h1, $now ) unless ref $h1 eq 'DateTime';
     while ( DateTime->compare( $now, $h2 ) < 0 ) {
-        $h2->subtract( $u2 => 1 );
+        $h2->subtract( $u2 => $amt2 );
     }
     while ( DateTime->compare( $h2, $h1 ) < 0 ) {
-        $h1->subtract( $u1 => 1 );
+        $h1->subtract( $u1 => $amt1 );
     }
     return $h1, $h2;
 }
@@ -839,17 +908,18 @@ to facilitate finding them.
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
   <modifiable_day_no_time> = [ <modifier> s ] <weekday>
         <modifiable_month> = [ <month_modifier> s ] <month>
-         <modified_period> = <period_modifier> s ( "week" | "month" | <pay> )
+       <modifiable_period> = [ <period_modifier> s ] <period>
                 <modifier> = "last" | "this" 
                    <month> = <full_month> | <short_month> 
                <month_day> = <at_time_on> <month_day_no_time> | <month_day_no_time> <at_time>
        <month_day_no_time> = <month_first> | <day_first>
              <month_first> = <month> s d{1,2}
           <month_modifier> = <modifier> | <termini> [ s "of" ]
-            <named_period> = <modifiable_day> | <modifiable_month> | <modified_period> 
-                 <numeric> = <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
+            <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period> 
+                 <numeric> = <year> | <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
+                  <period> = "week" | "month" | "year" | <pay>
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
          <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time>
  <relative_period_no_time> = "yesterday" | "today"
@@ -862,6 +932,7 @@ to facilitate finding them.
                       <us> = d{1,2} ( <divider> ) d{1,2} \1 d{4}
                   <verbal> = <named_period> | <relative_period> | <month_day> | <full>  
                  <weekday> = <full_weekday> | <short_weekday>
+                    <year> = d{4}
 
 In general C<App::JobLog::TimeGrammar> will understand most time expressions you are likely to want to use.
 

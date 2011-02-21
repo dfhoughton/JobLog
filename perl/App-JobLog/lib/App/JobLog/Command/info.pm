@@ -292,17 +292,18 @@ return <<END;
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
   <modifiable_day_no_time> = [ <modifier> s ] <weekday>
         <modifiable_month> = [ <month_modifier> s ] <month>
-         <modified_period> = <period_modifier> s ( "week" | "month" | <pay> )
+       <modifiable_period> = [ <period_modifier> s ] <period>
                 <modifier> = "last" | "this" 
                    <month> = <full_month> | <short_month> 
                <month_day> = <at_time_on> <month_day_no_time> | <month_day_no_time> <at_time>
        <month_day_no_time> = <month_first> | <day_first>
              <month_first> = <month> s d{1,2}
           <month_modifier> = <modifier> | <termini> [ s "of" ]
-            <named_period> = <modifiable_day> | <modifiable_month> | <modified_period> 
-                 <numeric> = <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
+            <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period> 
+                 <numeric> = <year> | <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
+                  <period> = "week" | "month" | "year" | <pay>
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
          <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time>
  <relative_period_no_time> = "yesterday" | "today"
@@ -315,6 +316,7 @@ return <<END;
                       <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
                   <verbal> = <named_period> | <relative_period> | <month_day> | <full>  
                  <weekday> = <full_weekday> | <short_weekday>
+                    <year> = d{4}
 END
 }
 
