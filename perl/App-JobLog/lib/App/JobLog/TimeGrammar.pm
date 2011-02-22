@@ -803,6 +803,8 @@ sub normalize {
                 next if $value =~ /\d/;
                 $value = lc $value;
                 if ( $value =~ /^p/ ) {
+                    croak 'pay period not defined'
+                      unless defined start_pay_period;
                     $h->{$key} = 'pay';
                 }
                 else {

@@ -2,6 +2,16 @@ package App::JobLog::Log;
 
 # ABSTRACT: the code that lets us interact with the log
 
+=head1 DESCRIPTION
+
+C<App::JobLog::Log> uses an L<IO::All> object to extract information from the
+log file or add lines to it.
+
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
+
+=cut
+
 use Modern::Perl;
 use App::JobLog::Config qw(log init_file);
 use App::JobLog::Log::Line;
@@ -26,6 +36,15 @@ use constant LAST_INDEX  => 4;
 # timestamp format
 use constant TS => '%Y/%m/%d';
 
+=method new
+
+C<new> is the constructor, naturally. It touches the log file into existence
+if it does not yet exist, initializing the hidden job log directory in the
+process, which means creating the directory and the README file. It also opens
+an L<IO::All> object to read or modify the log with.
+
+=cut
+
 sub new {
 
     # touch log into existence
@@ -41,7 +60,13 @@ sub new {
     return $self;
 }
 
-# collects all events in log and returns reference to list
+=method all_events
+
+C<all_events> processes the log as a stream, extracting all events and 
+returning them as an array reference.
+
+=cut
+
 sub all_events {
     my ($self) = @_;
 
@@ -64,8 +89,14 @@ sub all_events {
     return \@events;
 }
 
-# makes sure log contains only valid lines, all events are in chronological order,
-# and every ending follows a beginning
+=method validate
+
+C<validate> makes sure the log contains only valid lines, all events are 
+in chronological order, and every ending follows a beginning. Invalid lines
+are commented out and a warning is emitted.
+
+=cut
+
 sub validate {
     my ($self) = @_;
     my ( $i, $previous_event ) = (0);
@@ -116,6 +147,13 @@ sub validate {
     }
 }
 
+=method first_event
+
+C<first_event> returns the first event in the log and the index
+of its line. Its return object is an L<App::JobLog::Log::Event>.
+
+=cut
+
 sub first_event {
     my ($self) = @_;
     return $self->[FIRST_EVENT], $self->[FIRST_INDEX] if $self->[FIRST_EVENT];
@@ -136,6 +174,13 @@ sub first_event {
     $self->[FIRST_EVENT] = $e;
     return $e, $self->[FIRST_INDEX];
 }
+
+=method last_event
+
+C<last_event> returns the last event in the log and the index
+of its line. Its return object is an L<App::JobLog::Log::Event>.
+
+=cut
 
 sub last_event {
     my ($self) = @_;
@@ -161,6 +206,15 @@ sub last_event {
     $self->[LAST_INDEX] = $i;
     return $e, $i;
 }
+
+=method find_events
+
+C<find_events> expects two L<DateTime> objects representing the
+termini of an interval. It returns an array reference containing
+the portion of all logged events falling within this interval. These
+portions are represented as L<App::JobLog::Log::Event> objects.
+
+=cut
 
 sub find_events {
     my ( $self, $start, $end ) = @_;
@@ -240,50 +294,21 @@ sub find_events {
     }
 
     # otherwise, do binary search for first event in range
-    my ( $et, $eb ) = ( $start_event->start, $end_event->start );
-    my $previous_index;
-  OUTER: while (1) {
-        return $self->_scan_from( $top, $start, $end )
-          if $bottom - $top + 1 <= WINDOW / 2;
-        my $index = _estimate_index( $top, $bottom, $et, $eb, $start );
-        if ( defined $previous_index && $previous_index == $index ) {
-
-            # search was too clever by half; we've entered an infinite loop
-            return $self->_scan_from( $top, $start, $end );
-        }
-        $previous_index = $index;
-        my $event;
-        for my $i ( $index .. $#$io ) {
-            my $line = $io->[$i];
-            my $ll   = App::JobLog::Log::Line->parse($line);
-            if ( $ll->is_beginning ) {
-                given ( DateTime->compare( $ll->time, $start ) ) {
-                    when ( $_ < 0 ) {
-                        $top = $i;
-                        $et  = $ll->time;
-                        next OUTER;
-                    }
-                    when ( $_ > 0 ) {
-                        $bottom = $i;
-                        $eb     = $ll->time;
-                        next OUTER;
-                    }
-                    default {
-
-                        # found beginning!!
-                        # this should happen essentially never
-                        return $self->_scan_from( $i, $start, $end );
-                    }
-                };
-            }
-        }
-    }
+    my ( undef, $i ) = $self->find_previous($start);
+    return $self->_scan_from( $i, $start, $end );
 }
 
-# find moment immediately before moment specified
-# returns event and index
-sub _find_previous {
-    my ( $self, $start, $end ) = @_;
+=method find_previous
+
+C<find_previous> looks for the logged event previous to a given
+moment, returning the L<App::JobLog::Log::Event> objects and the
+appropriate log line number, or the empty list if no such
+event exists. It expects a L<DateTime> object as its parameter.
+
+=cut
+
+sub find_previous {
+    my ( $self, $e ) = @_;
     my $io = $self->[IO];
     my ( $end_event, $bottom, $start_event, $top ) =
       ( $self->last_event, $self->first_event );
@@ -291,89 +316,26 @@ sub _find_previous {
     # if the log is empty, return empty list
     return () unless $start_event && $end_event;
 
-    # if the log concerns events before the time in question, return empty list
-    return ()
-      unless $end_event->is_open
-          || DateTime->compare( $start, $end_event->end ) < 0;
+# if the start time (improbably but fortuitously) happens to be what we're looking
+# for, return it
+    return ( $start_event, $top )
+      if DateTime->compare( $start_event->start, $e ) == 0;
 
-    # if it concerns events after; return last event and index
-    return ( $end_event, $bottom )
-      if DateTime->compare( $start_event->start, $end ) > 0;
-
-    # narrow time range to that in log
-    my $c1 = DateTime->compare( $start, $start_event->start ) <= 0;
-    my $c2 =
-      $end_event->is_open
-      ? DateTime->compare( $end, $end_event->start ) >= 0
-      : DateTime->compare( $end, $end_event->end ) >= 0;
-    return $self->all_events if $c1 && $c2;
-    $start = $start_event->start if $c1;
-    $end   = $end_event->end     if $c2;
-
-    # matters are simple if what we want is at the start of the log
-    if ($c1) {
-
-        # not sure whether this is necessary
-        $io = $self->[IO] = io log;
-        my ( $line, $previous, @events );
-        while ( my $line = $io->getline ) {
-            chomp $line;
-            my $ll = App::JobLog::Log::Line->parse($line);
-            if ( $ll->is_event ) {
-                if ( DateTime->compare( $ll->time, $end ) >= 0 ) {
-                    $previous->end = $end if $previous->is_open;
-                    last;
-                }
-                if ( $previous && $previous->is_open ) {
-                    $previous->end = $ll->time;
-                }
-                if ( $ll->is_beginning ) {
-                    $previous = App::JobLog::Log::Event->new($ll);
-                    push @events, $previous;
-                }
-            }
-        }
-        return \@events;
-    }
-
-    # matters are likewise simple if what we want is at the end of the log
-    if ($c2) {
-
-        # not sure whether this is necessary
-        $io = $self->[IO] = io log;
-        $io->backwards;
-        my ( $line, $previous, @events );
-        while ( my $line = $io->getline ) {
-            chomp $line;
-            my $ll = App::JobLog::Log::Line->parse($line);
-            if ( $ll->is_event ) {
-                my $e;
-                if ( $ll->is_beginning ) {
-                    $e = App::JobLog::Log::Event->new($ll);
-                    $e->end = $previous->time if $previous;
-                    unshift @events, $e;
-                }
-                if ( DateTime->compare( $ll->time, $start ) <= 0 ) {
-                    $e->start = $start if $e;
-                    last;
-                }
-                $previous = $ll;
-            }
-        }
-        return \@events;
-    }
+    # return the empty list if the event in question precede the first
+    # event in the log
+    return () unless $start_event->start < $e;
 
     # otherwise, do binary search for first event in range
     my ( $et, $eb ) = ( $start_event->start, $end_event->start );
     my $previous_index;
   OUTER: while (1) {
-        return $self->_scan_from( $top, $start, $end )
+        return $self->_scan_for_previous( $top, $e )
           if $bottom - $top + 1 <= WINDOW / 2;
-        my $index = _estimate_index( $top, $bottom, $et, $eb, $start );
+        my $index = _estimate_index( $top, $bottom, $et, $eb, $e );
         if ( defined $previous_index && $previous_index == $index ) {
 
             # search was too clever by half; we've entered an infinite loop
-            return $self->_scan_from( $top, $start, $end );
+            return $self->_scan_for_previous( $top, $e );
         }
         $previous_index = $index;
         my $event;
@@ -381,7 +343,7 @@ sub _find_previous {
             my $line = $io->[$i];
             my $ll   = App::JobLog::Log::Line->parse($line);
             if ( $ll->is_beginning ) {
-                given ( DateTime->compare( $ll->time, $start ) ) {
+                given ( DateTime->compare( $ll->time, $e ) ) {
                     when ( $_ < 0 ) {
                         $top = $i;
                         $et  = $ll->time;
@@ -396,7 +358,7 @@ sub _find_previous {
 
                         # found beginning!!
                         # this should happen essentially never
-                        return $self->_scan_from( $i, $start, $end );
+                        return $self->_scan_for_previous( $i, $e );
                     }
                 };
             }
@@ -440,6 +402,36 @@ sub _scan_from {
     return \@return;
 }
 
+# now that we're close to the section of the log we want, we
+# scan it sequentially
+sub _scan_for_previous {
+    my ( $self, $i, $e ) = @_;
+    my $io = $self->[IO];
+
+    # collect events
+    my ( $previous, $previous_index );
+    for my $index ( $i .. $#$io ) {
+        my $line = $io->[$index];
+        my $ll   = App::JobLog::Log::Line->parse($line);
+        if ( $ll->is_event ) {
+            if ($previous) {
+                $previous->end = $ll->time if $previous->is_open;
+                last if $ll->time > $e;
+            }
+            if ( $ll->is_beginning ) {
+                $previous       = App::JobLog::Log::Event->new($ll);
+                $previous_index = $i;
+            }
+            else {
+                $previous = undef;
+            }
+        }
+    }
+
+    # return only overlap
+    return $previous, $previous_index;
+}
+
 sub _estimate_index {
     my ( $top, $bottom, $et, $eb, $s ) = @_;
     my $delta = $bottom - $top + 1;
@@ -463,9 +455,14 @@ sub _estimate_index {
     return $top + $i;
 }
 
-# expects array of event properties
-# returns duration of previous event it it was open and
-# has been running for more than a day
+=method append_event
+
+C<append_event> expects an array of event properties. It constructs an event
+object and appends its stringification to the log, returning a L<DateTime::Duration>
+object if the previous event was left open and spanned more than one day.
+
+=cut
+
 sub append_event {
     my ( $self, @args ) = @_;
     my $current = @args == 1 ? $args[0] : App::JobLog::Log::Line->new(@args);
@@ -525,6 +522,8 @@ sub append_event {
     return $duration;
 }
 
+# a test to determine whether two DateTime objects
+# represent different days
 sub _different_day {
     my ( $d1, $d2 ) = @_;
     return !( $d1->day == $d2->day
@@ -532,22 +531,40 @@ sub _different_day {
         && $d1->year == $d2->year );
 }
 
-# force all changes to be written to log
+=method close
+
+C<close> closes the L<IO::All> object, if it exists and is open, forcing
+all content to be written to the log.
+
+=cut
+
 sub close {
     my ($self) = @_;
     my $io = $self->[IO];
     $io->close if $io && $io->is_open;
 }
 
-1;
+=method insert
 
-__END__
-
-=pod
-
-=head1 DESCRIPTION
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
+C<insert> takes an insertion index and a list of L<App::JobLog::Log::Line> objects
+and inserts the latter into the log at the index preceded by a comment explaining
+that these lines have been inserted.
 
 =cut
+
+sub insert {
+    my ( $self, $index, @lines ) = @_;
+
+    # silently return unless some content to insert has been provided
+    return unless @lines;
+    my $comment =
+      App::JobLog::Log::LogLine->new( comment => 'the following '
+          . ( @lines == 1 ? ''  : scalar(@lines) . ' ' ) . 'line'
+          . ( @lines == 1 ? ''  : 's' ) . ' ha'
+          . ( @lines == 1 ? 's' : 've' )
+          . ' been inserted by '
+          . __PACKAGE__ );
+    splice @{ $self->[IO] }, $i, 0, $comment, @lines;
+}
+
+1;
