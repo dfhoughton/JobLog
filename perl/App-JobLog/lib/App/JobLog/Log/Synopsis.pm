@@ -1,4 +1,4 @@
-package App::JobClock::Log::Overview;
+package App::JobClock::Log::Synopsis;
 
 # ABSTRACT: consolidates App::JobClock::Log::Event objects for display
 
@@ -7,7 +7,7 @@ use Modern::Perl;
 require 'Exporter';
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(
-  overview
+  synopsis
   MERGE_ALL
   MERGE_ADJACENT
   MERGE_ADJACENT_SAME_TAGS
@@ -15,8 +15,6 @@ our @EXPORT = qw(
   MERGE_SAME_DAY_SAME_TAGS
   NO_MERGE
 );
-use App::JobLog::Config qw(columns);
-use Text::Wrap;
 
 use constant MERGE_ALL      => 1;
 use constant MERGE_ADJACENT => 2;
@@ -28,28 +26,25 @@ use constant MERGE_SAME_DAY           => 5;
 use constant MERGE_SAME_DAY_SAME_TAGS => 6;
 use constant NO_MERGE                 => 0;
 
-# given a format and events prints out overview
-sub overview {
+# given a format and events prints out synopsis
+sub synopsis {
     my ( $events, $merge_level, $test ) = @_;
     $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
     $test ||= sub { 1 };
     my @items = collect( $events, $merge_level, $test );
-
-    # TODO figure out column widths
-    # generate format
-    # print columns
+    return @items;
 }
 
 # takes in a bunch of App::JobClock::Log::Event objects
-# returns a bunch of App::JobClock::Log::Overview objects
+# returns a bunch of App::JobClock::Log::Synopsis objects
 sub collect {
     my ( $events, $merge_level, $test ) = @_;
     $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
     $test ||= sub { 1 };
     my $one_interval = $merge_level == MERGE_ADJACENT_SAME_TAGS
       || $merge_level == MERGE_ADJACENT;
-    my ( @overview, $previous );
-  OUTER: for my $e (@$events) {
+    my ( @Synopsis, $previous );
+  OUTER: for my $e ( map { $_->split_days } @$events ) {
         if ( $test->($e) ) {
             my $do_merge = 0;
             if ($previous) {
@@ -59,7 +54,7 @@ sub collect {
                         $do_merge = $previous->adjacent($e)
                     }
                     when (MERGE_SAME_TAGS) {
-                        for my $o (@overview) {
+                        for my $o (@Synopsis) {
                             if ( $o->same_tags($e) ) {
                                 $o->merge($e);
                                 next OUTER;
@@ -89,11 +84,11 @@ sub collect {
             }
             else {
                 $previous = _new( $e, $one_interval );
-                push @overview, $previous;
+                push @Synopsis, $previous;
             }
         }
     }
-    return @overview;
+    return @Synopsis;
 }
 
 # test to make sure this and the given event
@@ -116,7 +111,7 @@ sub same_day {
       && $d1->year == $d2->year;
 }
 
-# whether given event is immediately adjacent to last event in overview
+# whether given event is immediately adjacent to last event in synopsis
 sub adjacent {
     my ( $self, $event ) = @_;
     my $d1 = ( $self->events )[-1]->end;
@@ -124,23 +119,21 @@ sub adjacent {
     return DateTime->compare( $d1, $d2 ) == 0;
 }
 
-# add an event to the events overviewed
+# add an event to the events described
 sub merge { push @{ $_[0]{events} }, $_[1] }
 
-# returns an unformatted list of strings to display
-sub columns {
-    my ($self) = @_;
-    unless ( exists $self->{columns} ) {
+=method date
 
-        # TODO flesh this out
-    }
-    return @{ $self->{columns} };
-}
+L<DateTime> object representing first moment in first event in synopsis.
+
+=cut
+
+sub date { $_[0]->{events}[0]->start }
 
 =method description
 
 Returns unformatted string containing all unique descriptions
-in events overviewed, listing them in the order in which they
+in events described, listing them in the order in which they
 appeared and separating distinct events with semicolons when they
 end in a word character.
 
@@ -148,27 +141,30 @@ end in a word character.
 
 sub description {
     my ($self) = @_;
-    my ( %seen, @descriptions );
-    my $s = '';
-    for my $e ( $self->events ) {
-        for my $d ( @{ $e->description } ) {
-            unless ( $seen{$d} ) {
-                $seen{$d} = 1;
-                push @descriptions, $d;
+    unless ( exists $self->{description} ) {
+        my ( %seen, @descriptions );
+        my $s = '';
+        for my $e ( $self->events ) {
+            for my $d ( @{ $e->description } ) {
+                unless ( $seen{$d} ) {
+                    $seen{$d} = 1;
+                    push @descriptions, $d;
+                }
             }
         }
+        my $s = $descriptions[0];
+        for my $d ( @descriptions[ 1 .. $#descriptions ] ) {
+            $s .= $s =~ /\w$/ ? '; ' : ' ';
+        }
+        $self->{description} = $s;
     }
-    my $s = $descriptions[0];
-    for my $d ( @descriptions[ 1 .. $#descriptions ] ) {
-        $s .= $s =~ /\w$/ ? '; ' : ' ';
-    }
-    return $s;
+    return $self->{description};
 }
 
 =method tags
 
 Returns unformatted string containing all unique tags
-in events overviewed, listing them in alphabetical order.
+in events described, listing them in alphabetical order.
 
 =cut
 
@@ -186,25 +182,27 @@ sub tags {
 
 =method tag_string
 
-Returns stringification of tags in the events overviewed, sorting them alphabetically
+Returns stringification of tags in the events described, sorting them alphabetically
 and separating distinct tags with commas.
 
 =cut
 
 sub tag_string {
     my ($self) = @_;
-    return join ', ', $self->tags;
+    $self->{tag_string} = join ', ', $self->tags
+      unless exists $self->{tag_string};
+    return $self->{tag_string};
 }
 
 =method events
 
-Accessor for events in overview.
+Accessor for events in Synopsis.
 
 =cut
 
 sub events { @{ $_[0]->{events} } }
 
-# constructs a single-event overview
+# constructs a single-event synopsis
 # NOTE: not a package method
 sub _new {
     my ( $event, $one_interval ) = @_;
@@ -215,7 +213,7 @@ sub _new {
 
 =method single_interval
 
-Whether all events contained in this overview are adjacent.
+Whether all events contained in this synopsis are adjacent.
 
 =cut
 
@@ -223,7 +221,7 @@ sub single_interval { $_[0]->{one_interval} }
 
 =method duration
 
-Duration in seconds of all events contained in this overview.
+Duration in seconds of all events contained in this Synopsis.
 
 =cut
 
@@ -238,6 +236,26 @@ sub duration {
         $d += $_->duration for @events;
         return $d;
     }
+}
+
+=method time_fmt
+
+Formats time interval of events.
+
+=cut
+
+sub time_fmt {
+    my ($self) = @_;
+    my @events = $self->events;
+    my ( $start, $end ) = ( $events[0]->start, $events[$#events]->end );
+    my $same_period = $start->hour < 12 && $end->hour < 12
+      || $start->hour >= 12 && $end->hour >= 12;
+    my ( $f1, $f2 ) = ( $same_period ? '%l:%M' : '%l:%M %P', '%l:%M %P' );
+    my $s =
+      $start->strftime($f1) . ' - ' . $self->is_open
+      ? 'ongoing'
+      : $end->strftime($f2);
+    return $s;
 }
 
 1;

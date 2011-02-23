@@ -564,7 +564,7 @@ sub insert {
           . ( @lines == 1 ? 's' : 've' )
           . ' been inserted by '
           . __PACKAGE__ );
-    splice @{ $self->[IO] }, $i, 0, $comment, @lines;
+    splice @{ $self->[IO] }, $index, 0, $comment, @lines;
 }
 
 1;

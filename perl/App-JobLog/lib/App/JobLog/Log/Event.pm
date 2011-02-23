@@ -11,6 +11,18 @@ sub new {
     return $self;
 }
 
+=method clone
+
+Create a duplicate of this event.
+
+=cut
+
+sub clone {
+    my ($self) = @_;
+    my $clone = App::JobLog::Log::Event->new( $self->data->clone );
+    $clone->end = $self->end->clone unless $self->is_open;
+}
+
 # the portion of an event falling within given interval
 sub overlap {
     my ( $self, $start, $end ) = @_;
@@ -97,6 +109,37 @@ sub duration {
 # function facilitating override of DateTime->now in testing
 our $now;    # for use in testing
 sub _now { $now || DateTime->now }
+
+=method split_days
+
+Splits a multi-day event up at the day boundaries.
+
+=cut
+
+sub split_days {
+    my ($self) = @_;
+    my $days_end = $self->start->clone->truncate_to('day')->add( days => 1 );
+    if ( $days_end < $self->end ) {
+        my @splits;
+        my $s = $self->start;
+        do {
+            my $clone = $self->clone;
+            $clone->start = $s;
+            $clone->end   = $days_end;
+            push @splits, $clone;
+            $s = $days_end->clone;
+            $days_end->add( days => 1 );
+        } while ( $days_end < $self->end );
+        my $clone = $self->clone;
+        $clone->start = $s;
+        $clone->end   = $self->end;
+        push @splits, $clone;
+        return @splits;
+    }
+    else {
+        return $self;
+    }
+}
 
 1;
 
