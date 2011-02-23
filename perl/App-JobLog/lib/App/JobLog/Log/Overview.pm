@@ -15,8 +15,8 @@ our @EXPORT = qw(
   MERGE_SAME_DAY_SAME_TAGS
   NO_MERGE
 );
-
-use constant WRAP => 76;
+use App::JobLog::Config qw(columns);
+use Text::Wrap;
 
 use constant MERGE_ALL      => 1;
 use constant MERGE_ADJACENT => 2;
@@ -88,7 +88,7 @@ sub collect {
                 $previous->merge($e);
             }
             else {
-                $previous = new( $e, $one_interval );
+                $previous = _new( $e, $one_interval );
                 push @overview, $previous;
             }
         }
@@ -131,53 +131,113 @@ sub merge { push @{ $_[0]{events} }, $_[1] }
 sub columns {
     my ($self) = @_;
     unless ( exists $self->{columns} ) {
+
         # TODO flesh this out
     }
     return @{ $self->{columns} };
 }
 
-# returns unformatted string containing all unique descriptions
-# in events overviewed, listing them in the order in which they
-# appeared
+=method description
+
+Returns unformatted string containing all unique descriptions
+in events overviewed, listing them in the order in which they
+appeared and separating distinct events with semicolons when they
+end in a word character.
+
+=cut
+
 sub description {
     my ($self) = @_;
-    my (%seen, @descriptions);
+    my ( %seen, @descriptions );
     my $s = '';
-    for my $e ($self->events) {
-        for my $d (@{$e->description}) {
-            unless ($seen{$d}) {
+    for my $e ( $self->events ) {
+        for my $d ( @{ $e->description } ) {
+            unless ( $seen{$d} ) {
                 $seen{$d} = 1;
                 push @descriptions, $d;
             }
         }
     }
-    return join('; ', @descriptions);
+    my $s = $descriptions[0];
+    for my $d ( @descriptions[ 1 .. $#descriptions ] ) {
+        $s .= $s =~ /\w$/ ? '; ' : ' ';
+    }
+    return $s;
 }
 
-# returns unformatted string containing all unique tags
-# in events overviewed, listing them in alphabetical order 
+=method tags
+
+Returns unformatted string containing all unique tags
+in events overviewed, listing them in alphabetical order.
+
+=cut
+
 sub tags {
     my ($self) = @_;
     my %seen;
     my $s = '';
-    for my $e ($self->events) {
-        for my $t (@{$e->tags}) {
+    for my $e ( $self->events ) {
+        for my $t ( @{ $e->tags } ) {
             $seen{$t} = 1;
         }
     }
     return sort keys %seen;
 }
 
-# accessor for events in overview
+=method tag_string
+
+Returns stringification of tags in the events overviewed, sorting them alphabetically
+and separating distinct tags with commas.
+
+=cut
+
+sub tag_string {
+    my ($self) = @_;
+    return join ', ', $self->tags;
+}
+
+=method events
+
+Accessor for events in overview.
+
+=cut
+
 sub events { @{ $_[0]->{events} } }
 
 # constructs a single-event overview
 # NOTE: not a package method
-sub new {
+sub _new {
     my ( $event, $one_interval ) = @_;
     die 'requires event argument'
       unless $event && ref $event eq 'App::JobClock::Log::Event';
     return bless { events => [$event], one_interval => $one_interval };
+}
+
+=method single_interval
+
+Whether all events contained in this overview are adjacent.
+
+=cut
+
+sub single_interval { $_[0]->{one_interval} }
+
+=method duration
+
+Duration in seconds of all events contained in this overview.
+
+=cut
+
+sub duration {
+    my (@self) = @_;
+    my @events = $self->events;
+    if ( $self->one_interval ) {
+        return $events[$#events]->end -epoch - $events[0]->start->epoch;
+    }
+    else {
+        my $d = 0;
+        $d += $_->duration for @events;
+        return $d;
+    }
 }
 
 1;

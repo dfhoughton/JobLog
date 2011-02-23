@@ -2,18 +2,18 @@ package App::JobLog::Config;
 
 # ABSTRACT: central depot for App::JobLog configuration parameters and controller allowing their modification
 
-use Class::Autouse qw{
-  File::HomeDir
-  File::Spec
-  Config::Tiny
-  FileHandle
-  App::JobLog::Command::info
-};
-use autouse 'File::Path' => qw(mkpath);
-use autouse 'Cwd'        => qw(abs_path);
-require Exporter;
+=head1 DESCRIPTION
+
+C<App::JobLog::Config> is a central repository for program state that may be conserved from
+session to session. It also serves as a general interface between the program and the machine.
+
+This wasn't written to be used outside of C<App::JobLog>. 
+
+=cut
+
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(
+  columns
   dir
   editor
   init_file
@@ -24,12 +24,23 @@ our @EXPORT_OK = qw(
   start_pay_period
   sunday_begins_week
   vacation
-  EDITOR
   DIRECTORY
-  PRECISION
-  PERIOD
+  EDITOR
   HOURS
+  PERIOD
+  PRECISION
 );
+use Class::Autouse qw{
+  File::HomeDir
+  File::Spec
+  Config::Tiny
+  FileHandle
+  App::JobLog::Command::info
+};
+use autouse 'File::Path'    => qw(mkpath);
+use autouse 'Cwd'           => qw(abs_path);
+use autouse 'Term::ReadKey' => qw(GetTerminalSize);
+require Exporter;
 use Modern::Perl;
 
 # default precision
@@ -53,10 +64,14 @@ use constant EDITOR => 'JOB_LOG_EDITOR';
 # identifies directory to write files into
 use constant DIRECTORY => 'JOB_LOG_DIRECTORY';
 
-# manages configuration
+=method init_file
 
-# ensures that the working directory and the README file exist before
-# we try to create or modify any files in the working directory
+C<init_file> manages configuration files. It ensures that the 
+working directory and the README file exist before
+we try to create or modify any files in the working directory.
+
+=cut
+
 sub init_file {
     my ($path) = @_;
     unless ( -e $path ) {
@@ -87,7 +102,12 @@ END
     }
 }
 
-# working directory
+=method dir
+
+Working directory.
+
+=cut
+
 my $dir;
 
 sub dir {
@@ -96,7 +116,12 @@ sub dir {
     return $dir;
 }
 
-# log file
+=method log
+
+Log file.
+
+=cut
+
 my $log;
 
 sub log {
@@ -104,7 +129,12 @@ sub log {
     return $log;
 }
 
-# readme file
+=method readme
+
+README file.
+
+=cut
+
 my $readme;
 
 sub readme {
@@ -120,7 +150,12 @@ sub _config_file {
     return $config_file;
 }
 
-# file recording vacation times
+=method vacation
+
+Obtain the file in which vacation information is stored.
+
+=cut
+
 my $vacation_file;
 
 sub vacation {
@@ -138,6 +173,7 @@ END {
     }
 }
 
+# construct configuration object as necessary
 sub _config {
     unless ($config) {
         $config = Config::Tiny->new;
@@ -147,34 +183,67 @@ sub _config {
     return $config;
 }
 
+=method precision
+
+Obtain the number of decimal places represented when displaying the duration
+of events.
+
+=cut
+
 sub precision {
     my ($value) = @_;
-    return _param( 'precision', PRECISION, $value );
+    return _param( 'precision', PRECISION, 'summary', $value );
 }
+
+=method day_length
+
+The number of hours one is expected to work in a day.
+
+=cut
 
 sub day_length {
     my ($value) = @_;
-    return _param( 'day-length', HOURS, $value );
+    return _param( 'day-length', HOURS, 'time', $value );
 }
+
+=method pay_period_length
+
+The number of days between paychecks.
+
+=cut
 
 sub pay_period_length {
     my ($value) = @_;
-    return _param( 'pay-period-length', PERIOD, $value );
+    return _param( 'pay-period-length', PERIOD, 'time', $value );
 }
+
+=method sunday_begins_week
+
+Whether to regard Sunday or Monday as the first day in the week
+when interpreting time expressions such as 'last week'. L<DateTime>
+uses Monday. The default for L<App::JobLog> is Sunday. For the purposes
+of calculating hours worked this will make no difference for most people.
+
+=cut
 
 sub sunday_begins_week {
     my ($value) = @_;
-    return _param( 'sunday-begins-week', SUNDAY_BEGINS_WEEK, $value );
+    return _param( 'sunday-begins-week', SUNDAY_BEGINS_WEEK, 'time', $value );
 }
 
-# returns DateTime representing start date of pay period or null if none is defined
+=method start_pay_period
+
+Returns DateTime representing start date of pay period or null if none is defined.
+
+=cut
+
 sub start_pay_period {
     my ($value) = @_;
     require DateTime;
     if ( ref $value eq 'DateTime' ) {
         $value = sprintf '%d %d %d', $value->year, $value->month, $value->day;
     }
-    $value = _param( 'start-pay-period', undef, $value );
+    $value = _param( 'start-pay-period', undef, 'time', $value );
     if ($value) {
         my @parts = split / /, $value;
         return DateTime->new(
@@ -186,37 +255,46 @@ sub start_pay_period {
     return undef;
 }
 
+# abstracts out code for maintaining config file
 sub _param {
-    my ( $param, $default, $new_value ) = @_;
+    my ( $param, $default, $section, $new_value ) = @_;
+    $section ||= 'main';
     my $config = _config();
-    my $value  = $config->{all}->{$param};
+    my $value  = $config->{$section}->{$param};
     if ( defined $new_value ) {
         if ( defined $default && $new_value eq $default && !defined $value ) {
             return $new_value;
         }
         return $value if defined $value && $value eq $new_value;
         $config_changed = 1;
-        return $config->{all}->{$param} = $new_value;
+        return $config->{$section}->{$param} = $new_value;
     }
     else {
         return defined $value ? $value : $default;
     }
 }
 
-# editing program
+=method editor
+
+Log editing program.
+
+=cut
+
 sub editor {
     return $ENV{ EDITOR() };
 }
 
-1;
+=method columns
 
-__END__
-
-=pod
-
-=head1 DESCRIPTION
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
+The number of columns available in the terminal. This defaults to
+76 when L<Term::ReadKey> is unable to determine terminal width.
 
 =cut
+
+sub columns {
+    my ($cols) = GetTerminalSize;
+    $cols ||= 76;
+    return $cols;
+}
+
+1;

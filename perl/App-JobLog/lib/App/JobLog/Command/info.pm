@@ -267,7 +267,8 @@ sub _footer {
 END
 }
 
-# the complete bnf diagram for time grammar
+# the complete bnf diagram for time grammar, also maintained
+# in App::JobLog::TimeGrammar for lack of introspection in pod
 sub _bnf {
 return <<END;
               <expression> = s* <span> s*

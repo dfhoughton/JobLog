@@ -17,7 +17,7 @@ sub overlap {
 
     # if this falls entirely within interval, return this
     my $c1 = DateTime->compare( $start, $self->start ) || 0;
-    my $c2 = DateTime->compare( $end,   $self->end ) || 0;
+    my $c2 = DateTime->compare( $end,   $self->end )   || 0;
     if ( $c1 <= 0 && $c2 >= 0 ) {
         return $self;
     }
@@ -81,6 +81,22 @@ sub cmp {
 sub is_closed { exists $_[0]->{end} }
 
 sub is_open { !$_[0]->is_closed }
+
+=method duration
+
+Duration of event in seconds.
+
+=cut
+
+sub duration {
+    my ($self) = @_;
+    my $e = $self->is_open ? _now() : $self->end;
+    return $self->start->epoch - $e->epoch;
+}
+
+# function facilitating override of DateTime->now in testing
+our $now;    # for use in testing
+sub _now { $now || DateTime->now }
 
 1;
 
