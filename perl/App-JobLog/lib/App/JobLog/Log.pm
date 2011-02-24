@@ -477,9 +477,9 @@ sub append_event {
               if $current->is_end && $previous->is_closed;
             if (
                 $current->is_beginning
-                && (   $current->start < $previous->start
+                && (   $current->time < $previous->start
                     || $previous->is_closed
-                    && $current->start < $previous->end )
+                    && $current->time < $previous->end )
               )
             {
                 carp

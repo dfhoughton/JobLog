@@ -110,7 +110,7 @@ sub duration {
 
 # function facilitating override of DateTime->now in testing
 our $now;    # for use in testing
-sub _now { $now || DateTime->now }
+sub _now { $now ||= DateTime->now; $now }
 
 =method split_days
 
@@ -120,8 +120,9 @@ Splits a multi-day event up at the day boundaries.
 
 sub split_days {
     my ($self) = @_;
-    my $days_end = $self->start->clone->truncate_to('day')->add( days => 1 );
-    if ( $days_end < $self->end ) {
+    my $days_end =
+      $self->start->clone->truncate( to => 'day' )->add( days => 1 );
+    if ( $days_end < ($self->end || _now()) ) {
         my @splits;
         my $s = $self->start;
         do {

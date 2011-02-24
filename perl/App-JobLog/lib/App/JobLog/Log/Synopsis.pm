@@ -28,6 +28,7 @@ our %EXPORT_TAGS = (
 );
 
 use Modern::Perl;
+use autouse 'Carp' => qw(carp);
 
 use constant MERGE_ALL      => 1;
 use constant MERGE_ADJACENT => 2;
@@ -43,9 +44,9 @@ use constant NO_MERGE                 => 0;
 sub synopsis {
     my ( $events, $merge_level, $test ) = @_;
     $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
-    $test ||= sub { 1 };
-    my @items = collect( $events, $merge_level, $test );
-    return @items;
+    $test ||= sub { $_[0] };
+    my $items = collect( $events, $merge_level, $test );
+    return $items;
 }
 
 # takes in a bunch of App::JobClock::Log::Event objects
@@ -53,7 +54,6 @@ sub synopsis {
 sub collect {
     my ( $events, $merge_level, $test ) = @_;
     $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
-    $test ||= sub { $_[0] };
     my ( @synopses, $previous, @current_day );
     for my $e ( map { $_->split_days } @$events ) {
         if ( $e = $test->($e) ) {
@@ -100,7 +100,7 @@ sub collect {
 
                         # NO OP
                     }
-                    default { die 'unfamiliar merge level' }
+                    default { carp 'unfamiliar merge level' }
                 }
             }
             if ($do_merge) {
@@ -118,7 +118,7 @@ sub collect {
 
 # test to make sure this and the given event
 sub same_tags {
-    my ( $self, $event );
+    my ( $self, $event ) = @_;
     for my $e ( $self->events ) {
         return 0
           unless $e->all_tags( $event->tags ) && $event->all_tags( $e->tags );
@@ -127,7 +127,7 @@ sub same_tags {
 }
 
 sub same_day {
-    my ( $self, $event );
+    my ( $self, $event ) = @_;
     my $d1 = ( $self->events )[-1]->end;
     my $d2 = $event->start;
     return
@@ -169,7 +169,7 @@ sub description {
     unless ( exists $self->{description} ) {
         my ( %seen, @descriptions );
         for my $e ( $self->events ) {
-            for my $d ( @{ $e->description } ) {
+            for my $d ( @{ $e->data->description } ) {
                 unless ( $seen{$d} ) {
                     $seen{$d} = 1;
                     push @descriptions, $d;
@@ -230,8 +230,8 @@ sub events { @{ $_[0]->{events} } }
 # NOTE: not a package method
 sub _new {
     my ( $event, $merge_level ) = @_;
-    die 'requires event argument'
-      unless $event && ref $event eq 'App::JobClock::Log::Event';
+    carp 'requires event argument'
+      unless $event && ref $event eq 'App::JobLog::Log::Event';
     my ( $one_interval, $one_day );
     given ($merge_level) {
         when (MERGE_ALL)      { ( $one_interval, $one_day ) = ( 0, 0 ) }
@@ -278,8 +278,10 @@ Duration in seconds of all events contained in this Synopsis.
 sub duration {
     my ($self) = @_;
     my @events = $self->events;
-    if ( $self->one_interval ) {
-        return $events[$#events]->end->epoch - $events[0]->start->epoch;
+    if ( $self->single_interval ) {
+        my ( $se, $ee ) = ( $events[0], $events[$#events] );
+        my ( $start, $end ) = ( $se->start, $ee->end || _now() );
+        return $end->epoch - $start->epoch;
     }
     else {
         my $d = 0;
@@ -287,6 +289,9 @@ sub duration {
         return $d;
     }
 }
+
+our $now;
+sub _now { $now ||= DateTime->now; $now }
 
 =method time_fmt
 
@@ -297,14 +302,19 @@ Formats time interval of events.
 sub time_fmt {
     my ($self) = @_;
     my @events = $self->events;
-    my ( $start, $end ) = ( $events[0]->start, $events[$#events]->end );
-    my $same_period = $start->hour < 12 && $end->hour < 12
-      || $start->hour >= 12 && $end->hour >= 12;
-    my ( $f1, $f2 ) = ( $same_period ? '%l:%M' : '%l:%M %P', '%l:%M %P' );
-    my $s =
-      $start->strftime($f1) . ' - ' . $self->is_open
-      ? 'ongoing'
-      : $end->strftime($f2);
+    my ( $se, $ee ) = ( $events[0], $events[$#events] );
+    my ( $start, $end ) = ( $se->start, $ee->end );
+    my $s;
+    if ($end) {
+        my $same_period = $start->hour < 12 && $end->hour < 12
+          || $start->hour >= 12 && $end->hour >= 12;
+        my ( $f1, $f2 ) = ( $same_period ? '%l:%M' : '%l:%M %P', '%l:%M %P' );
+        $s = $start->strftime($f1) . ' - ' . $end->strftime($f2);
+    }
+    else {
+        $s = $start->strftime('%l:%M %P') . ' - ongoing';
+    }
+    $s =~ s/  / /;    # strftime tends to add in an extra space
     return $s;
 }
 

@@ -4,11 +4,12 @@ package App::JobLog::Command::done;
 
 use App::JobLog -command;
 use Modern::Perl;
+use Class::Autouse 'App::JobLog::Log';
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
 
-    print "(done) Everything has been initialized.  (Not really.)\n";
+    App::JobLog::Log->new->append_event( done => 1 );
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name }

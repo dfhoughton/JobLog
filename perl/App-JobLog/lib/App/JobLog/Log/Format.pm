@@ -50,7 +50,7 @@ sub display {
 
     # TODO augment events with vacation and holidays
     if (@$events) {
-        my @synopses = @{synopsis( $events, $merge_level, $test )};
+        my @synopses = @{ synopsis( $events, $merge_level, $test ) };
 
         my ( $format, $tag_width, $description_width ) =
           _define_format( \@synopses );
@@ -126,7 +126,7 @@ sub _pad_lines {
     for my $column (@$lines) {
         push @$column, '' while @$column < $max;
     }
-    return $max;
+    return $max - 1;
 }
 
 # whether two DateTime objects refer to the same day
@@ -173,6 +173,7 @@ sub _define_format {
 
     # add on initial space to each column
     $widths = [ map { $_ + 2 } @$widths ];
+    $widths->[-2] -= 2; # tags column is special
     for my $c (@$widths) {
         $max_description -= $c;    # column width
     }
@@ -181,7 +182,7 @@ sub _define_format {
     if ( @$widths == 3 ) {
 
         # print times
-        $format = sprintf "%%%ds%%%ds%%-%ds%%-%ds\n", @$widths,
+        $format = sprintf "%%%ds%%%ds  %%-%ds%%-%ds\n", @$widths,
           $max_description;
     }
     else {

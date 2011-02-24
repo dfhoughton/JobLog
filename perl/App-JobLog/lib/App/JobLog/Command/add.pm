@@ -5,11 +5,22 @@ package App::JobLog::Command::add;
 use App::JobLog -command;
 use Modern::Perl;
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
+use Class::Autouse qw(
+  App::JobLog::Log
+  DateTime
+);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
-
-    print "(add) Everything has been initialized.  (Not really.)\n";
+    my $tags = $opt->tag;
+    unless ($tags) {
+        $tags = [] if $opt->clear_tags;
+    }
+    App::JobLog::Log->new->append_event(
+        $tags ? ( tags => $tags ) : (),
+        description => [ join ' ', @$args ],
+        time        => DateTime->now
+    );
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' <description of event>' }
