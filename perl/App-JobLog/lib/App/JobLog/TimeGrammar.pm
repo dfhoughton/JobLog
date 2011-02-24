@@ -30,8 +30,15 @@ produces
 
 =cut 
 
+use Exporter 'import';
+our @EXPORT = qw(
+  parse
+  daytime
+);
+
 use Modern::Perl;
 use DateTime;
+use Class::Autouse qw(DateTime::TimeZone);
 use Carp 'croak';
 use autouse 'App::JobLog::Config' => qw(
   log
@@ -40,9 +47,6 @@ use autouse 'App::JobLog::Config' => qw(
   start_pay_period
   DIRECTORY
 );
-require Exporter;
-our @ISA    = qw(Exporter);
-our @EXPORT = qw(parse);
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing
@@ -325,6 +329,48 @@ sub stow {
     %buffer = ();
 }
 
+=method daytime
+
+Parses a time expression such as "11:00" or "8:15:40 pm". Returns a map from
+C<hour>, C<minute>, C<second>, and C<suffix> to the appropriate value, where
+'x' represents an ambiguous suffix.
+
+=cut
+
+sub daytime {
+    my $time = shift;
+
+    #parse
+    $time =~ /(?<hour>\d++)
+                  (?:
+                   : (?<minute>\d++)
+                   (?:
+                    : (?<second>\d++)
+                   )?
+                  )?
+                  (?: \s*+ (?<suffix>[ap]) (\.?)m\g{-1})?
+                 /ix;
+    my ( $hour, $minute, $second, $suffix ) =
+      ( $+{hour}, $+{minute} || 0, $+{second} || 0, lc( $+{suffix} || 'x' ) );
+    $hour += 12 if $suffix eq 'p' && $hour < 12;
+    $suffix = 'p' if $hour > 11;
+    $hour = 0 if $hour == 12 && $suffix eq 'a';
+    croak
+      "impossible time: $time" #<--- syntax error at (eval 4158) line 23, near "croak "impossible time: $time""
+
+      if $hour > 23
+          || $minute > 59
+          || $second > 59
+          || $suffix eq 'a' && $hour > 12;
+    $hour = 0 if $suffix eq 'a' && $hour == 12;
+    return (
+        hour   => $hour,
+        minute => $minute,
+        second => $second,
+        suffix => $suffix
+    );
+}
+
 =method parse
 
 This function (it isn't actually a method) is the essential function of this module.
@@ -411,42 +457,14 @@ sub extract_time {
     if ( defined $time ) {
         delete $h->{time};
 
-        #parse
-        $time =~ /(?<hour>\d++)
-                  (?:
-                   : (?<minute>\d++)
-                   (?:
-                    : (?<second>\d++)
-                   )?
-                  )?
-                  (?: \s*+ (?<suffix>[ap]) (\.?)m\g{-1})?
-                 /x;
-        my ( $hour, $minute, $second, $suffix ) = (
-            $+{hour},
-            $+{minute} || 0,
-            $+{second} || 0,
-            lc( $+{suffix} || 'x' )
-        );
-        $hour += 12 if $suffix eq 'p' && $hour < 12;
-        croak "impossible time: $time"
-          if $hour > 23
-              || $minute > 59
-              || $second > 59
-              || $suffix eq 'a' && $hour > 12;
-        $hour = 0 if $suffix eq 'a' && $hour == 12;
-        return (
-            hour   => $hour,
-            minute => $minute,
-            second => $second,
-            suffix => $suffix
-        );
+        return daytime($time);
     }
     else {
 
         #return default values
         return $is_start
-          ? ( hour => 0, minute => 0, second => 0, suffix => 'x' )
-          : ( hour => 23, minute => 59, second => 59, suffix => 'x' );
+          ? ( hour => 0, minute => 0, second => 0, suffix => 'a' )
+          : ( hour => 23, minute => 59, second => 59, suffix => 'p' );
     }
 }
 

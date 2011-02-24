@@ -473,9 +473,18 @@ sub append_event {
         if ($previous) {
 
             # validation to prevent inconsistency
-            die
-              'attempting to append event to log younger than last event in log'
-              if $current->cmp($previous) < 0;
+            carp 'no currently open task'
+              if $current->is_end && $previous->is_closed;
+            if (
+                $current->is_beginning
+                && (   $current->start < $previous->start
+                    || $previous->is_closed
+                    && $current->start < $previous->end )
+              )
+            {
+                carp
+'attempting to append event to log younger than last event in log';
+            }
 
             # apply default tags
             $current->tags = $previous->tags if $current->tags_unspecified;

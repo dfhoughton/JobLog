@@ -4,7 +4,7 @@ package App::JobLog::Command;
 
 use App::Cmd::Setup -command;
 use Modern::Perl;
-use autouse 'Text::Wrap' => qw(fill);
+use App::JobLog::Config qw(columns);
 
 sub opt_spec {
     my ( $class, $app ) = @_;
@@ -34,7 +34,9 @@ sub description {
     }
 
     # make sure things are wrapped nicely
-    $desc = fill '', '', $desc;
+    require Text::Wrap;
+    $Text::Wrap::columns = columns;
+    $desc = Text::Wrap::fill( '', '', $desc );
 
     # space between description and options text
     $desc .= "\n";
@@ -42,7 +44,7 @@ sub description {
 }
 
 # override to make full description
-sub _description { }
+sub full_description { }
 
 sub validate_args {
     my ( $self, $opt, $args ) = @_;

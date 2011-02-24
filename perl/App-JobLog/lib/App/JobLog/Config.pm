@@ -11,7 +11,7 @@ This wasn't written to be used outside of C<App::JobLog>.
 
 =cut
 
-our @ISA       = qw(Exporter);
+use Exporter 'import';
 our @EXPORT_OK = qw(
   columns
   dir
@@ -30,6 +30,7 @@ our @EXPORT_OK = qw(
   PERIOD
   PRECISION
 );
+
 use Class::Autouse qw{
   File::HomeDir
   File::Spec
@@ -40,7 +41,6 @@ use Class::Autouse qw{
 use autouse 'File::Path'    => qw(mkpath);
 use autouse 'Cwd'           => qw(abs_path);
 use autouse 'Term::ReadKey' => qw(GetTerminalSize);
-require Exporter;
 use Modern::Perl;
 
 # default precision

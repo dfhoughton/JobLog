@@ -12,6 +12,10 @@ use File::Temp;
 use Test::More;
 use Test::Fatal;
 
+# create working directory
+my $dir = File::Temp->newdir();
+$ENV{ DIRECTORY() } = $dir;
+
 # fix current moment
 my $now = DateTime->new( year => 2011, month => 2, day => 18 );
 App::JobLog::TimeGrammar->present_date = $now;
@@ -87,8 +91,6 @@ subtest 'periods' => sub {
 };
 
 subtest 'pay period' => sub {
-    my $dir = File::Temp->newdir();
-    $ENV{ DIRECTORY() } = $dir;
     my $start_pay_period = DateTime->new( year => 2011, month => 2, day => 13 );
     start_pay_period($start_pay_period);
     pay_period_length(14);

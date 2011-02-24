@@ -8,13 +8,15 @@ This module handles word wrapping, date formatting, and the like.
 
 =cut
 
-require Exporter;
-our @ISA    = qw(Exporter);
-our @EXPORT = qw(format);
+use Exporter 'import';
+our @EXPORT = qw(
+  display
+  time_remaining
+);
 
 use Modern::Perl;
-use App::JobLog::Log;
 use App::JobLog::Config qw(columns precision);
+use App::JobLog::Log::Synopsis qw(synopsis :merge);
 use Text::Wrap;
 
 use constant TAG_COLUMN_LIMIT => 10;
@@ -22,27 +24,45 @@ use constant HOUR_IN_SECONDS  => 60 * 60;
 
 my $duration_format = '%0.' . precision() . 'f';
 
-=method format
-Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
+=method time_remaining
+
+Determines the time remaining to work in the given period.
+Accepts a reference to an array of L<App::JobLog::Log::Event> objects
+and returns an integer representing a number of seconds.
+
 =cut
 
-sub format {
-    my ( $start, $end, $merge_level, $test ) = @_;
-    my $events = App::JobLog::Log->new->find_events( $start, $end );
+sub time_remaining {
+    my ($events) = @_;
+
+    # TODO put in real code
+    return 0;
+}
+
+=method display
+
+Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
+
+=cut
+
+sub display {
+    my ( $events, $merge_level, $test ) = @_;
 
     # TODO augment events with vacation and holidays
     if (@$events) {
-        my @synopses = synopsis( $events, $merge_level, $test );
+        my @synopses = @{synopsis( $events, $merge_level, $test )};
 
         my ( $format, $tag_width, $description_width ) =
           _define_format( \@synopses );
-        my ($total, $previous_date, %tag_map) = 0;
+        my ( $total, $previous_date, %tag_map ) = 0;
         for my $s (@synopses) {
+
             # collect durations
             $total += $s->duration;
             $tag_map{$_} += $s->duration for $s->tags;
             if (
-                !(
+                $s->single_day
+                && !(
                     defined $previous_date
                     && _same_day( $previous_date, $s->date )
                 )
@@ -61,20 +81,21 @@ sub format {
             push @lines, [ _duration( $s->duration ) ];
             push @lines, _wrap( $s->tag_string,  $tag_width );
             push @lines, _wrap( $s->description, $description_width );
-            my $count = _pad_lines(\@lines);
-            for my $i (0..$count) {
-                printf $format, _gather(\@lines, $i);
+            my $count = _pad_lines( \@lines );
+
+            for my $i ( 0 .. $count ) {
+                printf $format, _gather( \@lines, $i );
             }
             print "\n";
         }
-        my ($m1, $m2) = (length 'TOTAL HOURS', length _duration($total));
-        for my $tag (keys %tag_map) {
+        my ( $m1, $m2 ) = ( length 'TOTAL HOURS', length _duration($total) );
+        for my $tag ( keys %tag_map ) {
             my $l = length $tag;
             $m1 = $l if $l > $m1;
         }
         $format = sprintf "%%-%ds %%%ds\n", $m1, $m2;
         printf $format, 'TOTAL HOURS', _duration($total);
-        for my $key (sort keys %tag_map) {
+        for my $key ( sort keys %tag_map ) {
             my $d = $tag_map{$key};
             printf $format, $key, _duration($d);
         }
@@ -86,7 +107,7 @@ sub format {
 
 # collect the pieces of columns corresponding to a particular line to print
 sub _gather {
-    my ($lines, $i) = @_;
+    my ( $lines, $i ) = @_;
     my @line;
     for my $column (@$lines) {
         push @line, $column->[$i];

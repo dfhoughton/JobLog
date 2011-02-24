@@ -19,8 +19,9 @@ Create a duplicate of this event.
 
 sub clone {
     my ($self) = @_;
-    my $clone = App::JobLog::Log::Event->new( $self->data->clone );
+    my $clone = __PACKAGE__->new( $self->data->clone );
     $clone->end = $self->end->clone unless $self->is_open;
+    return $clone;
 }
 
 # the portion of an event falling within given interval
@@ -33,9 +34,10 @@ sub overlap {
     if ( $c1 <= 0 && $c2 >= 0 ) {
         return $self;
     }
+    return undef if $self->start >= $end || $start >= $self->end;
     my $s = $c1 < 0 ? $self->start : $start;
     my $e = $c2 < 0 ? $end         : $self->end;
-    my $clone = __PACKAGE__->new( $self->data->clone );
+    my $clone = $self->clone;
     $clone->start = $s;
     $clone->end   = $e;
     return $clone;

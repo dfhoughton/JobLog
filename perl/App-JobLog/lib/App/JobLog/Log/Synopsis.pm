@@ -1,20 +1,33 @@
-package App::JobClock::Log::Synopsis;
+package App::JobLog::Log::Synopsis;
 
 # ABSTRACT: consolidates App::JobClock::Log::Event objects for display
 
-use Modern::Perl;
-
-require 'Exporter';
-our @ISA    = qw(Exporter);
-our @EXPORT = qw(
+use Exporter 'import';
+our @EXPORT_OK = qw(
   synopsis
   MERGE_ALL
   MERGE_ADJACENT
   MERGE_ADJACENT_SAME_TAGS
+  MERGE_SAME_TAGS
   MERGE_SAME_DAY
   MERGE_SAME_DAY_SAME_TAGS
   NO_MERGE
 );
+our %EXPORT_TAGS = (
+    merge => [
+        qw(
+          MERGE_ALL
+          MERGE_ADJACENT
+          MERGE_ADJACENT_SAME_TAGS
+          MERGE_SAME_TAGS
+          MERGE_SAME_DAY
+          MERGE_SAME_DAY_SAME_TAGS
+          NO_MERGE
+          )
+    ]
+);
+
+use Modern::Perl;
 
 use constant MERGE_ALL      => 1;
 use constant MERGE_ADJACENT => 2;
@@ -40,24 +53,26 @@ sub synopsis {
 sub collect {
     my ( $events, $merge_level, $test ) = @_;
     $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
-    $test ||= sub { 1 };
-    my $one_interval = $merge_level == MERGE_ADJACENT_SAME_TAGS
-      || $merge_level == MERGE_ADJACENT;
-    my ( @Synopsis, $previous );
-  OUTER: for my $e ( map { $_->split_days } @$events ) {
-        if ( $test->($e) ) {
+    $test ||= sub { $_[0] };
+    my ( @synopses, $previous, @current_day );
+    for my $e ( map { $_->split_days } @$events ) {
+        if ( $e = $test->($e) ) {
             my $do_merge = 0;
+            my $mergand  = $previous;
             if ($previous) {
+                @current_day = () unless $previous->same_day($e);
                 given ($merge_level) {
                     when (MERGE_ALL) { $do_merge = 1 }
                     when (MERGE_ADJACENT) {
-                        $do_merge = $previous->adjacent($e)
+                        $do_merge = $previous->same_day($e)
+                          && $previous->adjacent($e)
                     }
                     when (MERGE_SAME_TAGS) {
-                        for my $o (@Synopsis) {
+                        for my $o (@synopses) {
                             if ( $o->same_tags($e) ) {
-                                $o->merge($e);
-                                next OUTER;
+                                $mergand  = $o;
+                                $do_merge = 1;
+                                last;
                             }
                         }
                     }
@@ -65,11 +80,20 @@ sub collect {
                         $do_merge = $previous->same_day($e)
                     }
                     when (MERGE_SAME_DAY_SAME_TAGS) {
-                        $do_merge = $previous->same_day($e)
-                          && $previous->same_tags($e)
+                        if ( $previous->same_day($e) ) {
+                            for my $s (@current_day) {
+                                if ( $s->same_tags($e) ) {
+                                    $do_merge = 1;
+                                    $mergand  = $s;
+                                    last;
+                                }
+                            }
+                        }
                     }
                     when (MERGE_ADJACENT_SAME_TAGS) {
-                        $do_merge = $previous->adjacent($e)
+                        $do_merge =
+                             $previous->same_day($e)
+                          && $previous->adjacent($e)
                           && $previous->same_tags($e)
                     }
                     when (NO_MERGE) {
@@ -80,15 +104,16 @@ sub collect {
                 }
             }
             if ($do_merge) {
-                $previous->merge($e);
+                $mergand->merge($e);
             }
             else {
-                $previous = _new( $e, $one_interval );
-                push @Synopsis, $previous;
+                $previous = _new( $e, $merge_level );
+                push @synopses,    $previous;
+                push @current_day, $previous;
             }
         }
     }
-    return @Synopsis;
+    return \@synopses;
 }
 
 # test to make sure this and the given event
@@ -143,7 +168,6 @@ sub description {
     my ($self) = @_;
     unless ( exists $self->{description} ) {
         my ( %seen, @descriptions );
-        my $s = '';
         for my $e ( $self->events ) {
             for my $d ( @{ $e->description } ) {
                 unless ( $seen{$d} ) {
@@ -205,10 +229,28 @@ sub events { @{ $_[0]->{events} } }
 # constructs a single-event synopsis
 # NOTE: not a package method
 sub _new {
-    my ( $event, $one_interval ) = @_;
+    my ( $event, $merge_level ) = @_;
     die 'requires event argument'
       unless $event && ref $event eq 'App::JobClock::Log::Event';
-    return bless { events => [$event], one_interval => $one_interval };
+    my ( $one_interval, $one_day );
+    given ($merge_level) {
+        when (MERGE_ALL)      { ( $one_interval, $one_day ) = ( 0, 0 ) }
+        when (MERGE_ADJACENT) { ( $one_interval, $one_day ) = ( 1, 1 ) }
+        when (MERGE_ADJACENT_SAME_TAGS) {
+            ( $one_interval, $one_day ) = ( 1, 1 )
+        }
+        when (MERGE_SAME_TAGS) { ( $one_interval, $one_day ) = ( 0, 0 ) }
+        when (MERGE_SAME_DAY)  { ( $one_interval, $one_day ) = ( 0, 1 ) }
+        when (MERGE_SAME_DAY_SAME_TAGS) {
+            ( $one_interval, $one_day ) = ( 0, 1 )
+        }
+        when (NO_MERGE) { ( $one_interval, $one_day ) = ( 1, 1 ) }
+    }
+    return bless {
+        events       => [$event],
+        one_interval => $one_interval,
+        one_day      => $one_day
+    };
 }
 
 =method single_interval
@@ -219,6 +261,14 @@ Whether all events contained in this synopsis are adjacent.
 
 sub single_interval { $_[0]->{one_interval} }
 
+=method single_day
+
+Whether all events contained in this synopsis occur in the same day.
+
+=cut
+
+sub single_day { $_[0]->{one_day} }
+
 =method duration
 
 Duration in seconds of all events contained in this Synopsis.
@@ -226,10 +276,10 @@ Duration in seconds of all events contained in this Synopsis.
 =cut
 
 sub duration {
-    my (@self) = @_;
+    my ($self) = @_;
     my @events = $self->events;
     if ( $self->one_interval ) {
-        return $events[$#events]->end -epoch - $events[0]->start->epoch;
+        return $events[$#events]->end->epoch - $events[0]->start->epoch;
     }
     else {
         my $d = 0;
