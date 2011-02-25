@@ -6,6 +6,7 @@ use App::JobLog -command;
 use Modern::Perl;
 use App::JobLog::Config qw(
   day_length
+  editor
   pay_period_length
   precision
   start_pay_period
@@ -66,6 +67,10 @@ sub execute {
         $bool = sunday_begins_week($bool);
         say "Sunday begins week is now " . ( $bool ? 'true' : 'false' );
     }
+    if (defined $opt->editor) {
+        my $value = editor($opt->editor);
+        say "log editor is now $value";
+    }
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
@@ -91,8 +96,7 @@ sub options {
             'sunday-begins-week=s',
             'whether Sundays should be regarded as the first day in the week; '
               . 'the alternative is Monday; default is '
-              . ( SUNDAY_BEGINS_WEEK ? 'TRUE' : 'FALSE' ),
-            { regex => qr/^(?:true|false|[01])?$/i }
+              . ( SUNDAY_BEGINS_WEEK ? 'TRUE' : 'FALSE' )
         ],
         [
             'length-pay-period=i',
@@ -110,9 +114,9 @@ sub options {
               . DAYS
               . '; e.g., --workdays=MTWH; '
               . 'default is '
-              . WORKDAYS,
-            { regex => qr/^[SMTWHFA]*+$/i }
+              . WORKDAYS
         ],
+        ['editor=s','text editor to use when manually editing the log'],
         [ 'list|l', 'list all configuration parameters' ],
     );
 }
@@ -121,9 +125,10 @@ sub options {
 # list values of all params
 #
 sub _list_params {
-    my @params = qw(
+    my @params = sort qw(
       precision
       day_length
+      editor
       pay_period_length
       start_pay_period
       sunday_begins_week
@@ -157,6 +162,12 @@ sub validate {
     my ( $self, $opt, $args ) = @_;
 
     $self->usage_error('specify some parameter to set or display') unless %$opt;
+    $self->usage_error('cannot parse work days')
+      if $opt->workdays && $opt->workdays !~ /^[SMTWHFA]*+$/i;
+    $self->usage_error(
+        'cannot understand argument ' . $opt->sunday_begins_week )
+      if $opt->sunday_begins_week
+          && $opt->sunday_begins_week !~ /^(?:true|false|[01])?$/i;
 }
 
 1;

@@ -29,7 +29,6 @@ our @EXPORT_OK = qw(
   workdays
   DAYS
   DIRECTORY
-  EDITOR
   HOURS
   PERIOD
   PRECISION
@@ -63,9 +62,6 @@ use constant HOURS => 8;
 use constant SUNDAY_BEGINS_WEEK => 1;
 
 # environment variables
-
-# identifies text editor to use to edit log
-use constant EDITOR => 'JOB_LOG_EDITOR';
 
 # identifies directory to write files into
 use constant DIRECTORY => 'JOB_LOG_DIRECTORY';
@@ -292,7 +288,9 @@ Log editing program.
 =cut
 
 sub editor {
-    return $ENV{ EDITOR() };
+    my ($value) = @_;
+    $value = _param( 'editor', undef, 'external', $value );
+    return $value;
 }
 
 =method columns

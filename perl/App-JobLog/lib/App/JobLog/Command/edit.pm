@@ -5,20 +5,33 @@ package App::JobLog::Command::edit;
 use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw{
-  App::JobLog::Config
+  App::JobLog::Log
   App::JobLog::Log::Line
   FileHandle
 };
 use autouse 'File::Temp'                => qw(tempfile);
 use autouse 'File::Copy'                => qw(copy);
 use autouse 'Digest::MD5'               => qw(md5);
-use autouse 'App::JobLog::Config'       => qw(editor log EDITOR);
+use autouse 'App::JobLog::Config'       => qw(editor log);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
+use autouse 'App::JobLog::TimeGrammar'  => qw(parse);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
-    die 'not yet implemented!' if $opt->close;
-    if ( my $editor = editor() ) {
+    if ( $opt->close ) {
+        my $time = join ' ', @$args;
+        eval {
+            my ($s) = parse($time);
+            my $log = App::JobLog::Log->new;
+            my ( $e, $i ) = $log->find_previous($s);
+            $self->usage_error('log does not contain appropriate event')
+              unless $e;
+            $log->insert( $i + 1,
+                App::JobLog::Log::Line->new( time => $s, done => 1 ) );
+        };
+        $self->usage_error($@) if $@;
+    }
+    elsif ( my $editor = editor() ) {
         if ( my $log = log ) {
             my ( $fh, $fn ) = tempfile;
             binmode $fh;
@@ -34,7 +47,7 @@ sub execute {
                 $fh = FileHandle->new( "$log.bak", 'w' );
                 copy( $fn, $fh );
                 $fh->close;
-                print STDERR "saved backup log in $log.bak\n";
+                say "saved backup log in $log.bak";
                 App::JobLog::Log->new->validate;
             }
             else {
@@ -42,11 +55,12 @@ sub execute {
             }
         }
         else {
-            print STDERR "nothing in log to edit\n";
+            say 'nothing in log to edit';
         }
     }
-
-    print "(edit) Everything has been initialized.  (Not really.)\n";
+    else {
+        $self->usage_error('no editor specified') unless $opt->close;
+    }
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' [-c <date and time>]' }
@@ -74,7 +88,7 @@ for summaries, but @{[prog_name]} will understand most common natural language t
 If you need to do more extensive editing of the log this command will open a text editor
 for you and confirm the validity of the log after you save, commenting out
 ill-formed lines and printing a warning. This command requires the you
-to have set the \$@{[EDITOR()]} environment variable to specify a text. 
+to have set editor configuration parameter to specify a text. 
 The text editor must be invokable like so,
 
   <editor> <file to edit>

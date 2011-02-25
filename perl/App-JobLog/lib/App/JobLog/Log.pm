@@ -157,8 +157,8 @@ of its line. Its return object is an L<App::JobLog::Log::Event>.
 sub first_event {
     my ($self) = @_;
     return $self->[FIRST_EVENT], $self->[FIRST_INDEX] if $self->[FIRST_EVENT];
-    my ( $i, $e );
-    while ( my $line = $self->[IO][ $i++ ] ) {
+    my ( $i, $e ) = 0;
+    while ( my $line = $self->[IO][$i] ) {
         my $ll = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_event ) {
             if ($e) {
@@ -170,6 +170,7 @@ sub first_event {
                 $self->[FIRST_INDEX] = $i;
             }
         }
+        $i++;
     }
     $self->[FIRST_EVENT] = $e;
     return $e, $self->[FIRST_INDEX];
@@ -420,15 +421,13 @@ sub _scan_for_previous {
             }
             if ( $ll->is_beginning ) {
                 $previous       = App::JobLog::Log::Event->new($ll);
-                $previous_index = $i;
+                $previous_index = $index;
             }
             else {
                 $previous = undef;
             }
         }
     }
-
-    # return only overlap
     return $previous, $previous_index;
 }
 
@@ -566,7 +565,7 @@ sub insert {
     # silently return unless some content to insert has been provided
     return unless @lines;
     my $comment =
-      App::JobLog::Log::LogLine->new( comment => 'the following '
+      App::JobLog::Log::Line->new( comment => 'the following '
           . ( @lines == 1 ? ''  : scalar(@lines) . ' ' ) . 'line'
           . ( @lines == 1 ? ''  : 's' ) . ' ha'
           . ( @lines == 1 ? 's' : 've' )
