@@ -478,8 +478,7 @@ sub append_event {
             if (
                 $current->is_beginning
                 && (   $current->time < $previous->start
-                    || $previous->is_closed
-                    && $current->time < $previous->end )
+                    || $previous->is_closed && $current->time < $previous->end )
               )
             {
                 carp
@@ -574,6 +573,19 @@ sub insert {
           . ' been inserted by '
           . __PACKAGE__ );
     splice @{ $self->[IO] }, $index, 0, $comment, @lines;
+}
+
+=method replace
+
+Replace one line with another.
+
+=cut
+
+sub replace {
+    my ( $self, $index, $line ) = @_;
+    carp 'expected integer and log line'
+      unless $index =~ /^\d++$/ && ref $line eq 'App::JobLog::Log::Line';
+    $self->[IO][$index] = $line;
 }
 
 1;
