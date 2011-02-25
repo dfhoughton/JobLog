@@ -11,7 +11,7 @@ sub execute {
     my ( $self, $opt, $args ) = @_;
 
     # display everything done today
-    'App::JobLog::Command::summary'->execute( $opt, 'today' );
+    'App::JobLog::Command::summary'->execute( $opt, ['today'] );
     if ( exists $opt->{finished} ) {
 
         # adjust options

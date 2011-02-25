@@ -22,16 +22,20 @@ use autouse 'App::JobLog::Log::Synopsis' => qw(
 sub execute {
     my ( $self, $opt, $args ) = @_;
 
-    my $tags          = $opt->tag         || [];
-    my $excluded_tags = $opt->exclude_tag || [];
-    my $match         = $opt->match       || [];
-    my $no_match      = $opt->no_match    || [];
-    my $time          = $opt->time;
+    my $tags          = $opt->{tag}         || [];
+    my $excluded_tags = $opt->{exclude_tag} || [];
+    my $match         = $opt->{match}       || [];
+    my $no_match      = $opt->{no_match}    || [];
+    my $time          = $opt->{time};
 
     # validate regexes, if any, while generating test
+
+ # NOTE: using $opt->{x} form rather than $opt->x to facilitate invoking summary
+ # from today command
+
     my $test = _make_test( $tags, $excluded_tags, $match, $no_match, $time );
     my $merge_level;
-    given ( $opt->merge || '' ) {
+    given ( $opt->{merge} || '' ) {
         when ('no_merge') {
             $merge_level = NO_MERGE
         }
@@ -60,9 +64,9 @@ sub execute {
     my ( $start, $end ) = parse( join ' ', @$args );
 
     # collect synopses
-    my $events = App::JobLog::Log->new->find_events($start, $end);
+    my $events = App::JobLog::Log->new->find_events( $start, $end );
     my $time_remaining = time_remaining($events);
-    display $events unless $opt->hidden;
+    display $events unless $opt->{hidden};
 
     return $time_remaining;
 }
