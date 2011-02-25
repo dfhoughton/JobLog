@@ -8,11 +8,12 @@ package App::JobLog::TimeGrammar;
   
   use Modern::Perl;
   use DateTime;
+  use App::JobLog::Time qw(tz);
   use App::JobLog::TimeGrammar qw(parse);
   
-  # for demonstration purposes we modify "now"
-  App::JobLog::TimeGrammar->present_date =
-    DateTime->new( year => 2011, month => 2, day => 17 );
+  # for demonstration purposes we modify "today"
+  $App::JobLog::Time::today =
+    DateTime->new( year => 2011, month => 2, day => 17, time_zone => tz );
 
   for my $phrase ( 'Monday until the end of the week', 'Tuesday at 9:00 p.m.' ) {
       my ( $start, $end, $endpoints ) = parse($phrase);
@@ -47,6 +48,7 @@ use autouse 'App::JobLog::Config' => qw(
   start_pay_period
   DIRECTORY
 );
+use autouse 'App::JobLog::Time' => qw(today);
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing
@@ -59,42 +61,6 @@ our ( $b1, $b2 );
 
 # holds time of day information
 our $time_buffer;
-
-# $today used to cache current moment for efficiency
-# and to facilitate testing
-our $today;
-
-=method present_date
-
-And lvalue class method for getting or setting the cached C<DateTime>
-object representing "now". This is useful for debugging and testing
-but otherwise you should leave it alone.
-
-=cut
-
-sub present_date : lvalue {
-    $today;
-}
-
-# cache local time zone, again for efficiency and to facilitate
-# testing
-our $tz;
-
-=method time_zone
-
-An lvalue class method for getting or setting the C<DateTime::TimeZone>
-object which will be used to define the current moment. This is useful
-for debugging and testing but otherwise you should leave it alone. Also,
-it will only have any effect if you set it before doing any parsing. After
-calling C<parse> the present moment will have been defined and cached
-and any further parsing will use this cached C<DateTime> (unless you
-use C<present_date> to set the present moment to C<undef>).
-
-=cut
-
-sub time_zone : lvalue {
-    $tz;
-}
 
 # static maps for translating month and day names to numbers
 my ( %month_abbr, %day_abbr );
@@ -555,7 +521,7 @@ sub decontextualized_date {
         when ('beginning') { $is_start = 1 }
     }
     if ( my $period = $h->{period} ) {
-        my $date = today();
+        my $date = today;
         given ($period) {
             when ('mon') {
                 $date->truncate( to => 'month' );
@@ -597,7 +563,7 @@ sub decontextualized_date {
 
 sub decontextualized_numeric_date {
     my ( $h, $is_start ) = @_;
-    my $date = today();
+    my $date = today;
     delete $h->{type};
     delete $h->{modifier};
     $h->{year}  //= $date->year;
@@ -622,7 +588,7 @@ sub fix_date {
             return DateTime->new(%$d);
         }
         elsif ( my $day = $d->{day} ) {
-            my $date = today();
+            my $date = today;
             return $date if $day eq 'tod';
             if ( $day eq 'yes' ) {
                 $date->subtract( days => 1 );
@@ -654,7 +620,7 @@ sub fix_date {
         }
 
         if ( my $period = $d->{period} ) {
-            my $date = today();
+            my $date = today;
             if ( $d->{modifier} eq 'this' ) {
                 given ($period) {
                     when ('mon') {
@@ -731,7 +697,7 @@ sub fix_date {
         }
 
         init_month_abbr();
-        my $date = today();
+        my $date = today;
         $date->truncate( to => 'month' );
         my $month_num  = $month_abbr{ $d->{month} };
         my $todays_num = $date->month;
@@ -796,7 +762,7 @@ sub init_hash {
 # the present
 sub before_now {
     my ( $h1, $h2 ) = @_;
-    my $now = today();
+    my $now = today;
     my ( $u1, $amt1, $u2, $amt2 ) = ( time_unit($h1), time_unit($h2) );
     ( $h1, $h2 ) =
       ( decontextualized_date( $h1, 1 ), decontextualized_date($h2) );
@@ -854,18 +820,6 @@ sub is_fixed {
         }
     }
     return 0;
-}
-
-# fetch cached current moment
-sub today {
-    $today //= DateTime->today( time_zone => tz() );
-    return $today->clone;
-}
-
-# fetch the current time zone
-sub tz {
-    $tz //= DateTime::TimeZone->new( name => 'local' );
-    return $tz;
 }
 
 1;

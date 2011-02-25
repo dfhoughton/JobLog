@@ -5,10 +5,8 @@ package App::JobLog::Command::add;
 use App::JobLog -command;
 use Modern::Perl;
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
-use Class::Autouse qw(
-  App::JobLog::Log
-  DateTime
-);
+use autouse 'App::JobLog::Time'         => qw(now);
+use Class::Autouse qw(App::JobLog::Log);
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
@@ -19,7 +17,7 @@ sub execute {
     App::JobLog::Log->new->append_event(
         $tags ? ( tags => $tags ) : (),
         description => [ join ' ', @$args ],
-        time        => DateTime->now
+        time        => now
     );
 }
 

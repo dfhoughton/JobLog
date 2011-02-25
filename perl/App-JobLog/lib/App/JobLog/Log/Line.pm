@@ -2,8 +2,9 @@ package App::JobLog::Log::Line;
 
 # ABSTRACT: encapsulates one line of log text
 
-use Class::Autouse qw{DateTime};
 use Modern::Perl;
+use Class::Autouse qw{DateTime};
+use autouse 'App::JobLog::Time' => qw(now tz);
 
 # represents a single non-comment line in the log
 # not using Moose to keep CLI snappy
@@ -46,7 +47,7 @@ sub new {
         my $time = $opts{time};
         die "invalid value for time: $time"
           if $time && ref $time ne 'DateTime';
-        $self->{time} = $time || DateTime->now;
+        $self->{time} = $time || now;
         $self->{done} = 1;
         delete $opts{done};
         delete $opts{time};
@@ -110,12 +111,13 @@ sub parse {
         delete $obj->{text};
         my @time = split /\s++/, $date;
         $date = DateTime->new(
-            year   => $time[0],
-            month  => $time[1],
-            day    => $time[2],
-            hour   => $time[3],
-            minute => $time[4],
-            second => $time[5],
+            year      => $time[0],
+            month     => $time[1],
+            day       => $time[2],
+            hour      => $time[3],
+            minute    => $time[4],
+            second    => $time[5],
+            time_zone => tz,
         );
         $obj->{time} = $date;
         if ($is_beginning) {

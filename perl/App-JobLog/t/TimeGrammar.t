@@ -5,6 +5,7 @@
 use Modern::Perl;
 
 use App::JobLog::Config qw(log start_pay_period pay_period_length DIRECTORY);
+use App::JobLog::Time qw(tz);
 use App::JobLog::TimeGrammar;
 use DateTime;
 use File::Temp;
@@ -17,8 +18,8 @@ my $dir = File::Temp->newdir();
 $ENV{ DIRECTORY() } = $dir;
 
 # fix current moment
-my $now = DateTime->new( year => 2011, month => 2, day => 18 );
-App::JobLog::TimeGrammar->present_date = $now;
+my $now = DateTime->new( year => 2011, month => 2, day => 18, time_zone => tz );
+$App::JobLog::Time::now = $now;
 
 subtest 'single dates with times' => sub {
     my %dates = (

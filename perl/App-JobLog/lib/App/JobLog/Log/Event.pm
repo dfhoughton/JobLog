@@ -4,6 +4,7 @@ package App::JobLog::Log::Event;
 
 use Modern::Perl;
 use Class::Autouse qw{DateTime};
+use autouse 'App::JobLog::Time' => qw(now);
 
 sub new {
     my ( undef, $logline ) = @_;
@@ -104,13 +105,9 @@ Duration of event in seconds.
 
 sub duration {
     my ($self) = @_;
-    my $e = $self->is_open ? _now() : $self->end;
+    my $e = $self->is_open ? now : $self->end;
     return $self->start->epoch - $e->epoch;
 }
-
-# function facilitating override of DateTime->now in testing
-our $now;    # for use in testing
-sub _now { $now ||= DateTime->now; $now }
 
 =method split_days
 
@@ -122,7 +119,7 @@ sub split_days {
     my ($self) = @_;
     my $days_end =
       $self->start->clone->truncate( to => 'day' )->add( days => 1 );
-    if ( $days_end < ($self->end || _now()) ) {
+    if ( $days_end < ( $self->end || now ) ) {
         my @splits;
         my $s = $self->start;
         do {

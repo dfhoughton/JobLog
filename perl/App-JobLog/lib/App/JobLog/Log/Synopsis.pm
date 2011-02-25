@@ -28,7 +28,9 @@ our %EXPORT_TAGS = (
 );
 
 use Modern::Perl;
-use autouse 'Carp' => qw(carp);
+use autouse 'Carp'              => qw(carp);
+use autouse 'App::JobLog::Time' => qw(now);
+use Class::Autouse qw(DateTime);
 
 use constant MERGE_ALL      => 1;
 use constant MERGE_ADJACENT => 2;
@@ -280,7 +282,7 @@ sub duration {
     my @events = $self->events;
     if ( $self->single_interval ) {
         my ( $se, $ee ) = ( $events[0], $events[$#events] );
-        my ( $start, $end ) = ( $se->start, $ee->end || _now() );
+        my ( $start, $end ) = ( $se->start, $ee->end || now );
         return $end->epoch - $start->epoch;
     }
     else {
@@ -289,9 +291,6 @@ sub duration {
         return $d;
     }
 }
-
-our $now;
-sub _now { $now ||= DateTime->now; $now }
 
 =method time_fmt
 

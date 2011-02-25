@@ -4,7 +4,7 @@ package App::JobLog::Command::today;
 
 use App::JobLog -command;
 use App::JobLog::Command::summary;
-use Class::Autouse qw{DateTime};
+use autouse 'App::JobLog::Time' => qw(now);
 use Modern::Perl;
 
 sub execute {
@@ -34,8 +34,8 @@ sub _when_finished {
         print "you are just now done\n";
     }
     else {
-        my $now  = DateTime->now;
-        my $then = DateTime->clone;
+        my $now  = now;
+        my $then = $now->clone;
         $then->add( hours => $remaining );
         my $duration = $then->subtract_datetime($now);
         if ( $duration->days > 0 ) {
