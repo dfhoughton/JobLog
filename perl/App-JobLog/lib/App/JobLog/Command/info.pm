@@ -301,12 +301,13 @@ return <<END;
              <month_first> = <month> s d{1,2}
           <month_modifier> = <modifier> | <termini> [ s "of" ]
             <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period> 
+                     <now> = "now"
                  <numeric> = <year> | <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
                   <period> = "week" | "month" | "year" | <pay>
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
-         <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time>
+         <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time> | <now>
  <relative_period_no_time> = "yesterday" | "today"
              <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
            <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
