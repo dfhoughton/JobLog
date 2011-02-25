@@ -14,9 +14,11 @@ This wasn't written to be used outside of C<App::JobLog>.
 use Exporter 'import';
 our @EXPORT_OK = qw(
   columns
+  day_length
   dir
   editor
   init_file
+  is_workday
   log
   pay_period_length
   precision
@@ -24,11 +26,15 @@ our @EXPORT_OK = qw(
   start_pay_period
   sunday_begins_week
   vacation
+  workdays
+  DAYS
   DIRECTORY
   EDITOR
   HOURS
   PERIOD
   PRECISION
+  SUNDAY_BEGINS_WEEK
+  WORKDAYS
 );
 
 use Class::Autouse qw{
@@ -63,6 +69,12 @@ use constant EDITOR => 'JOB_LOG_EDITOR';
 
 # identifies directory to write files into
 use constant DIRECTORY => 'JOB_LOG_DIRECTORY';
+
+# expected abbreviations for working days in week
+use constant WORKDAYS => 'MTWHF';
+
+# expected abbreviations for weekdays
+use constant DAYS => 'S' . WORKDAYS . 'A';
 
 =method init_file
 
@@ -176,9 +188,8 @@ END {
 # construct configuration object as necessary
 sub _config {
     unless ($config) {
-        $config = Config::Tiny->new;
         my $f = _config_file();
-        $config->read($f) if -e $f;
+        $config = -e $f ? Config::Tiny->read($f) : Config::Tiny->new;
     }
     return $config;
 }
@@ -295,6 +306,45 @@ sub columns {
     my ($cols) = GetTerminalSize;
     $cols ||= 76;
     return $cols;
+}
+
+=method workdays
+
+The days of the week when one expects to be working.
+
+=cut
+
+sub workdays {
+    my ($value) = @_;
+    return _param( 'workdays', WORKDAYS, 'time', $value );
+}
+
+=method is_workday
+
+Returns whether a particular L<DateTime> object represents a workday.
+
+=cut
+
+my %workdays;
+
+sub is_workday {
+    my ($date) = @_;
+
+    # initialize map
+    unless (%workdays) {
+        my @days = split //, DAYS;
+
+        # move Sunday into DateTime's expected position
+        push @days, shift @days;
+        my %day_map;
+        for ( 0 .. $#days ) {
+            $day_map{ $days[$_] } = $_ + 1;
+        }
+        for ( split //, workdays() ) {
+            $workdays{ $day_map{$_} } = 1;
+        }
+    }
+    return $workdays{ $date->day_of_week };
 }
 
 1;
