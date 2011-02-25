@@ -7,7 +7,10 @@ use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now);
 
 # for debugging
-use overload '""' => sub { $_[0]->data->to_string };
+use overload '""' => sub {
+    $_[0]->data->to_string . '-->'
+      . ( $_[0]->is_closed ? $_[0]->end : 'ongoing' );
+};
 
 sub new {
     my ( undef, $logline ) = @_;

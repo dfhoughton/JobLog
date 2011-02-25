@@ -431,6 +431,7 @@ sub _scan_for_previous {
     return $previous, $previous_index;
 }
 
+# your generic O(log_n) complexity bisecting search
 sub _estimate_index {
     my ( $top, $bottom, $et, $eb, $s ) = @_;
     my $delta = $bottom - $top + 1;

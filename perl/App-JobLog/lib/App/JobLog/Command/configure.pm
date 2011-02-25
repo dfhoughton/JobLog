@@ -1,6 +1,6 @@
 package App::JobLog::Command::configure;
 
-# ABSTRACT: observe or modify App::JobLog configuration
+# ABSTRACT: examine or modify App::JobLog configuration
 
 use App::JobLog -command;
 use Modern::Perl;
@@ -171,3 +171,14 @@ sub validate {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
+you want the details.
+
+=cut

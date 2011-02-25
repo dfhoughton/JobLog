@@ -161,7 +161,6 @@ sub to_string {
     my ($self) = @_;
     return $self->{text} if exists $self->{text};
     if ( $self->is_event ) {
-        my $time = $self->time;
         my $text = $self->time_stamp;
         $text .= ':';
         if ( $self->is_beginning ) {
