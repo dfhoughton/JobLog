@@ -94,6 +94,8 @@ Code to manage vacation times.
           map { ( my $d = $_ ) =~ s/([;\\])/\\$1/g; $d }
           @{ $self->description };
     }
+    
+    sub display { "foo" }
 }
 
 use Modern::Perl;
@@ -131,7 +133,7 @@ Returns sorted list of vacation periods.
 
 =cut
 
-sub periods { @{ $_[0]->{data} } }
+sub periods { @{ $_[0]->{data} || [] } }
 
 =method close
 
