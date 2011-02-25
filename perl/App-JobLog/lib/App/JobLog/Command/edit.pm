@@ -31,7 +31,7 @@ sub execute {
         };
         $self->usage_error($@) if $@;
     }
-    elsif ( my $editor = editor() ) {
+    elsif ( my $editor = editor ) {
         if ( my $log = log ) {
             my ( $fh, $fn ) = tempfile;
             binmode $fh;

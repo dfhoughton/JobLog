@@ -39,7 +39,9 @@ our @EXPORT = qw(
 
 use Modern::Perl;
 use DateTime;
-use Class::Autouse qw(DateTime::TimeZone);
+use Class::Autouse qw(
+  App::JobLog::Log
+);
 use Carp 'croak';
 use autouse 'App::JobLog::Config' => qw(
   log
@@ -48,7 +50,7 @@ use autouse 'App::JobLog::Config' => qw(
   start_pay_period
   DIRECTORY
 );
-use autouse 'App::JobLog::Time' => qw(today);
+use autouse 'App::JobLog::Time' => qw(now today);
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing
@@ -67,10 +69,12 @@ my ( %month_abbr, %day_abbr );
 
 # the master date parsing regex
 my $re = qr{
-    \A \s*+ (?&span) \s*+ \Z
+    \A \s*+ (?: (?&ever) | (?&span) ) \s*+ \Z
 
     (?(DEFINE)
 
+     (?<ever> (?: all | always | ever | (?:(?:the \s++)? (?: entire | whole ) \s++ )? log ) (?{ $matches{ever} = 1 }) )
+     
      (?<span>
       ((?&date)) (?{ $d1 = $^N; stow($d1) })
       (?: (?&span_divider) ((?&date)) (?{ $d2 = $^N; stow($d2) }) )?
@@ -363,6 +367,16 @@ sub parse {
     my $phrase = shift;
     local ( %matches, %buffer, $d1, $d2, $b1, $b2, $time_buffer );
     if ( $phrase =~ $re ) {
+        if ($matches{ever}) {
+            # we want the entire timespan of the log
+            my ($se) = App::JobLog::Log->new->first_event;
+            if ($se) {
+                return $se->start, now, 0;
+            } else {
+                return now->subtract(seconds => 1), now, 0;
+            }
+        }
+        
         my $h1 = $matches{$d1};
         my %t1 = extract_time( $h1, 1 );
         normalize($h1);
@@ -865,10 +879,11 @@ C<parse> will croak if it cannot parse the expression given.
 
 The following is a semi-formal BNF grammar of time understood by C<App::JobLog::TimeGrammar>. In this
 formalization C<s> represents whitespace, C<d> represents a digit, and C<\\n> represents a back reference
-to the nth item in parenthesis in the given rule. After the first two rules the rules are alphabetized
+to the nth item in parenthesis in the given rule. After the first three rules the rules are alphabetized
 to facilitate finding them.
 
-              <expression> = s* <span> s*
+              <expression> = s* ( <ever> | <span> ) s*
+                    <ever> = "all" | "always" | "ever" | [ [ "the" s ] ( "entire" | "whole" ) s ] "log"
                     <span> = <date> [ <span_divider> <date> ]
  
                       <at> = "at" | "@"

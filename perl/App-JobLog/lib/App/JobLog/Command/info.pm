@@ -266,7 +266,8 @@ END
 # in App::JobLog::TimeGrammar for lack of introspection in pod
 sub _bnf {
 return <<END;
-              <expression> = s* <span> s*
+              <expression> = s* ( <ever> | <span> ) s*
+                    <ever> = "all" | "always" | "ever" | [ [ "the" s ] ( "entire" | "whole" ) s ] "log"
                     <span> = <date> [ <span_divider> <date> ]
  
                       <at> = "at" | "@"
