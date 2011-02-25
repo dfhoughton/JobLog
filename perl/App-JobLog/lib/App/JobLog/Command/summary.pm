@@ -66,7 +66,7 @@ sub execute {
     # collect synopses
     my $events = App::JobLog::Log->new->find_events( $start, $end );
     my $time_remaining = time_remaining($events);
-    display $events unless $opt->{hidden};
+    display $events, $merge_level, $test unless $opt->{hidden};
 
     return $time_remaining;
 }
@@ -84,22 +84,14 @@ sub _make_test {
     return undef unless %tags || %excluded_tags || @no_match || @match || $time;
 
     my $test = sub {
-        my ($e) = @$_;
-        if (%tags) {
+        my ($e) = @_;
+        if ( %tags || %excluded_tags ) {
             my $good = 0;
-            for my $t ( $e->tags ) {
+            for my $t ( @{ $e->tags } ) {
+                return undef if $excluded_tags{$t};
                 $good = $tags{$t};
-                last if $good;
             }
             return undef unless $good;
-        }
-        if (%excluded_tags) {
-            my $bad = 0;
-            for my $t ( $e->tags ) {
-                $bad = $excluded_tags{$t};
-                last if $bad;
-            }
-            return undef if $bad;
         }
         if ( @no_match || @match ) {
             my $good = !@match;

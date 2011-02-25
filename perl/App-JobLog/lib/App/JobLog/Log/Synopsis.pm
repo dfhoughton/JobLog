@@ -45,7 +45,6 @@ use constant NO_MERGE                 => 0;
 # given a format and events prints out synopsis
 sub synopsis {
     my ( $events, $merge_level, $test ) = @_;
-    $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
     $test ||= sub { $_[0] };
     my $items = collect( $events, $merge_level, $test );
     return $items;
@@ -123,7 +122,8 @@ sub same_tags {
     my ( $self, $event ) = @_;
     for my $e ( $self->events ) {
         return 0
-          unless $e->all_tags( $event->tags ) && $event->all_tags( $e->tags );
+          unless $e->all_tags( @{ $event->tags } )
+              && $event->all_tags( @{ $e->tags } );
     }
     return 1;
 }
@@ -174,6 +174,7 @@ sub description {
             for my $d ( @{ $e->data->description } ) {
                 unless ( $seen{$d} ) {
                     $seen{$d} = 1;
+                    chomp $d;    # got newline from log
                     push @descriptions, $d;
                 }
             }
@@ -181,6 +182,7 @@ sub description {
         my $s = $descriptions[0];
         for my $d ( @descriptions[ 1 .. $#descriptions ] ) {
             $s .= $s =~ /\w$/ ? '; ' : ' ';
+            $s .= $d;
         }
         $self->{description} = $s;
     }
@@ -314,6 +316,7 @@ sub time_fmt {
         $s = $start->strftime('%l:%M %P') . ' - ongoing';
     }
     $s =~ s/  / /;    # strftime tends to add in an extra space
+    $s =~ s/^ //;
     return $s;
 }
 

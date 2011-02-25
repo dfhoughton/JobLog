@@ -6,6 +6,9 @@ use Modern::Perl;
 use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now);
 
+# for debugging
+use overload '""' => sub { $_[0]->data->to_string };
+
 sub new {
     my ( undef, $logline ) = @_;
     my $self = bless { log => $logline };

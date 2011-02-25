@@ -51,6 +51,11 @@ sub display {
     # TODO augment events with vacation and holidays
     if (@$events) {
         my @synopses = @{ synopsis( $events, $merge_level, $test ) };
+        
+        unless (@synopses) {
+            say 'no events remain after filtering';
+            return;
+        }
 
         my ( $format, $tag_width, $description_width ) =
           _define_format( \@synopses );
@@ -93,7 +98,7 @@ sub display {
             my $l = length $tag;
             $m1 = $l if $l > $m1;
         }
-        $format = sprintf "%%-%ds %%%ds\n", $m1, $m2;
+        $format = sprintf "  %%-%ds %%%ds\n", $m1, $m2;
         printf $format, 'TOTAL HOURS', _duration($total);
         for my $key ( sort keys %tag_map ) {
             my $d = $tag_map{$key};
@@ -173,16 +178,16 @@ sub _define_format {
 
     # add on initial space to each column
     $widths = [ map { $_ + 2 } @$widths ];
-    $widths->[-2] -= 2; # tags column is special
+    $widths->[$#$widths] -= 2;    # tags column is special
     for my $c (@$widths) {
         $max_description -= $c;    # column width
     }
-    $max_description -= 2;         # tab before text
+    $max_description -= 2 + 2;     # tab before text and margin on the right
     my $format;
     if ( @$widths == 3 ) {
 
         # print times
-        $format = sprintf "%%%ds%%%ds  %%-%ds%%-%ds\n", @$widths,
+        $format = sprintf "%%%ds%%%ds  %%-%ds  %%-%ds\n", @$widths,
           $max_description;
     }
     else {
@@ -190,7 +195,9 @@ sub _define_format {
         # don't print times
         $format = sprintf "%%%ds%%-%ds%%-%ds\n", @$widths, $max_description;
     }
-    return $format, $widths->[$#$widths], $max_description;
+
+# there seems to be a bug in Text::Wrap that requires tinkering with the column width
+    return $format, $widths->[$#$widths] + 1, $max_description;
 }
 
 sub _duration { sprintf $duration_format, $_[0] / HOUR_IN_SECONDS }
