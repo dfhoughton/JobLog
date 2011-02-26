@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(
   MERGE_SAME_TAGS
   MERGE_SAME_DAY
   MERGE_SAME_DAY_SAME_TAGS
-  NO_MERGE
+  MERGE_NONE
 );
 our %EXPORT_TAGS = (
     merge => [
@@ -22,7 +22,7 @@ our %EXPORT_TAGS = (
           MERGE_SAME_TAGS
           MERGE_SAME_DAY
           MERGE_SAME_DAY_SAME_TAGS
-          NO_MERGE
+          MERGE_NONE
           )
     ]
 );
@@ -32,19 +32,18 @@ use autouse 'Carp'              => qw(carp);
 use autouse 'App::JobLog::Time' => qw(now);
 use Class::Autouse qw(DateTime);
 
-use constant MERGE_ALL      => 1;
-use constant MERGE_ADJACENT => 2;
-
-# default
+use constant MERGE_ALL                => 1;
+use constant MERGE_ADJACENT           => 2;
 use constant MERGE_ADJACENT_SAME_TAGS => 3;
 use constant MERGE_SAME_TAGS          => 4;
 use constant MERGE_SAME_DAY           => 5;
 use constant MERGE_SAME_DAY_SAME_TAGS => 6;
-use constant NO_MERGE                 => 0;
+use constant MERGE_NONE               => 0;
 
 # given a format and events prints out synopsis
 sub synopsis {
     my ( $events, $merge_level, $test ) = @_;
+    $merge_level //= MERGE_ADJACENT_SAME_TAGS;
     $test ||= sub { $_[0] };
     my $items = collect( $events, $merge_level, $test );
     return $items;
@@ -54,12 +53,11 @@ sub synopsis {
 # returns a bunch of App::JobClock::Log::Synopsis objects
 sub collect {
     my ( $events, $merge_level, $test ) = @_;
-    $merge_level //= MERGE_ADJACENT_SAME_TAGS;
     my ( @synopses, $previous, @current_day );
     for my $e ( map { $_->split_days } @$events ) {
         if ( $e = $test->($e) ) {
             my $do_merge = 0;
-            my $mergand = $previous;
+            my $mergand  = $previous;
             if ($previous) {
                 @current_day = () unless $previous->same_day($e);
                 given ($merge_level) {
@@ -97,7 +95,7 @@ sub collect {
                           && $previous->adjacent($e)
                           && $previous->same_tags($e)
                     }
-                    when (NO_MERGE) {
+                    when (MERGE_NONE) {
                         $do_merge = 0
                     }
                     default { carp 'unfamiliar merge level' }
@@ -247,7 +245,7 @@ sub _new {
         when (MERGE_SAME_DAY_SAME_TAGS) {
             ( $one_interval, $one_day ) = ( 0, 1 )
         }
-        when (NO_MERGE) { ( $one_interval, $one_day ) = ( 1, 1 ) }
+        when (MERGE_NONE) { ( $one_interval, $one_day ) = ( 1, 1 ) }
     }
     return bless {
         events       => [$event],

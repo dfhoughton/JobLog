@@ -8,6 +8,7 @@ use Class::Autouse 'App::JobLog::Log';
 use autouse 'App::JobLog::TimeGrammar'   => qw(parse daytime);
 use autouse 'Carp'                       => qw(carp);
 use autouse 'Getopt::Long::Descriptive'  => qw(prog_name);
+use autouse 'App::JobLog::Config'        => qw(merge);
 use autouse 'App::JobLog::Log::Format'   => qw(display time_remaining);
 use autouse 'App::JobLog::Log::Synopsis' => qw(
   MERGE_ALL
@@ -16,7 +17,7 @@ use autouse 'App::JobLog::Log::Synopsis' => qw(
   MERGE_SAME_TAGS
   MERGE_SAME_DAY
   MERGE_SAME_DAY_SAME_TAGS
-  NO_MERGE
+  MERGE_NONE
 );
 
 sub execute {
@@ -37,7 +38,7 @@ sub execute {
     my $merge_level;
     given ( $opt->{merge} || '' ) {
         when ('no_merge') {
-            $merge_level = NO_MERGE
+            $merge_level = MERGE_NONE
         }
         when ('merge_all') {
             $merge_level = MERGE_ALL
@@ -57,7 +58,14 @@ sub execute {
         when ('merge_same_day_same_tags') {
             $merge_level = MERGE_SAME_DAY_SAME_TAGS
         }
-        default { $merge_level = MERGE_ADJACENT_SAME_TAGS }
+        default {
+            # some dark wizardry here
+            my $m = uc merge;
+            $m =~ s/ /_/g;
+            $m = "MERGE_$m";
+            no strict 'refs';
+            $merge_level = &$m();
+        }
     }
 
     # parse time expression

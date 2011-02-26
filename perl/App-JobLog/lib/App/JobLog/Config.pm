@@ -20,6 +20,7 @@ our @EXPORT_OK = qw(
   init_file
   is_workday
   log
+  merge
   pay_period_length
   precision
   readme
@@ -30,6 +31,7 @@ our @EXPORT_OK = qw(
   DAYS
   DIRECTORY
   HOURS
+  MERGE
   PERIOD
   PRECISION
   SUNDAY_BEGINS_WEEK
@@ -71,6 +73,9 @@ use constant WORKDAYS => 'MTWHF';
 
 # expected abbreviations for weekdays
 use constant DAYS => 'S' . WORKDAYS . 'A';
+
+# default level of merging
+use constant MERGE => 'adjacent same tags';
 
 =method init_file
 
@@ -200,6 +205,11 @@ of events.
 sub precision {
     my ($value) = @_;
     return _param( 'precision', PRECISION, 'summary', $value );
+}
+
+sub merge {
+    my ($value) = @_;
+    return _param( 'merge', MERGE, 'summary', $value );
 }
 
 =method day_length

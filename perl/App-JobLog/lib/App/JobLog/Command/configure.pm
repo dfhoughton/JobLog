@@ -7,6 +7,7 @@ use Modern::Perl;
 use App::JobLog::Config qw(
   day_length
   editor
+  merge
   pay_period_length
   precision
   start_pay_period
@@ -14,6 +15,7 @@ use App::JobLog::Config qw(
   workdays
   DAYS
   HOURS
+  MERGE
   PERIOD
   PRECISION
   SUNDAY_BEGINS_WEEK
@@ -67,8 +69,15 @@ sub execute {
         $bool = sunday_begins_week($bool);
         say "Sunday begins week is now " . ( $bool ? 'true' : 'false' );
     }
-    if (defined $opt->editor) {
-        my $value = editor($opt->editor);
+    if ( defined $opt->merge ) {
+        my $m = lc $opt->merge;
+        $m =~ s/^\s++|\s++$//g;
+        $m =~ s/\s++/ /g;
+        my $value = merge($m);
+        say "merge level is now '$value'";
+    }
+    if ( defined $opt->editor ) {
+        my $value = editor( $opt->editor );
         say "log editor is now $value";
     }
 }
@@ -116,8 +125,15 @@ sub options {
               . 'default is '
               . WORKDAYS
         ],
-        ['editor=s','text editor to use when manually editing the log'],
-        [ 'list|l', 'list all configuration parameters' ],
+        [
+            'merge=s',
+            'amount of merging of events in summaries; '
+              . 'available options are : '
+              . "'adjacent same tags', 'adjacent', 'all', 'none', 'same day same tags', 'same day', 'same tags'; "
+              . "default is '@{[MERGE]}'"
+        ],
+        [ 'editor=s', 'text editor to use when manually editing the log' ],
+        [ 'list|l',   'list all configuration parameters' ],
     );
 }
 
@@ -129,6 +145,7 @@ sub _list_params {
       precision
       day_length
       editor
+      merge
       pay_period_length
       start_pay_period
       sunday_begins_week
@@ -168,6 +185,18 @@ sub validate {
         'cannot understand argument ' . $opt->sunday_begins_week )
       if $opt->sunday_begins_week
           && $opt->sunday_begins_week !~ /^(?:true|false|[01])?$/i;
+    if ( defined $opt->merge ) {
+        my $m = lc $opt->merge;
+        $m =~ s/^\s++|\s++$//g;
+        $m =~ s/\s++/ /g;
+        if ( $m !~
+/^(?:adjacent|adjacent same tags|all|none|same day|same day same tags|same tags)$/
+          )
+        {
+            $self->usage_error( 'unknown merge option: ' . $opt->merge );
+        }
+    }
+
 }
 
 1;
