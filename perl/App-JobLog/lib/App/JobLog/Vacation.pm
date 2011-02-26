@@ -8,97 +8,8 @@ Code to manage vacation times.
 
 =cut
 
-{
-
-    package Period;
-
-    use base 'App::JobLog::Log::Event';
-    use DateTime;
-    use App::JobLog::Log::Line;
-    use App::JobLog::Time qw(tz);
-    use Carp qw(carp);
-
-    use overload '""' => \&to_string;
-
-    sub flex : lvalue {
-        $_[0]->{flex};
-    }
-
-    # some global variables for use in BNF regex
-    our ( @dates, $is_flex, @tags, $description );
-
-    # log line parser
-    my $re = qr{
-    ^ (?&ts) : (?&non_ts) $
-    (?(DEFINE)
-     (?<ts> (?&date) : (?&date) )
-     (?<date> (\d{4}+\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{push @dates, $^N}) )
-     (?<non_ts> (?&flex) : (?&tags) : (?&description))
-     (?<flex> ([01]) (?{$is_flex = $^N}))
-     (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)
-     (?<tag> ((?:[^\s:\\]|(?&escaped))++) (?{push @tags, $^N}))
-     (?<escaped> \\.)
-     (?<description> (.++) (?{$description = $^N}))
-    )
-}xi;
-
-    # for parsing a line in an existing log
-    sub parse {
-        my ( undef, $text ) = @_;
-        local ( @dates, $is_flex, @tags, $description );
-        if ( $text =~ $re ) {
-            my $start = _parse_time( $dates[0] );
-            $obj->{time} = $start;
-            my %tags = map { $_ => 1 } @tags;
-            $obj->{tags} = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
-            $obj->{description} = [ map { s/\\(.)/$1/g; $_ } ($description) ];
-            $obj       = __PACKAGE__->new($obj);
-            $obj->flex = $is_flex;
-            $obj->end  = _parse_time( $dates[1] );
-            return $obj;
-        }
-        else {
-            carp "malformed line in vacation file: '$text'";
-        }
-        return undef;
-    }
-
-    sub _parse_time {
-        my @time = split /\s++/, $_[0];
-        $date = DateTime->new(
-            year      => $time[0],
-            month     => $time[1],
-            day       => $time[2],
-            hour      => $time[3],
-            minute    => $time[4],
-            second    => $time[5],
-            time_zone => tz,
-        );
-        return $date;
-    }
-
-    sub to_string {
-        my ($self) = @_;
-        my $text = $self->data->time_stamp( $self->start );
-        $text .= ':';
-        $text .= $self->data->time_stamp( $self->end );
-        $text .= ':';
-        $text .= $self->flex;
-        $text .= ':';
-        $self->tags ||= [];
-        my %tags = map { $_ => 1 } @{ $self->tags };
-        $text .= join ' ', map { s/([:\\\s])/\\$1/g; $_ } sort keys %tags;
-        $text .= ':';
-        $self->description ||= [];
-        $text .= join ';',
-          map { ( my $d = $_ ) =~ s/([;\\])/\\$1/g; $d }
-          @{ $self->description };
-    }
-    
-    sub display { "foo" }
-}
-
 use Modern::Perl;
+use App::JobLog::Vacation::Period;
 use App::JobLog::Config qw(
   vacation
   init_file
@@ -174,15 +85,25 @@ Add a new vacation period to file.
 
 sub add {
     my ( $self, %opts ) = @_;
-    my $end  = $opts{end};
-    my $flex = $opts{flex};
-    delete @opts{qw(end flex)};
+    my ( $end, $flex, $annual, $monthly ) = @opts{qw(end flex annual monthly)};
+    delete @opts{qw(end flex annual monthly)};
     my $ll = App::JobLog::Log::Line->new(%opts);
-    my $v  = Period->new($ll);
-    $v->end  = $end;
-    $v->flex = $flex;
-    push @{ $self->{data} }, $v;
-    $self->{data} = [ sort { $a->cmp($b) } @{ $self->{data} } ];
+    my $v  = App::JobLog::Vacation::Period->new($ll);
+    $v->end     = $end;
+    $v->flex    = $flex;
+    $v->annual  = $annual;
+    $v->monthly = $monthly;
+    my @data = @{ $self->{data} };
+
+    for my $other (@data) {
+        if ( $other->conflicts($v) ) {
+            my $d1 = join ' ', $v->parts;
+            my $d2 = join ' ', $other->parts;
+            carp "$d1 conflicts with existing period $d2";
+        }
+    }
+    push @data, $v;
+    $self->{data} = [ sort { $a->cmp($b) } @data ];
     $self->{changed} = 1;
 }
 
@@ -199,6 +120,73 @@ sub remove {
     carp "unknown vacation index: $index" unless $data && @$data >= $index;
     splice @$data, $index, 1;
     $self->{changed} = 1;
+}
+
+=method show
+
+Produces pretty list of vacation times.
+
+=cut
+
+sub show {
+    my ($self) = @_;
+    my @parts;
+    my $widths;
+    for my $v ( $self->periods ) {
+        my @p = $v->parts;
+        push @parts, \@p;
+        my $w = _widths( \@p );
+        if ($widths) {
+            for ( 0 .. $#$w ) {
+                my ( $l1, $l2 ) = ( $w->[$_], $widths->[$_] );
+                $widths->[$_] = $l1 if $l1 > $l2;
+            }
+        }
+        else {
+            $widths = $w;
+        }
+    }
+    return [] unless @parts;
+    my $format = sprintf "%%%d) %%%ds %%-%ds %%-%ds %%-%ds\n", scalar(@parts),
+      @$widths;
+    for my $i ( 0 .. $#parts ) {
+        $parts[$i] = sprintf $format, $i + 1, $parts[$i];
+    }
+    return \@parts;
+}
+
+=method add_overlaps
+
+Adds appropriate vacation times to a set of events.
+
+=cut
+
+sub add_overlaps {
+    my ( $self, $events ) = @_;
+    my ( %day_map, @overlaps );
+    for my $e (@$events) {
+        for my $v ( @{ $self->{data} } ) {
+            my $o = $v->overlap($e);
+            if ($o) {
+                my $s = $o->start . ' ' . $o->end;
+                unless ( $day_map{$s} ) {
+                    $day_map{$s} = 1;
+                    push @overlaps, $o;
+                }
+            }
+        }
+    }
+    return $events unless @overlaps;
+    push @overlaps, @$events;
+    return [ sort { $a->cmp($b) } @overlaps ];
+}
+
+# collect the widths of a list of strings
+sub _widths {
+    my ($ar) = @_;
+    my @w;
+    push @w, length $_ for @$ar;
+    return \@w;
 }
 
 1;

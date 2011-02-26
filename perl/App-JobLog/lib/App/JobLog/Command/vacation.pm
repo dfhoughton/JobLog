@@ -11,21 +11,20 @@ sub execute {
     my ( $self, $opt, $args ) = @_;
 
     my $vacation = App::JobLog::Vacation->new;
-    if ( $opt->list ) {
-        _show($vacation);
-    }
-    else {
+    if ( $opt->modification ) {
         given ( $opt->modification ) {
             when ('add') {
-                my $time = join ' ', @$args;
+                my $time = join ' ', $opt->add;
                 eval {
                     my ( $s, $e ) = parse($time);
                     $vacation->add(
-                        description => $opt->description,
+                        description => join( ' ', @$args ),
                         time        => $s,
                         end         => $e,
-                        flex        => $opt->flex || 0,
-                        tags        => $opt->tags
+                        annual      => $opt->annual,
+                        monthly     => $opt->monthly,
+                        flex => $opt->flex || 0,
+                        tags => $opt->tag
                     );
                 };
                 $self->usage_error($@) if $@;
@@ -35,17 +34,19 @@ sub execute {
                 $self->usage_error($@) if $@;
             }
         }
-        _show($vacation);
-        $vacation->close;
     }
+    _show($vacation);
+    $vacation->close;
 }
 
 sub _show {
     my ($vacation) = @_;
-    my @periods = $vacation->periods;
-    my $fmt = sprintf "%%%ds) %%s\n", scalar @periods;
-    for my $i (1 .. @periods) {
-        printf $fmt, $i, $periods[$i - 1]->display;
+    my $lines = $vacation->show;
+    if (@$lines) {
+        print $_ for @$lines;
+    }
+    else {
+        say 'no vacation times recorded';
     }
 }
 
@@ -60,8 +61,15 @@ sub options {
             'flex|f',
 'add sufficient vacation time to complete workday; this is recorded with the "flex" tag'
         ],
-        [ 'description|d=s', 'a description of the vacation period' ],
-        [ 'tag|t=s@',        'tag vacation time; e.g., -a yesterday -t float' ],
+        [ 'tag|t=s@', 'tag vacation time; e.g., -a yesterday -t float' ],
+        [
+            'repeat' => 'hidden' => {
+                one_of => [
+                    [ 'annual',  'vacation period repeats annually' ],
+                    [ 'monthly', 'vacation period repeats monthly' ],
+                ]
+            }
+        ],
         [
             'modification' => 'hidden' => {
                 one_of => [
@@ -79,18 +87,21 @@ sub options {
 sub validate {
     my ( $self, $opt, $args ) = @_;
 
+    my $mod = $opt->modification || '';
+    my $is_add = $mod eq 'add';
     $self->usage_error('either list or modify')
-      if ( $opt->list && $opt->modification )
-      || !( $opt->list || $opt->modification );
+      if ( $opt->list && $mod )
+      || !( $opt->list || $mod );
     $self->usage_error('--flex requires that you add a date')
-      if $opt->flex && !( ( $opt->modification || '' ) eq 'add' );
+      if $opt->flex && !$is_add;
     $self->usage_error('--tag requires that you add a date')
-      if $opt->tag && !( ( $opt->modification || '' ) eq 'add' );
+      if $opt->tag && !$is_add;
+    $self->usage_error('the repetition flags require that you add a date')
+      if $opt->repeat && !$is_add;
     $self->usage_error('vacation periods require descriptions')
-      if ( ( $opt->modification || '' ) eq 'add' )
-      && !defined $opt->description;
-    $self->usage_error('no time period provided')
-      if ( ( $opt->modification || '' ) eq 'add' ) && !@$args;
+      if $is_add && !defined $opt->add;
+    $self->usage_error('no description provided')
+      if $is_add && !@$args;
 }
 
 1;

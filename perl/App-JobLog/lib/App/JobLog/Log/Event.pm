@@ -13,8 +13,9 @@ use overload '""' => sub {
 };
 
 sub new {
-    my ( undef, $logline ) = @_;
-    my $self = bless { log => $logline };
+    my ( $class, $logline ) = @_;
+    $class = ref $class || $class;
+    my $self = bless { log => $logline }, $class;
     return $self;
 }
 
@@ -26,7 +27,7 @@ Create a duplicate of this event.
 
 sub clone {
     my ($self) = @_;
-    my $clone = __PACKAGE__->new( $self->data->clone );
+    my $clone = $self->new( $self->data->clone );
     $clone->end = $self->end->clone unless $self->is_open;
     return $clone;
 }
