@@ -93,7 +93,7 @@ sub add {
     $v->flex    = $flex;
     $v->annual  = $annual;
     $v->monthly = $monthly;
-    my @data = @{ $self->{data} };
+    my @data = @{ $self->{data} || [] };
 
     for my $other (@data) {
         if ( $other->conflicts($v) ) {

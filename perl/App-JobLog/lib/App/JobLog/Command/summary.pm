@@ -86,10 +86,10 @@ sub _make_test {
     my $test = sub {
         my ($e) = @_;
         if ( %tags || %excluded_tags ) {
-            my $good = 0;
+            my $good = !%tags;
             for my $t ( @{ $e->tags } ) {
                 return undef if $excluded_tags{$t};
-                $good = $tags{$t};
+                $good ||= $tags{$t};
             }
             return undef unless $good;
         }

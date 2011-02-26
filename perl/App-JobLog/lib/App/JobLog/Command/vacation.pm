@@ -12,28 +12,28 @@ sub execute {
 
     my $vacation = App::JobLog::Vacation->new;
     if ( $opt->modification ) {
-        given ( $opt->modification ) {
-            when ('add') {
-                my $time = join ' ', $opt->add;
-                eval {
+        eval {
+            given ( $opt->modification )
+            {
+                when ('add') {
+                    my $time = join ' ', $opt->add;
                     my ( $s, $e ) = parse($time);
                     $vacation->add(
                         description => join( ' ', @$args ),
                         time        => $s,
                         end         => $e,
-                        annual      => $opt->annual,
-                        monthly     => $opt->monthly,
-                        flex => $opt->flex || 0,
-                        tags => $opt->tag
+                        annual  => $opt->{annual}  || 0,
+                        monthly => $opt->{monthly} || 0,
+                        flex    => $opt->flex      || 0,
+                        tags    => $opt->tag
                     );
-                };
-                $self->usage_error($@) if $@;
+                }
+                when ('remove') {
+                    $vacation->remove( $opt->remove );
+                }
             }
-            when ('remove') {
-                eval { $vacation->remove( $opt->remove ); };
-                $self->usage_error($@) if $@;
-            }
-        }
+        };
+        $self->usage_error($@) if $@;
     }
     _show($vacation);
     $vacation->close;
