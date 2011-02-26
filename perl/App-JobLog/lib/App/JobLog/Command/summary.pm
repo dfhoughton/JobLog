@@ -109,9 +109,9 @@ sub _make_test {
             return undef unless $good;
         }
         if ($time) {
-            my $s = $e->start->clone->set( %{ $time->{start} } );
-            my $e = $e->end->clone->set( %{ $time->{end} } );
-            return $e->overlap( $s, $e );
+            my $start = $e->start->clone->set( %{ $time->{start} } );
+            my $end   = $e->end->clone->set( %{ $time->{end} } );
+            return $e->overlap( $start, $end );
         }
         return $e;
     };
