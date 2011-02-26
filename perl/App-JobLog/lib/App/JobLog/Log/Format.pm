@@ -51,7 +51,7 @@ sub display {
     # TODO augment events with vacation and holidays
     if (@$events) {
         my @synopses = @{ synopsis( $events, $merge_level, $test ) };
-        
+
         unless (@synopses) {
             say 'no events remain after filtering';
             return;
@@ -59,12 +59,16 @@ sub display {
 
         my ( $format, $tag_width, $description_width ) =
           _define_format( \@synopses );
-        my ( $total, $previous_date, %tag_map ) = 0;
+        my ( $total, $untagged, $previous_date, %tag_map ) = ( 0, 0 );
         for my $s (@synopses) {
 
             # collect durations
             $total += $s->duration;
-            $tag_map{$_} += $s->duration for $s->tags;
+            for my $e ( $s->events ) {
+                my @tags = @{ $e->tags };
+                $tag_map{$_} += $e->duration for @tags;
+                $untagged += $e->duration unless @tags;
+            }
             if (
                 $s->single_day
                 && !(
@@ -89,20 +93,23 @@ sub display {
             my $count = _pad_lines( \@lines );
 
             for my $i ( 0 .. $count ) {
-                printf $format, _gather( \@lines, $i );
+                say sprintf $format, _gather( \@lines, $i );
             }
             print "\n";
         }
         my ( $m1, $m2 ) = ( length 'TOTAL HOURS', length _duration($total) );
-        for my $tag ( keys %tag_map ) {
+        for my $tag ( 'UNTAGGED', keys %tag_map ) {
             my $l = length $tag;
             $m1 = $l if $l > $m1;
         }
         $format = sprintf "  %%-%ds %%%ds\n", $m1, $m2;
         printf $format, 'TOTAL HOURS', _duration($total);
-        for my $key ( sort keys %tag_map ) {
-            my $d = $tag_map{$key};
-            printf $format, $key, _duration($d);
+        if (%tag_map) {
+            printf $format, 'UNTAGGED', _duration($untagged);
+            for my $key ( sort keys %tag_map ) {
+                my $d = $tag_map{$key};
+                printf $format, $key, _duration($d);
+            }
         }
     }
     else {
@@ -177,23 +184,21 @@ sub _define_format {
     my $max_description = columns;
 
     # add on initial space to each column
-    $widths = [ map { $_ + 2 } @$widths ];
-    $widths->[$#$widths] -= 2;    # tags column is special
     for my $c (@$widths) {
         $max_description -= $c;    # column width
     }
-    $max_description -= 2 + 2;     # tab before text and margin on the right
+    $max_description -= 10;        # margin on the right
     my $format;
     if ( @$widths == 3 ) {
 
         # print times
-        $format = sprintf "%%%ds%%%ds  %%-%ds  %%-%ds\n", @$widths,
+        $format = sprintf '  %%%ds  %%%ds  %%-%ds  %%-%ds', @$widths,
           $max_description;
     }
     else {
 
         # don't print times
-        $format = sprintf "%%%ds%%-%ds%%-%ds\n", @$widths, $max_description;
+        $format = sprintf '  %%%ds  %%-%ds  %%-%ds', @$widths, $max_description;
     }
 
 # there seems to be a bug in Text::Wrap that requires tinkering with the column width

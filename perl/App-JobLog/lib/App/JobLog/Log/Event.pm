@@ -113,7 +113,7 @@ Duration of event in seconds.
 sub duration {
     my ($self) = @_;
     my $e = $self->is_open ? now : $self->end;
-    return $self->start->epoch - $e->epoch;
+    return $e->epoch - $self->start->epoch;
 }
 
 =method split_days

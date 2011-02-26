@@ -54,12 +54,12 @@ sub synopsis {
 # returns a bunch of App::JobClock::Log::Synopsis objects
 sub collect {
     my ( $events, $merge_level, $test ) = @_;
-    $merge_level ||= MERGE_ADJACENT_SAME_TAGS;
+    $merge_level //= MERGE_ADJACENT_SAME_TAGS;
     my ( @synopses, $previous, @current_day );
     for my $e ( map { $_->split_days } @$events ) {
         if ( $e = $test->($e) ) {
             my $do_merge = 0;
-            my $mergand  = $previous;
+            my $mergand = $previous;
             if ($previous) {
                 @current_day = () unless $previous->same_day($e);
                 given ($merge_level) {
@@ -98,8 +98,7 @@ sub collect {
                           && $previous->same_tags($e)
                     }
                     when (NO_MERGE) {
-
-                        # NO OP
+                        $do_merge = 0
                     }
                     default { carp 'unfamiliar merge level' }
                 }
