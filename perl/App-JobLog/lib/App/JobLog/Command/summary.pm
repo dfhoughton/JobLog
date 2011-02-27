@@ -4,7 +4,10 @@ package App::JobLog::Command::summary;
 
 use App::JobLog -command;
 use Modern::Perl;
-use Class::Autouse 'App::JobLog::Log';
+use Class::Autouse qw(
+  App::JobLog::Log
+  App::JobLog::Log::Day
+);
 use autouse 'App::JobLog::TimeGrammar'   => qw(parse daytime);
 use autouse 'Carp'                       => qw(carp);
 use autouse 'Getopt::Long::Descriptive'  => qw(prog_name);
@@ -59,6 +62,7 @@ sub execute {
             $merge_level = MERGE_SAME_DAY_SAME_TAGS
         }
         default {
+
             # some dark wizardry here
             my $m = uc merge;
             $m =~ s/ /_/g;
@@ -70,13 +74,29 @@ sub execute {
 
     # parse time expression
     my ( $start, $end ) = parse( join ' ', @$args );
+    my $days = _days( $start, $end );
 
     # collect synopses
     my $events = App::JobLog::Log->new->find_events( $start, $end );
-    my $time_remaining = time_remaining($events);
-    display $events, $merge_level, $test unless $opt->{hidden};
+    my $time_remaining = time_remaining( $events, $days );
+    display $events, $days, $merge_level, $test unless $opt->{hidden};
 
     return $time_remaining;
+}
+
+# create a list of days about which we wish to collect information
+sub _days {
+    my ( $start, $end ) = @_;
+    my @days;
+    my $b1 = $start;
+    my $b2 = $start->clone->add( days => 1 )->truncate( to => 'day' );
+    while ( $b2 < $end ) {
+        push @days, App::JobLog::Log::Day->new( start => $b1, end => $b2 );
+        $b1 = $b2;
+        $b2 = $b2->clone->add( days => 1 );
+    }
+    push @days, App::JobLog::Log::Day->new( start => $b1, end => $end );
+    return \@days;
 }
 
 # Construct a test from the tags, excluded-tags, match, no-match, and time options.

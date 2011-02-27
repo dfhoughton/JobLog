@@ -33,7 +33,7 @@ and returns an integer representing a number of seconds.
 =cut
 
 sub time_remaining {
-    my ($events) = @_;
+    my ($events, $days) = @_;
 
     # TODO put in real code
     return 0;
@@ -46,11 +46,11 @@ Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
 =cut
 
 sub display {
-    my ( $events, $merge_level, $test ) = @_;
+    my ( $events, $days, $merge_level, $test ) = @_;
 
     # TODO augment events with vacation and holidays
     if (@$events) {
-        my @synopses = @{ synopsis( $events, $merge_level, $test ) };
+        my @synopses = @{ synopsis( $events, $days, $merge_level, $test ) };
 
         unless (@synopses) {
             say 'no events remain after filtering';

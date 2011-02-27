@@ -42,17 +42,17 @@ use constant MERGE_NONE               => 0;
 
 # given a format and events prints out synopsis
 sub synopsis {
-    my ( $events, $merge_level, $test ) = @_;
+    my ( $events, $days, $merge_level, $test ) = @_;
     $merge_level //= MERGE_ADJACENT_SAME_TAGS;
     $test ||= sub { $_[0] };
-    my $items = collect( $events, $merge_level, $test );
+    my $items = collect( $events, $days, $merge_level, $test );
     return $items;
 }
 
 # takes in a bunch of App::JobClock::Log::Event objects
 # returns a bunch of App::JobClock::Log::Synopsis objects
 sub collect {
-    my ( $events, $merge_level, $test ) = @_;
+    my ( $events, $days, $merge_level, $test ) = @_;
     my ( @synopses, $previous, @current_day );
     for my $e ( map { $_->split_days } @$events ) {
         if ( $e = $test->($e) ) {
