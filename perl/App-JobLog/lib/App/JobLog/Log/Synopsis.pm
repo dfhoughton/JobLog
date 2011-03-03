@@ -215,7 +215,7 @@ sub last_event { ( $_[0]->events )[-1] }
 sub _new {
     my ( $event, $merge_level ) = @_;
     carp 'requires event argument'
-      unless $event && ref $event eq 'App::JobLog::Log::Event';
+      unless $event && $event->isa('App::JobLog::Log::Event');
     my ( $one_interval, $one_day );
     given ($merge_level) {
         when (MERGE_ALL)      { ( $one_interval, $one_day ) = ( 0, 0 ) }

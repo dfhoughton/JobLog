@@ -89,7 +89,7 @@ sub summary {
     # add in vacation times
     for my $p (@periods) {
         for my $d (@days) {
-            if ( is_workday( $d->start ) && $p->conflicts($d) ) {
+            if ( is_workday( $d->start ) && $p->conflicts($d->pseudo_event) ) {
                 my $clone = $p->clone;
                 $clone->start = $d->start;
                 if ( $clone->fixed ) {

@@ -195,11 +195,14 @@ Generates an L<App::JobLog::Log::Event> that encapsulates the interval of the da
 
 sub pseudo_event {
     my ($self) = @_;
-    my $e =
-      App::JobLog::Log::Event->new(
-        App::JobLog::Log::Line->new( time => $self->start ) );
-    $e->end = $self->end;
-    return $e;
+    unless ( $self->{pseudo_event} ) {
+        my $e =
+          App::JobLog::Log::Event->new(
+            App::JobLog::Log::Line->new( time => $self->start ) );
+        $e->end = $self->end;
+        $self->{pseudo_event} = $e;
+    }
+    return $self->{pseudo_event};
 }
 
 1;
