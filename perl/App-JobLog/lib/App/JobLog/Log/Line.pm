@@ -11,6 +11,7 @@ use autouse 'App::JobLog::Time' => qw(now tz);
 
 # to_string method for convenience
 use overload '""' => \&to_string;
+use overload 'bool' => sub { 1 };
 
 # some global variables for use in BNF regex
 our ( $date, @tags, @description, $is_beginning );

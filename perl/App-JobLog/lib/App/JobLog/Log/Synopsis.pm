@@ -45,7 +45,7 @@ use constant MERGE_NONE               => 0;
 sub collect {
     my ( $day, $merge_level ) = @_;
     my ( @synopses, $previous, @current_day );
-    for my $e ( @{ $day->events } ) {
+    for my $e ( @{ $day->events }, @{ $day->vacation } ) {
         my $do_merge = 0;
         my $mergand  = $previous;
         if ($previous) {
@@ -79,7 +79,10 @@ sub collect {
                 default { carp 'unfamiliar merge level' }
             }
         }
-        $do_merge &&= ref $mergand eq ref $e;
+
+        # keep vacation and regular events apart
+        $do_merge &&= ref $mergand->last_event eq ref $e;
+
         if ($do_merge) {
             $mergand->merge($e);
         }
@@ -204,6 +207,8 @@ Accessor for events in Synopsis.
 =cut
 
 sub events { @{ $_[0]->{events} } }
+
+sub last_event { ( $_[0]->events )[-1] }
 
 # constructs a single-event synopsis
 # NOTE: not a package method

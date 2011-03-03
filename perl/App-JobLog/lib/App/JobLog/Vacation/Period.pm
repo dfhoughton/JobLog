@@ -10,6 +10,14 @@ file.
 
 =cut
 
+use Exporter 'import';
+our @EXPORT_OK = qw(
+  FLEX
+  FIXED
+  ANNUAL
+  MONTHLY
+);
+
 use base 'App::JobLog::Log::Event';
 use DateTime;
 use App::JobLog::Log::Line;
@@ -17,6 +25,7 @@ use App::JobLog::Time qw(tz);
 use Carp qw(carp);
 
 use overload '""' => \&to_string;
+use overload 'bool' => sub { 1 };
 
 use constant FLEX    => 1;
 use constant FIXED   => 2;
@@ -25,8 +34,9 @@ use constant MONTHLY => 2;
 
 sub new {
     my ( $class, $log_line, %opts ) = @_;
+    $class = ref $class || $class;
     bless {
-        data     => $log_line,
+        log      => $log_line,
         type     => 0,
         repeats  => 0,
         tags     => [],
@@ -155,19 +165,26 @@ my $re = qr{
 
 # for parsing a line in an existing log
 sub parse {
-    my ( undef, $text ) = @_;
+    my ( $class, $text ) = @_;
+    $class = ref $class || $class;
     local ( @dates, $type, @tags, $description );
     if ( $text =~ $re ) {
         my $start = _parse_time( $dates[0] );
-        $obj->{time} = $start;
-        my %tags = map { $_ => 1 } @tags;
-        $obj->{tags} = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
-        $obj->{description} = [ map { s/\\(.)/$1/g; $_ } ($description) ];
-        $obj = __PACKAGE__->new($obj);
+        my $end   = _parse_time( $dates[1] );
+        my %tags  = map { $_ => 1 } @tags;
+        my $tags  = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
+        $description = [ map { s/\\(.)/$1/g; $_ } ($description) ];
         my ( $type, $repeats ) = split //, $type;
-        $obj->{type}    = $type;
-        $obj->{repeats} = $repeats;
-        $obj->end       = _parse_time( $dates[1] );
+        $obj = $class->new(
+            App::JobLog::Log::Line->new(
+                description => $description,
+                time        => $start,
+                tags        => $tags
+            ),
+            type    => $type,
+            repeats => $repeats,
+            end     => $end
+        );
         return $obj;
     }
     else {
@@ -214,7 +231,7 @@ sub to_string {
     if ( $self->annual ) {
         $text .= ANNUAL;
     }
-    elsif ( $self->montly ) {
+    elsif ( $self->monthly ) {
         $text .= MONTHLY;
     }
     else {
@@ -356,7 +373,7 @@ sub _tags {
 # description part of summary
 sub _description {
     my ($self) = @_;
-    return $self->description;
+    return join '; ', @{ $self->description };
 }
 
 1;

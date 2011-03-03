@@ -17,7 +17,10 @@ use App::JobLog::Config qw(
 );
 use Carp qw(carp);
 use Text::Wrap;
-use App::JobLog::Log::Format qw(duration);
+use App::JobLog::Log::Format qw(
+  duration
+  wrap
+);
 
 use constant WORK_SECONDS => 60 * 60 * day_length;
 
@@ -108,7 +111,7 @@ Count up the amount of time spent in various ways this day.
 sub times {
     my ( $self, $times ) = @_;
 
-    for my $e ( @{ $self->events } ) {
+    for my $e ( @{ $self->events }, @{ $self->vacation } ) {
         my @tags = @{ $e->tags };
         my $d    = $e->duration;
         $times->{tags}{$_} += $d for @tags;
@@ -127,10 +130,14 @@ sub times {
 =cut
 
 sub display {
-    my ( $self, $previous, $format, $columns, $show_times, $show_durations,
-        $show_tags, $show_descriptions )
-      = @_;
+    my ( $self, $previous, $format, $columns ) = @_;
     return if $self->is_empty;
+
+    # cache some bits from the $columns hash
+    my ( $show_times, $show_durations, $show_tags, $show_descriptions ) =
+      @{ $columns->{formats} }{qw(time duration tags description)};
+    my ( $tag_width, $description_width ) =
+      @{ $columns->{widths} }{qw(tags description)};
 
     # date
     my $f =
@@ -144,9 +151,8 @@ sub display {
         my @lines;
         push @lines, [ $s->time_fmt ] if $show_times;
         push @lines, [ duration( $s->duration ) ] if $show_durations;
-        push @lines, _wrap( $s->tag_string, $columns->{widths}{tags} )
-          if $show_tags;
-        push @lines, _wrap( $s->description, $columns->{widths}{description} )
+        push @lines, wrap( $s->tag_string, $tag_width ) if $show_tags;
+        push @lines, wrap( $s->description, $description_width )
           if $show_descriptions;
         my $count = _pad_lines( \@lines );
 
@@ -155,15 +161,6 @@ sub display {
         }
     }
     print "\n";
-}
-
-# wraps Text::Wrap::wrap
-sub _wrap {
-    my ( $text, $columns ) = @_;
-    $Text::Wrap::columns = $columns;
-    my $s = wrap( '', '', $text );
-    my @ar = $s =~ /^.*$/mg;
-    return \@ar;
 }
 
 # add blank lines to short columns

@@ -4,7 +4,13 @@ package App::JobLog::Command::vacation;
 
 use Modern::Perl;
 use App::JobLog -command;
-use autouse 'App::JobLog::TimeGrammar' => qw(parse);
+use autouse 'App::JobLog::TimeGrammar'      => qw(parse);
+use autouse 'App::JobLog::Vacation::Period' => qw(
+  FLEX
+  FIXED
+  ANNUAL
+  MONTHLY
+);
 use Class::Autouse qw(App::JobLog::Vacation);
 
 sub execute {
@@ -16,17 +22,26 @@ sub execute {
             given ( $opt->modification )
             {
                 when ('add') {
-                    my $time = join ' ', $opt->add;
-                    my ( $s, $e ) = parse($time);
+                    my ( $s, $e ) = parse( $opt->add );
+                    my $repeats;
+                    given ( $opt->{repeat} || '' ) {
+                        when ('annual')  { $repeats = ANNUAL }
+                        when ('monthly') { $repeats = MONTHLY }
+                        default          { $repeats = 0 }
+                    }
+                    my $flexibility;
+                    given ( $opt->{flexibility} || '' ) {
+                        when ('fixed') { $flexibility = FIXED }
+                        when ('flex')  { $flexibility = FLEX }
+                        default        { $flexibility = 0 }
+                    }
                     $vacation->add(
                         description => join( ' ', @$args ),
                         time        => $s,
                         end         => $e,
-                        annual  => $opt->{annual}  || 0,
-                        monthly => $opt->{monthly} || 0,
-                        flex  => $opt->flexibility eq 'flex'  || 0,
-                        fixed => $opt->flexibility eq 'fixed' || 0,
-                        tags  => $opt->tag
+                        repeats     => $repeats,
+                        type        => $flexibility,
+                        tags => $opt->{tag} || [],
                     );
                 }
                 when ('remove') {
@@ -87,8 +102,8 @@ sub options {
                 one_of => [
                     [ 'add|a=s', 'add date or range; e.g., -a "May 17, 1951"' ],
                     [
-                        'delete|d=i',
-'delete date with given index in list (see --list); e.g., -d 1'
+                        'remove|r=i',
+'remove period with given index from list (see --list); e.g., -d 1'
                     ],
                 ]
             }

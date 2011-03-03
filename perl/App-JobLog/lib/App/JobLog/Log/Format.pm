@@ -13,6 +13,7 @@ our @EXPORT = qw(
   display
   duration
   summary
+  wrap
 );
 
 use Modern::Perl;
@@ -23,11 +24,11 @@ use App::JobLog::Config qw(
   precision
 );
 use App::JobLog::Log::Synopsis qw(collect :merge);
-use Text::Wrap;
+use Text::WrapI18N qw();
 use App::JobLog::TimeGrammar qw(parse);
 
 use constant TAG_COLUMN_LIMIT => 10;
-use constant MARGIN           => 10;
+use constant MARGIN           => 30;
 use constant DURATION_FORMAT  => '%0.' . precision . 'f';
 
 =method time_remaining
@@ -79,7 +80,7 @@ sub summary {
                         push @{ $d->events }, $e;
                         last;
                     }
-                    last if $d->start > $e->end;
+                    last if $e->is_open || $d->start > $e->end;
                 }
             }
         }
@@ -198,10 +199,6 @@ sub display {
         };
         my $format = _define_format( \@synopses, $columns );
 
-        # cache which columns to display
-        my ( $show_times, $show_durations, $show_tags, $show_descriptions ) =
-          @{ $columns->{formats} }{qw(time duration tags description)};
-
         # keep track of various durations
         my $times = {
             total    => 0,
@@ -215,8 +212,7 @@ sub display {
         my $previous;
         for my $d (@$days) {
             $d->times($times);
-            $d->display( $previous, $format, $columns, $show_times,
-                $show_durations, $show_tags, $show_descriptions );
+            $d->display( $previous, $format, $columns );
             $previous = $d;
         }
 
@@ -247,39 +243,6 @@ sub display {
     }
 }
 
-# collect the pieces of columns corresponding to a particular line to print
-sub _gather {
-    my ( $lines, $i ) = @_;
-    my @line;
-    for my $column (@$lines) {
-        push @line, $column->[$i];
-    }
-    return @line;
-}
-
-# add blank lines to short columns
-# returns the number of lines to print
-sub _pad_lines {
-    my ($lines) = @_;
-    my $max = 0;
-    for my $column (@$lines) {
-        $max = @$column if @$column > $max;
-    }
-    for my $column (@$lines) {
-        push @$column, '' while @$column < $max;
-    }
-    return $max - 1;
-}
-
-# whether two DateTime objects refer to the same day
-sub _same_day {
-    my ( $d1, $d2 ) = @_;
-    return
-         $d1->year == $d2->year
-      && $d1->month == $d2->month
-      && $d1->day == $d2->day;
-}
-
 # generate printf format for synopses
 # returns format and wrap widths for tags and descriptions
 sub _define_format {
@@ -292,7 +255,7 @@ sub _define_format {
             my $w1 = $hash->{widths}{tags} || 0;
             my $ts = $s->tag_string;
             if ( length $ts > TAG_COLUMN_LIMIT ) {
-                my $wrapped = _wrap( $ts, TAG_COLUMN_LIMIT );
+                my $wrapped = wrap( $ts, TAG_COLUMN_LIMIT );
                 $ts = '';
                 for my $line (@$wrapped) {
                     $ts = $line if length $line > length $ts;
@@ -312,26 +275,32 @@ sub _define_format {
             $hash->{widths}{duration} = $w2 if $w2 > $w1;
         }
     }
-    if ( $hash->{description} ) {
-        my $max_description = columns;
-        for my $col (qw(time duration tags)) {
-            $max_description -= $hash->{widths}{col} || 0;
-        }
-        $max_description -= MARGIN;    # margin on the right
-        $hash->{widths}{description} = $max_description;
-        $hash->{formats}{description} = sprintf '%%-%ds', $max_description;
-    }
+    my $margins = 0;
     if ( $hash->{tags} && $hash->{widths}{tags} ) {
+        $margins++;
         $hash->{formats}{tags} = sprintf '%%-%ds', $hash->{widths}{tags};
 
 # there seems to be a bug in Text::Wrap that requires tinkering with the column width
         $hash->{widths}{tags}++;
     }
     if ( $hash->{time} && $hash->{widths}{time} ) {
+        $margins++;
         $hash->{formats}{time} = sprintf '%%%ds', $hash->{widths}{time};
     }
     if ( $hash->{duration} && $hash->{widths}{duration} ) {
+        $margins++;
         $hash->{formats}{duration} = sprintf '%%%ds', $hash->{widths}{duration};
+    }
+    if ( $hash->{description} ) {
+        $margins++;
+        my $max_description = columns;
+        for my $col (qw(time duration tags)) {
+            $max_description -= $hash->{widths}{col} || 0;
+        }
+        $max_description -= $margins * 2;    # left margins
+        $max_description -= MARGIN;          # margin on the right
+        $hash->{widths}{description} = $max_description;
+        $hash->{formats}{description} = sprintf '%%-%ds', $max_description;
     }
 
     my $format = '';
@@ -342,11 +311,17 @@ sub _define_format {
     return $format;
 }
 
-# wraps Text::Wrap::wrap
-sub _wrap {
+=method wrap
+
+Wraps C<wrap> from L<Text::Wrap>. Expects a string and a number of columns.
+Returns a reference to an array of substrings wrapped to fit the columns.
+
+=cut
+
+sub wrap {
     my ( $text, $columns ) = @_;
-    $Text::Wrap::columns = $columns;
-    my $s = wrap( '', '', $text );
+    $Text::WrapI18N::columns = $columns;
+    my $s = Text::WrapI18N::wrap( '', '', $text );
     my @ar = $s =~ /^.*$/mg;
     return \@ar;
 }

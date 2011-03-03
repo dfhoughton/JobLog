@@ -3,15 +3,15 @@ package App::JobLog::Command::today;
 # ABSTRACT: show what has happened today
 
 use App::JobLog -command;
+use Modern::Perl;
 use App::JobLog::Command::summary;
 use autouse 'App::JobLog::Time' => qw(now);
-use Modern::Perl;
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
 
     # display everything done today
-    'App::JobLog::Command::summary'->execute( $opt, ['today'] );
+    App::JobLog::Command::summary->execute( $opt, ['today'] );
     if ( exists $opt->{finished} ) {
 
         # adjust options

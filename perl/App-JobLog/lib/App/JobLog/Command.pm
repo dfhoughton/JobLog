@@ -34,9 +34,9 @@ sub description {
     }
 
     # make sure things are wrapped nicely
-    require Text::Wrap;
-    $Text::Wrap::columns = columns;
-    $desc = Text::Wrap::fill( '', '', $desc );
+    require Text::WrapI18N;
+    $Text::WrapI18N::columns = columns;
+    $desc = Text::WrapI18N::wrap( '', '', $desc );
 
     # space between description and options text
     $desc .= "\n";

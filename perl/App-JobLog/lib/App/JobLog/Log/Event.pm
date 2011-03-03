@@ -11,6 +11,7 @@ use overload '""' => sub {
     $_[0]->data->to_string . '-->'
       . ( $_[0]->is_closed ? $_[0]->end : 'ongoing' );
 };
+use overload 'bool' => sub { 1 };
 
 =method new
 
@@ -107,7 +108,19 @@ sub cmp {
     return $comparison;
 }
 
-sub is_closed { exists $_[0]->{end} }
+=method is_closed
+
+Whether an end moment for this event is defined.
+
+=cut
+
+sub is_closed { $_[0]->{end} }
+
+=method is_open
+
+Whether no end moment for this event is defined.
+
+=cut
 
 sub is_open { !$_[0]->is_closed }
 
@@ -172,13 +185,14 @@ Whether the time period of this overlaps with another.
 
 sub intersects {
     my ( $self, $other ) = @_;
-    if ($self->start > $other->start) {
+    if ( $self->start > $other->start ) {
+
         #rearrange so $self is earlier
         my $t = $other;
         $other = $self;
-        $self = $t;
+        $self  = $t;
     }
-    return $self->end > $other->start;
+    return $self->is_open || $self->end > $other->start;
 }
 
 1;

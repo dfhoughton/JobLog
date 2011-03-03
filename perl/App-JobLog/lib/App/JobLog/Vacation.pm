@@ -35,7 +35,7 @@ sub new {
         }
         $self->{data} = [ sort { $a->cmp($b) } @data ];
     }
-    return bless { changed => 0 };
+    return $self;
 }
 
 =method periods
@@ -55,6 +55,7 @@ Save any changes to vacation file.
 sub close {
     my ($self) = @_;
     if ( $self->{changed} ) {
+        $self->{changed} = 0;
         if ( @{ $self->{data} } ) {
 
             # something to save
@@ -85,14 +86,15 @@ Add a new vacation period to file.
 
 sub add {
     my ( $self, %opts ) = @_;
-    my ( $end, $flex, $annual, $monthly ) = @opts{qw(end flex annual monthly)};
-    delete @opts{qw(end flex annual monthly)};
+    my ( $end, $type, $repeats ) = @opts{qw(end type repeats)};
+    delete @opts{qw(end type repeats)};
     my $ll = App::JobLog::Log::Line->new(%opts);
-    my $v  = App::JobLog::Vacation::Period->new($ll);
-    $v->end     = $end;
-    $v->flex    = $flex;
-    $v->annual  = $annual;
-    $v->monthly = $monthly;
+    my $v  = App::JobLog::Vacation::Period->new(
+        $ll,
+        end     => $end,
+        type    => $type,
+        repeats => $repeats
+    );
     my @data = @{ $self->{data} || [] };
 
     for my $other (@data) {
@@ -118,7 +120,7 @@ sub remove {
     carp 'vacation date index must be non-negative' if $index < 0;
     my $data = $self->{data};
     carp "unknown vacation index: $index" unless $data && @$data >= $index;
-    splice @$data, $index, 1;
+    splice @$data, $index - 1, 1;
     $self->{changed} = 1;
 }
 
@@ -147,10 +149,10 @@ sub show {
         }
     }
     return [] unless @parts;
-    my $format = sprintf "%%%d) %%%ds %%-%ds %%-%ds %%-%ds\n", scalar(@parts),
+    my $format = sprintf "%%%dd) %%%ds %%-%ds %%-%ds %%-%ds\n", scalar(@parts),
       @$widths;
     for my $i ( 0 .. $#parts ) {
-        $parts[$i] = sprintf $format, $i + 1, $parts[$i];
+        $parts[$i] = sprintf $format, $i + 1, @{ $parts[$i] };
     }
     return \@parts;
 }
