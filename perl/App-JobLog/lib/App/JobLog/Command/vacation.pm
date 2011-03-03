@@ -24,8 +24,9 @@ sub execute {
                         end         => $e,
                         annual  => $opt->{annual}  || 0,
                         monthly => $opt->{monthly} || 0,
-                        flex    => $opt->flex      || 0,
-                        tags    => $opt->tag
+                        flex  => $opt->flexibility eq 'flex'  || 0,
+                        fixed => $opt->flexibility eq 'fixed' || 0,
+                        tags  => $opt->tag
                     );
                 }
                 when ('remove') {
@@ -50,7 +51,7 @@ sub _show {
     }
 }
 
-sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
+sub usage_desc { '%c ' . __PACKAGE__->name . ' %o [<description>]' }
 
 sub abstract { 'list or define days off' }
 
@@ -58,8 +59,19 @@ sub options {
     return (
         [ 'list|l', 'show all vacation times recorded', ],
         [
-            'flex|f',
+            'flexibility' => hidden => {
+                one_of => [
+                    [
+                        'flex|f',
 'add sufficient vacation time to complete workday; this is recorded with the "flex" tag'
+                    ],
+                    [
+                        'fixed|x',
+'a particular period of time during the day that should be marked as vacation; '
+                          . 'this is in effect a special variety of work time, since it has a definite start and duration'
+                    ],
+                ]
+            }
         ],
         [ 'tag|t=s@', 'tag vacation time; e.g., -a yesterday -t float' ],
         [
@@ -87,21 +99,21 @@ sub options {
 sub validate {
     my ( $self, $opt, $args ) = @_;
 
-    my $mod = $opt->modification || '';
-    my $is_add = $mod eq 'add';
-    $self->usage_error('either list or modify')
-      if ( $opt->list && $mod )
-      || !( $opt->list || $mod );
-    $self->usage_error('--flex requires that you add a date')
-      if $opt->flex && !$is_add;
-    $self->usage_error('--tag requires that you add a date')
-      if $opt->tag && !$is_add;
-    $self->usage_error('the repetition flags require that you add a date')
-      if $opt->repeat && !$is_add;
-    $self->usage_error('vacation periods require descriptions')
-      if $is_add && !defined $opt->add;
-    $self->usage_error('no description provided')
-      if $is_add && !@$args;
+    if ( $opt->modification ) {
+        $self->usage_error('either list or modify') if $opt->list;
+        $self->usage_error('no description provided')
+          if $opt->modification eq 'add'
+              && !@$args;
+    }
+    else {
+        $self->usage_error('--tag requires that you add a date')
+          if $opt->tag;
+        $self->usage_error('--annual and --monthly require --add')
+          if $opt->repeat;
+        $self->usage_error('either list or modify') unless $opt->list;
+        $self->usage_error('both --flex and --fixed require --add')
+          if $opt->flexibility;
+    }
 }
 
 1;

@@ -2,6 +2,8 @@ package App::JobLog::Command::summary;
 
 # ABSTRACT: show what you did during a particular period
 
+# TODO: hide vacation; hide time and tags columns
+
 use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw(
@@ -12,7 +14,7 @@ use autouse 'App::JobLog::TimeGrammar'   => qw(parse daytime);
 use autouse 'Carp'                       => qw(carp);
 use autouse 'Getopt::Long::Descriptive'  => qw(prog_name);
 use autouse 'App::JobLog::Config'        => qw(merge);
-use autouse 'App::JobLog::Log::Format'   => qw(display time_remaining);
+use autouse 'App::JobLog::Log::Format'   => qw(display summary);
 use autouse 'App::JobLog::Log::Synopsis' => qw(
   MERGE_ALL
   MERGE_ADJACENT
@@ -66,37 +68,37 @@ sub execute {
             # some dark wizardry here
             my $m = uc merge;
             $m =~ s/ /_/g;
-            $m = "MERGE_$m";
-            no strict 'refs';
-            $merge_level = &$m();
+            $m           = \&{"MERGE_$m"};
+            $merge_level = &$m;
         }
     }
 
     # parse time expression
-    my ( $start, $end ) = parse( join ' ', @$args );
-    my $days = _days( $start, $end );
+    my $days;
+    eval { $days = summary join( ' ', @$args ), $test; };
+    $self->usage_error($@) if $@;
+    unless ( $opt->{hidden} ) {
+        if ( $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS ) {
 
-    # collect synopses
-    my $events = App::JobLog::Log->new->find_events( $start, $end );
-    my $time_remaining = time_remaining( $events, $days );
-    display $events, $days, $merge_level, $test unless $opt->{hidden};
-
-    return $time_remaining;
-}
-
-# create a list of days about which we wish to collect information
-sub _days {
-    my ( $start, $end ) = @_;
-    my @days;
-    my $b1 = $start;
-    my $b2 = $start->clone->add( days => 1 )->truncate( to => 'day' );
-    while ( $b2 < $end ) {
-        push @days, App::JobLog::Log::Day->new( start => $b1, end => $b2 );
-        $b1 = $b2;
-        $b2 = $b2->clone->add( days => 1 );
+            # create "day" containing all events
+            my $duck_day = App::JobLog::Log::Day->new(
+                start   => $days->[0]->start->clone,
+                end     => $days->[$#$days]->end->clone,
+                no_date => 1,
+            );
+            for my $d (@$days) {
+                push @{ $duck_day->events },   @{ $d->events };
+                push @{ $duck_day->vacation }, @{ $d->vacation };
+            }
+            display [$duck_day], $merge_level;
+        }
+        else {
+            display $days, $merge_level;
+        }
     }
-    push @days, App::JobLog::Log::Day->new( start => $b1, end => $end );
-    return \@days;
+    my $t = 0;
+    $t += $_->time_remaining for @$days;
+    return $t;
 }
 
 # Construct a test from the tags, excluded-tags, match, no-match, and time options.
@@ -109,23 +111,23 @@ sub _make_test {
     my @no_match = map { _re_test($_); qr/$_/ } @$no_match;
     my @match    = map { _re_test($_); qr/$_/ } @$match;
     $time = _parse_time($time);
-    return undef unless %tags || %excluded_tags || @no_match || @match || $time;
+    return unless %tags || %excluded_tags || @no_match || @match || $time;
 
     my $test = sub {
         my ($e) = @_;
         if ( %tags || %excluded_tags ) {
             my $good = !%tags;
             for my $t ( @{ $e->tags } ) {
-                return undef if $excluded_tags{$t};
+                return if $excluded_tags{$t};
                 $good ||= $tags{$t};
             }
-            return undef unless $good;
+            return unless $good;
         }
         if ( @no_match || @match ) {
             my $good = !@match;
             for my $d ( @{ $e->data->description } ) {
                 for my $re (@no_match) {
-                    return undef if $d =~ $re;
+                    return if $d =~ $re;
                 }
                 unless ($good) {
                     for my $re (@match) {
@@ -134,7 +136,7 @@ sub _make_test {
                     }
                 }
             }
-            return undef unless $good;
+            return unless $good;
         }
         if ($time) {
             my $start = $e->start->clone->set( %{ $time->{start} } );
@@ -239,6 +241,10 @@ Time subranges may be of the form '11-12pm', '1am-12:30:15', 'before 2', 'after 
 or 'after' (or some prefix of these such as 'bef' or 'aft') may be followed by a time or you may use two time
 expressions separated by a dash. The code will attempt to infer the precise time of ambiguous time expressions,
 but it's best to be explicit. Case is ignored. Whitespace is optional in the expected places.
+
+Note that any filtering of events, event specifying particular times for the start and end of the period in question,
+e.g., "yesterday at 8:00 am until today", will cause all flex time vacation to be ignored. This is because, given
+the flexible nature of this vacation, it is unclear how much should be accounted for when filtering events.
 
 @{[__PACKAGE__->name]} provides many ways to consolidate events. These are the "merge" options. By default events
 are grouped into days and within days into subgroups of adjacent events with the same tags. All the merge options

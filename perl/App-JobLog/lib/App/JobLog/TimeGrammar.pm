@@ -84,7 +84,10 @@ my $re = qr{
 
      (?<at> at | @ )
 
-     (?<at_time> (?: (?: \s++ | \s*+ (?&at) \s*+ ) (?&time))? )
+     (?<at_time> 
+       (?{ $time_buffer = undef })
+       (?: (?: \s++ | \s*+ (?&at) \s*+ ) (?&time))? 
+     )
 
      (?<at_time_on> (?:(?&at) \s++)? (?&time) \s++ on \s++ )
 
@@ -367,16 +370,18 @@ sub parse {
     my $phrase = shift;
     local ( %matches, %buffer, $d1, $d2, $b1, $b2, $time_buffer );
     if ( $phrase =~ $re ) {
-        if ($matches{ever}) {
+        if ( $matches{ever} ) {
+
             # we want the entire timespan of the log
             my ($se) = App::JobLog::Log->new->first_event;
             if ($se) {
                 return $se->start, now, 0;
-            } else {
-                return now->subtract(seconds => 1), now, 0;
+            }
+            else {
+                return now->subtract( seconds => 1 ), now, 0;
             }
         }
-        
+
         my $h1 = $matches{$d1};
         my %t1 = extract_time( $h1, 1 );
         normalize($h1);

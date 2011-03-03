@@ -66,7 +66,7 @@ events, not vacation.
 
 =cut
 
-sub events { $_[0]->{event} || [] }
+sub events { $_[0]->{events} }
 
 =method vacation
 
@@ -74,7 +74,7 @@ Returns reference to list of vacation events occurring in this day.
 
 =cut
 
-sub vacation { $_[0]->{vacation} || [] }
+sub vacation { $_[0]->{vacation} }
 
 =method synopses
 

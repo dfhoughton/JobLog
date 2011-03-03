@@ -33,11 +33,12 @@ our $re = qr{
 
 # for composing a log line out of a hash of attributes
 sub new {
-    my ( undef, @args ) = @_;
+    my ( $class, @args ) = @_;
+    $class = ref $class || $class;
     my %opts = @args;
 
     # validate %opts
-    my $self = bless {};
+    my $self = bless {}, $class;
     if ( exists $opts{comment} ) {
         $self->{comment} = $opts{comment};
         delete $opts{comment};
@@ -79,9 +80,7 @@ sub new {
             $description = [];
         }
         $self->{description} = $description;
-        delete $opts{time};
-        delete $opts{tags};
-        delete $opts{description};
+        delete @opts{qw(time tags description)};
         die 'inconsistent arguments: ' . join( ', ', @args ) if keys %opts;
     }
     elsif ( exists $opts{text} ) {
@@ -95,8 +94,8 @@ sub new {
 
 # for parsing a line in an existing log
 sub parse {
-    my ( undef, $text ) = @_;
-    my $obj = bless { text => $text };
+    my ( $class, $text ) = @_;
+    my $obj = bless { text => $text }, $class;
     if ( $text =~ /^\s*(?:#\s*+(.*?)\s*)?$/ ) {
         if ( defined $1 ) {
             $obj->{comment} = $1;
@@ -122,8 +121,10 @@ sub parse {
         $obj->{time} = $date;
         if ($is_beginning) {
             my %tags = map { $_ => 1 } @tags;
-            $obj->{tags}        = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
-            $obj->{description} = [ map { s/\\(.)/$1/g; $_ } @description ];
+            $obj->{tags} =
+              [ map { ( my $v = $_ ) =~ s/\\(.)/$1/g; $v } sort keys %tags ];
+            $obj->{description} =
+              [ map { ( my $v = $_ ) =~ s/\\(.)/$1/g; $v } @description ];
         }
         else {
             $obj->{done} = 1;
@@ -138,7 +139,7 @@ sub parse {
 
 sub clone {
     my ($self) = @_;
-    my $clone = bless {};
+    my $clone = bless {}, ref $self;
     if ( $self->is_malformed ) {
         $clone->{malformed} = 1;
         $clone->text = $self->text;
@@ -238,22 +239,22 @@ sub comment_out {
 
 sub all_tags {
     my ( $self, @tags ) = @_;
-    return undef unless $self->tags;
+    return unless $self->tags;
     my %tags = map { $_ => 1 } @{ $self->{tags} };
     for my $tag (@tags) {
-        return undef unless $tags{$tag};
+        return unless $tags{$tag};
     }
     return 1;
 }
 
 sub exists_tag {
     my ( $self, @tags ) = @_;
-    return undef unless $self->tags;
+    return unless $self->tags;
     my %tags = map { $_ => 1 } @{ $self->{tags} };
     for my $tag (@tags) {
         return 1 if $tags{$tag};
     }
-    return undef;
+    return;
 }
 
 1;

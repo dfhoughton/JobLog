@@ -18,38 +18,68 @@ use Carp qw(carp);
 
 use overload '""' => \&to_string;
 
+use constant FLEX    => 1;
+use constant FIXED   => 2;
+use constant ANNUAL  => 1;
+use constant MONTHLY => 2;
+
+sub new {
+    my ( $class, $log_line, %opts ) = @_;
+    bless {
+        data     => $log_line,
+        type     => 0,
+        repeats  => 0,
+        tags     => [],
+        events   => [],
+        vacation => [],
+        %opts
+      },
+      $class;
+}
+
 =method flex
 
-Whether time in a period so marked is "flexible". Flexible time off shrinks or expands to provide
+Whether time in a period is "flexible". Flexible time off shrinks or expands to provide
 enough work hours to complete the day it occurs in.
 
-Lvalue method.
+=cut
+
+sub flex { $_[0]->{type} == FLEX }
+
+=method fixed
+
+Whether time in a period is "fixed". Fixed periods have a definite start and end time. Regular
+vacation time is just a fixed period of virtual work in the day but at nor particular time 
+and flexible vacation time is just as much time as you need to fill out your work day, again
+without any particular start or end.
 
 =cut
 
-sub flex : lvalue {
-    $_[0]->{flex};
-}
+sub fixed { $_[0]->{type} == FIXED }
 
 =method annual
 
-Whether this period repeats annually on a particular range of days in particular months. Lvalue method.
+Whether this period repeats annually on a particular range of days in particular months. 
 
 =cut
 
-sub annual : lvalue {
-    $_[0]->{annual};
-}
+sub annual { $_[0]->{repeats} == ANNUAL }
 
 =method annual
 
-Whether this period repeats monthly on a particular range of days. Lvalue method.
+Whether this period repeats monthly on a particular range of days.
 
 =cut
 
-sub monthly : lvalue {
-    $_[0]->{monthly};
-}
+sub monthly { $_[0]->{repeats} == MONTHLY }
+
+=method repeats
+
+Whether this vacation repeats periodically.
+
+=cut
+
+sub repeats { $_[0]->{repeats} }
 
 =method description
 
@@ -71,9 +101,8 @@ properties.
 sub clone {
     my ($self) = @_;
     my $clone = $self->SUPER::clone;
-    $clone->flex    = $self->flex;
-    $clone->annual  = $self->annual;
-    $clone->monthly = $self->monthly;
+    $clone->{type}    = $self->{type};
+    $clone->{repeats} = $self->{repeats};
     return $clone;
 }
 
@@ -87,8 +116,15 @@ above non-repeating ones.
 sub cmp {
     my ( $self, $other );
 
-    # when mixed with ordinary events they should sort as ordinary events
-    return $self->SUPER::cmp($other) if ref $other eq 'App::JobLog::Log::Event';
+    # when mixed with ordinary events
+    if ( ref $other eq 'App::JobLog::Log::Event' ) {
+
+        # treat as an ordinary event if fixed
+        return $self->SUPER::cmp($other) if $self->fixed;
+
+        # put after ordinary events
+        return 1;
+    }
     if ( $self->monthly ) {
         return -1 unless $other->monthly;
     }
@@ -109,7 +145,7 @@ my $re = qr{
      (?<ts> (?&date) : (?&date) )
      (?<date> (\d{4}+\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{push @dates, $^N}) )
      (?<non_ts> (?&flex) : (?&tags) : (?&description))
-     (?<flex> ([01][012]) (?{$type = $^N}))
+     (?<flex> ([012]{2}) (?{$type = $^N}))
      (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)
      (?<tag> ((?:[^\s:\\]|(?&escaped))++) (?{push @tags, $^N}))
      (?<escaped> \\.)
@@ -128,11 +164,10 @@ sub parse {
         $obj->{tags} = [ map { s/\\(.)/$1/g; $_ } sort keys %tags ];
         $obj->{description} = [ map { s/\\(.)/$1/g; $_ } ($description) ];
         $obj = __PACKAGE__->new($obj);
-        my ( $is_flex, $repeats ) = split //, $type;
-        $obj->flex    = $is_flex;
-        $obj->annual  = $repeats == 1;
-        $obj->monthly = $repeats == 2;
-        $obj->end     = _parse_time( $dates[1] );
+        my ( $type, $repeats ) = split //, $type;
+        $obj->{type}    = $type;
+        $obj->{repeats} = $repeats;
+        $obj->end       = _parse_time( $dates[1] );
         return $obj;
     }
     else {
@@ -167,12 +202,20 @@ sub to_string {
     $text .= ':';
     $text .= $self->data->time_stamp( $self->end );
     $text .= ':';
-    $text .= $self->flex;
+    if ( $self->flex ) {
+        $text .= FLEX;
+    }
+    elsif ( $self->fixed ) {
+        $text .= FIXED;
+    }
+    else {
+        $text .= 0;
+    }
     if ( $self->annual ) {
-        $text .= 1;
+        $text .= ANNUAL;
     }
     elsif ( $self->montly ) {
-        $text .= 2;
+        $text .= MONTHLY;
     }
     else {
         $text .= 0;
@@ -195,58 +238,42 @@ Determines whether two events overlap in time.
 
 sub conflicts {
     my ( $self, $other ) = @_;
-    my $test =
-      _overlap_test( $self->_interval('day'), $other->_interval('day') );
-    return $day_test
-      if $self->monthly || ref $other eq __PACKAGE__ && $other->monthly;
-    if ($test) {
-        $test =
-          _overlap_test( $self->_interval('month'),
-            $other->_interval('month') );
-        return $test
-          if $self->annual || ref $other eq __PACKAGE__ && $other->annual;
-        if ($test) {
-            return _overlap_test( $self->_interval('year'),
-                $other->_interval('year') );
+    return 1 if $self->intersects($other);
+    my $other_is_period = ref $other eq __PACKAGE__;
+    if ( $self->annual || $other_is_period && $other->annual ) {
+        if ( $self->start->year != $other->start->year ) {
+            if ( !$self->annual ) {
+                my $t = $self;
+                $self  = $other;
+                $other = $t;
+            }
+            $self = $self->clone;
+            my $d = $self->start->year - $other->start->year;
+            $self->start->subtract( years => $d );
+            $self->end->subtract( years => $d );
+            return $self->intersects($other);
+        }
+    }
+    elsif ( $self->monthly || $other_is_period && $other->monthly ) {
+        if (   $self->start->year != $other->start->year
+            || $self->start->month != $other->start->month )
+        {
+            if ( !$self->monthly ) {
+                my $t = $self;
+                $self  = $other;
+                $other = $t;
+            }
+            $self = $self->clone;
+            my $d = $self->start->year - $other->start->year;
+            $self->start->subtract( years => $d );
+            $self->end->subtract( years => $d );
+            $d = $self->start->month - $other->start->month;
+            $self->start->subtract( months => $d );
+            $self->end->subtract( months => $d );
+            return $self->intersects($other);
         }
     }
     return 0;
-}
-
-=method overlap
-
-Determines the portion of a vacation period that overlaps an event.
-
-=cut
-
-sub overlap {
-    my ($self, $event) = @_;
-    return undef unless $self->conflicts($event);
-    my $clone = $self->clone;
-    return undef;
-    # TODO figure out complexities of this
-}
-
-# unrolls a calendrical interval onto a timeline
-sub _interval {
-    my ( $self, $unit ) = @_;
-    my $d2 =
-      $self->end->subtract_datetime( $self->start )->in_units( $unit . 's' );
-    my $d1 = $self->start->$unit;
-    return $d1, $d1 + $d2;
-}
-
-# determine whether two calendrical intervals overlap
-sub _overlap_test {
-    my ( $s1, $e1, $s2, $e2 ) = @_;
-    return 1 if $s1 == $s2;
-    my ( $i1, $i2, $it ) = ( [ $s1, $e1 ], [ $s2, $e2 ] );
-    if ( $s1 > $s2 ) {
-        $it = $i1;
-        $i1 = $i2;
-        $i2 = $it;
-    }
-    return $i1->[1] >= $i2[0];
 }
 
 =method parts
@@ -256,7 +283,80 @@ Converts period into list of displayable parts: time, properties, tags, descript
 =cut
 
 sub parts {
-    # TODO 
+    my ($self) = @_;
+    return $self->_time, $self->_properties, $self->_tags, $self->_description;
+}
+
+=method single_day
+
+Whether this period concerns a single day or a longer span of time.
+
+=cut
+
+sub single_day {
+    my ($self) = @_;
+    my ( $s, $e ) = ( $self->start, $self->end );
+    return $s->year == $e->year && $s->month == $e->month && $s->day == $e->day;
+}
+
+# time part of summary
+sub _time {
+    my ($self) = @_;
+    my $fmt;
+    if ( $self->annual ) {
+        $fmt = '%b %d';
+    }
+    elsif ( $self->monthly ) {
+        $fmt = '%d';
+    }
+    else {
+        $fmt = '%F';
+    }
+    $fmt .= ' %H:%M:%S' if $self->fixed;
+    my $s;
+    if ( $self->single_day ) {
+        $s = $self->start->strftime($fmt);
+    }
+    else {
+        $s = $self->start->strftime($fmt) . ' -- ' . $self->end->strftime($fmt);
+    }
+    return $s;
+}
+
+# properties part of summary
+sub _properties {
+    my ($self) = @_;
+    my $s;
+    if ( $self->fixed ) {
+        $s = 'fixed';
+    }
+    elsif ( $self->flex ) {
+        $s = 'flex';
+    }
+    else {
+        $s = '';
+    }
+    if ( $self->annual ) {
+        $s .= ' ' if $s;
+        $s .= 'annual';
+    }
+    elsif ( $self->monthly ) {
+        $s .= ' ' if $s;
+        $s .= 'monthly';
+    }
+    return $s;
+}
+
+# tag part of summary
+sub _tags {
+    my ($self) = @_;
+    return join ', ', @{ $self->tags };
+}
+
+# description part of summary
+sub _description {
+    my ($self) = @_;
+    return $self->description;
 }
 
 1;

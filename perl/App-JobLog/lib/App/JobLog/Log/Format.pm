@@ -11,18 +11,24 @@ This module handles word wrapping, date formatting, and the like.
 use Exporter 'import';
 our @EXPORT = qw(
   display
-  time_remaining
+  duration
+  summary
 );
 
 use Modern::Perl;
-use App::JobLog::Config qw(columns precision);
-use App::JobLog::Log::Synopsis qw(synopsis :merge);
+use App::JobLog::Config qw(
+  columns
+  day_length
+  is_workday
+  precision
+);
+use App::JobLog::Log::Synopsis qw(collect :merge);
 use Text::Wrap;
+use App::JobLog::TimeGrammar qw(parse);
 
 use constant TAG_COLUMN_LIMIT => 10;
-use constant HOUR_IN_SECONDS  => 60 * 60;
-
-my $duration_format = '%0.' . precision() . 'f';
+use constant MARGIN           => 10;
+use constant DURATION_FORMAT  => '%0.' . precision . 'f';
 
 =method time_remaining
 
@@ -32,11 +38,141 @@ and returns an integer representing a number of seconds.
 
 =cut
 
-sub time_remaining {
-    my ($events, $days) = @_;
+sub summary {
+    my ( $phrase, $test ) = @_;
 
-    # TODO put in real code
-    return 0;
+    # we skip flex days if the events are at all filtered
+    my $skip_flex = $test || 0;
+    $test //= sub { $_[0] };
+    my ( $start, $end ) = parse $phrase;
+    unless ($skip_flex) {
+
+     # if we are chopping off any of the first and last days we ignore flex time
+        $skip_flex = 1 unless _break_of_dawn($start) && _witching_hour($end);
+    }
+    my $events = App::JobLog::Log->new->find_events( $start, $end );
+    my @days = @{ _days( $start, $end, $skip_flex ) };
+    my @periods = App::JobLog::Vacation->new->periods;
+
+    # drop the vacation days that can't be relevant
+    {
+        my $e =
+          App::JobLog::Log::Event->new(
+            App::JobLog::Log::Line->new( time => $start ) );
+        $e->end = $end;
+        for ( my $i = 0 ; $i < @periods ; $i++ ) {
+            my $p = $periods[$i];
+            if ( $skip_flex && $p->flex || !$p->conflicts($e) ) {
+                splice @periods, $i, 1;
+                $i--;
+            }
+        }
+    }
+
+    # collect events into days
+    for my $big_e (@$events) {
+        for my $e ( $big_e->split_days ) {
+            if ( $e = $test->($e) ) {
+                for my $d (@days) {
+                    next if $e->start > $d->end;
+                    if ( $e->intersects( $d->pseudo_event ) ) {
+                        push @{ $d->events }, $e;
+                        last;
+                    }
+                    last if $d->start > $e->end;
+                }
+            }
+        }
+    }
+
+    # add in vacation times
+    for my $p (@periods) {
+        for my $d (@days) {
+            if ( is_workday( $d->start ) && $p->conflicts($d) ) {
+                my $clone = $p->clone;
+                $clone->start = $d->start;
+                if ( $clone->fixed ) {
+                    $clone->end = $d->end;
+                    push @{ $d->events }, $clone->overlap( $d->start, $d->end );
+                }
+                else {
+                    if ( $clone->flex ) {
+                        $clone->end = $clone->start->clone->add(
+                            seconds => $d->time_remaining );
+                        $d->{deferred} = $clone;
+                    }
+                    else {
+                        $clone->end =
+                          $clone->start->clone->add( hours => day_length );
+                        push @{ $d->vacation }, $clone;
+                    }
+                }
+            }
+        }
+    }
+
+    # delete empty days
+    for ( my $i = 0 ; $i < @days ; $i++ ) {
+        my $d = $days[$i];
+        if ( $d->is_empty && !is_workday( $d->start ) ) {
+            splice @days, $i, 1;
+            $i--;
+        }
+    }
+
+    # fix deferred flex time and ensure events are chronologically ordered
+    for my $d (@days) {
+        my $flex   = $d->{deferred};
+        my @events = @{ $d->events };
+        if ($flex) {
+            delete $d->{deferred};
+            my $tr = $d->time_remaining;
+            if ($tr) {
+                $flex->end = $flex->start->clone->add( seconds => $tr );
+            }
+            push @events, $flex;
+        }
+        $d->{events} = [ sort { $a->cmp($b) } @events ] if @events > 1;
+    }
+
+    return \@days;
+}
+
+# whether the date is the first moment in its day
+sub _break_of_dawn {
+    my ($date) = @_;
+    return $date->hour == 0 && $date->minute == 0 && $date->second == 0;
+}
+
+# whether the date is the last moment in its day
+sub _witching_hour {
+    my ($date) = @_;
+    return $date->hour == 23 && $date->minute == 59 && $date->second == 59;
+}
+
+# create a list of days about which we wish to collect information
+sub _days {
+    my ( $start, $end, $skip_flex ) = @_;
+    my @days;
+    my $b1 = $start;
+    my $b2 = $start->clone->add( days => 1 )->truncate( to => 'day' );
+    while ( $b2 < $end ) {
+        push @days,
+          App::JobLog::Log::Day->new(
+            start     => $b1,
+            end       => $b2,
+            skip_flex => $skip_flex
+          );
+        $b1 = $b2;
+        $b2 = $b2->clone->add( days => 1 );
+    }
+    push @days,
+      App::JobLog::Log::Day->new(
+        start     => $b1,
+        end       => $end,
+        skip_flex => $skip_flex
+      );
+    return \@days;
 }
 
 =method display
@@ -46,69 +182,63 @@ Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
 =cut
 
 sub display {
-    my ( $events, $days, $merge_level, $test ) = @_;
+    my ( $days, $merge_level ) = @_;
 
     # TODO augment events with vacation and holidays
-    if (@$events) {
-        my @synopses = @{ synopsis( $events, $days, $merge_level, $test ) };
+    if (@$days) {
+        collect $_, $merge_level for @$days;
+        my @synopses = map { @{ $_->synopses } } @$days;
 
-        unless (@synopses) {
-            say 'no events remain after filtering';
-            return;
+        # in the future we will allow more of these values to be toggled
+        my $columns = {
+            time        => _single_interval($merge_level),
+            tags        => 1,
+            description => 1,
+            duration    => 1
+        };
+        my $format = _define_format( \@synopses, $columns );
+
+        # cache which columns to display
+        my ( $show_times, $show_durations, $show_tags, $show_descriptions ) =
+          @{ $columns->{formats} }{qw(time duration tags description)};
+
+        # keep track of various durations
+        my $times = {
+            total    => 0,
+            untagged => 0,
+            expected => 0,
+            vacation => 0,
+            tags     => {}
+        };
+
+        # display synopses and add up durations
+        my $previous;
+        for my $d (@$days) {
+            $d->times($times);
+            $d->display( $previous, $format, $columns, $show_times,
+                $show_durations, $show_tags, $show_descriptions );
+            $previous = $d;
         }
 
-        my ( $format, $tag_width, $description_width ) =
-          _define_format( \@synopses );
-        my ( $total, $untagged, $previous_date, %tag_map ) = ( 0, 0 );
-        for my $s (@synopses) {
-
-            # collect durations
-            $total += $s->duration;
-            for my $e ( $s->events ) {
-                my @tags = @{ $e->tags };
-                $tag_map{$_} += $e->duration for @tags;
-                $untagged += $e->duration unless @tags;
-            }
-            if (
-                $s->single_day
-                && !(
-                    defined $previous_date
-                    && _same_day( $previous_date, $s->date )
-                )
-              )
-            {
-                my $format =
-                  !( defined $previous_date
-                    && $previous_date->year == $s->date->year )
-                  ? '%A, %e %B, %Y'
-                  : '%A, %e %B';
-                print $s->date->strftime($format), "\n";
-            }
-            $previous_date = $s->date;
-            my @lines;
-            push @lines, [ $s->time_fmt ] if $s->single_interval;
-            push @lines, [ _duration( $s->duration ) ];
-            push @lines, _wrap( $s->tag_string,  $tag_width );
-            push @lines, _wrap( $s->description, $description_width );
-            my $count = _pad_lines( \@lines );
-
-            for my $i ( 0 .. $count ) {
-                say sprintf $format, _gather( \@lines, $i );
-            }
-            print "\n";
-        }
-        my ( $m1, $m2 ) = ( length 'TOTAL HOURS', length _duration($total) );
-        for my $tag ( 'UNTAGGED', keys %tag_map ) {
+        my ( $m1, $m2 ) =
+          ( length 'TOTAL HOURS', length duration( $times->{total} ) );
+        my @keys = keys %{ $times->{tags} };
+        push @keys, 'UNTAGGED' if $times->{untagged};
+        push @keys, 'VACATION' if $times->{vacation};
+        for my $tag (@keys) {
             my $l = length $tag;
             $m1 = $l if $l > $m1;
         }
         $format = sprintf "  %%-%ds %%%ds\n", $m1, $m2;
-        printf $format, 'TOTAL HOURS', _duration($total);
-        if (%tag_map) {
-            printf $format, 'UNTAGGED', _duration($untagged);
-            for my $key ( sort keys %tag_map ) {
-                my $d = $tag_map{$key};
-                printf $format, $key, _duration($d);
+        printf $format, 'TOTAL HOURS', duration( $times->{total} );
+        printf $format, 'VACATION',    duration( $times->{vacation} )
+          if $times->{vacation};
+        if ( %{ $times->{tags} } ) {
+            printf $format, 'UNTAGGED', duration( $times->{untagged} )
+              if $times->{untagged};
+            for my $key ( sort keys %{ $times->{tags} } ) {
+                my $d = $times->{tags}{$key};
+                printf $format, $key, duration($d);
             }
         }
     }
@@ -153,59 +283,64 @@ sub _same_day {
 # generate printf format for synopses
 # returns format and wrap widths for tags and descriptions
 sub _define_format {
-    my $synopses = shift;
+    my ( $synopses, $hash ) = @_;
 
     #determine maximum width of each column
     my $widths;
     for my $s (@$synopses) {
-        my $ts = $s->tag_string;
-        if ( length $ts > TAG_COLUMN_LIMIT ) {
-            my $wrapped = _wrap( $ts, TAG_COLUMN_LIMIT );
-            $ts = '';
-            for my $line (@$wrapped) {
-                $ts = $line if length $line > length $ts;
+        if ( $hash->{tags} ) {
+            my $w1 = $hash->{widths}{tags} || 0;
+            my $ts = $s->tag_string;
+            if ( length $ts > TAG_COLUMN_LIMIT ) {
+                my $wrapped = _wrap( $ts, TAG_COLUMN_LIMIT );
+                $ts = '';
+                for my $line (@$wrapped) {
+                    $ts = $line if length $line > length $ts;
+                }
             }
+            my $w2 = length $ts;
+            $hash->{widths}{tags} = $w2 if $w2 > $w1;
         }
-        my $w = [
-            $s->single_interval ? ( length $s->time_fmt ) : (),
-            length _duration( $s->duration ),
-            length $ts
-        ];
-        if ($widths) {
-            for my $i ( 0 .. $#$widths ) {
-                my ( $l1, $l2 ) = ( $w->[$i], $widths->[$i] );
-                $widths->[$i] = $l1 if $l1 > $l2;
-            }
+        if ( $hash->{time} ) {
+            my $w1 = $hash->{widths}{time} || 0;
+            my $w2 = length $s->time_fmt;
+            $hash->{widths}{time} = $w2 if $w2 > $w1;
         }
-        else {
-            $widths = $w;
+        if ( $hash->{duration} ) {
+            my $w1 = $hash->{widths}{duration} || 0;
+            my $w2 = length duration( $s->duration );
+            $hash->{widths}{duration} = $w2 if $w2 > $w1;
         }
     }
-    my $max_description = columns;
-
-    # add on initial space to each column
-    for my $c (@$widths) {
-        $max_description -= $c;    # column width
+    if ( $hash->{description} ) {
+        my $max_description = columns;
+        for my $col (qw(time duration tags)) {
+            $max_description -= $hash->{widths}{col} || 0;
+        }
+        $max_description -= MARGIN;    # margin on the right
+        $hash->{widths}{description} = $max_description;
+        $hash->{formats}{description} = sprintf '%%-%ds', $max_description;
     }
-    $max_description -= 10;        # margin on the right
-    my $format;
-    if ( @$widths == 3 ) {
-
-        # print times
-        $format = sprintf '  %%%ds  %%%ds  %%-%ds  %%-%ds', @$widths,
-          $max_description;
-    }
-    else {
-
-        # don't print times
-        $format = sprintf '  %%%ds  %%-%ds  %%-%ds', @$widths, $max_description;
-    }
+    if ( $hash->{tags} && $hash->{widths}{tags} ) {
+        $hash->{formats}{tags} = sprintf '%%-%ds', $hash->{widths}{tags};
 
 # there seems to be a bug in Text::Wrap that requires tinkering with the column width
-    return $format, $widths->[$#$widths] + 1, $max_description;
-}
+        $hash->{widths}{tags}++;
+    }
+    if ( $hash->{time} && $hash->{widths}{time} ) {
+        $hash->{formats}{time} = sprintf '%%%ds', $hash->{widths}{time};
+    }
+    if ( $hash->{duration} && $hash->{widths}{duration} ) {
+        $hash->{formats}{duration} = sprintf '%%%ds', $hash->{widths}{duration};
+    }
 
-sub _duration { sprintf $duration_format, $_[0] / HOUR_IN_SECONDS }
+    my $format = '';
+    for my $col (qw(time duration tags description)) {
+        my $f = $hash->{formats}{$col};
+        $format .= "  $f" if $f;
+    }
+    return $format;
+}
 
 # wraps Text::Wrap::wrap
 sub _wrap {
@@ -215,5 +350,20 @@ sub _wrap {
     my @ar = $s =~ /^.*$/mg;
     return \@ar;
 }
+
+# determines from merge level whether event times should be displayed
+sub _single_interval {
+    $_[0] == MERGE_ADJACENT
+      || $_[0] == MERGE_ADJACENT_SAME_TAGS
+      || $_[0] == MERGE_NONE;
+}
+
+=method duration
+
+Work time formatter.
+
+=cut
+
+sub duration { sprintf DURATION_FORMAT, $_[0] / ( 60 * 60 ) }
 
 1;

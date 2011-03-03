@@ -12,6 +12,13 @@ use overload '""' => sub {
       . ( $_[0]->is_closed ? $_[0]->end : 'ongoing' );
 };
 
+=method new
+
+Basic constructor. Expects single L<App::JobLog::Log::Line> argument. Can be called on
+instance or class.
+
+=cut
+
 sub new {
     my ( $class, $logline ) = @_;
     $class = ref $class || $class;
@@ -42,7 +49,7 @@ sub overlap {
     if ( $c1 <= 0 && $c2 >= 0 ) {
         return $self;
     }
-    return undef if $self->start >= $end || $start >= $self->end;
+    return if $self->start >= $end || $start >= $self->end;
     my $s = $c1 < 0 ? $self->start : $start;
     my $e = $c2 < 0 ? $end         : $self->end;
     my $clone = $self->clone;
@@ -146,6 +153,32 @@ sub split_days {
     else {
         return $self;
     }
+}
+
+# unrolls a calendrical interval onto a timeline
+sub _interval {
+    my ( $self, $unit ) = @_;
+    my $d2 =
+      $self->end->subtract_datetime( $self->start )->in_units( $unit . 's' );
+    my $d1 = $self->start->$unit;
+    return $d1, $d1 + $d2;
+}
+
+=method intersects
+
+Whether the time period of this overlaps with another.
+
+=cut
+
+sub intersects {
+    my ( $self, $other ) = @_;
+    if ($self->start > $other->start) {
+        #rearrange so $self is earlier
+        my $t = $other;
+        $other = $self;
+        $self = $t;
+    }
+    return $self->end > $other->start;
 }
 
 1;

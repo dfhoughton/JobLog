@@ -30,7 +30,7 @@ sub new {
         my @data;
         while ( my $line = <$fh> ) {
             chomp $line;
-            my $v = Period->parse($line);
+            my $v = App::JobLog::Vacation::Period->parse($line);
             push @data, $v;
         }
         $self->{data} = [ sort { $a->cmp($b) } @data ];
