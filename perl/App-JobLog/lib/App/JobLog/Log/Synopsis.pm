@@ -119,7 +119,7 @@ sub same_day {
 # whether given event is immediately adjacent to last event in synopsis
 sub adjacent {
     my ( $self, $event ) = @_;
-    my $d1 = ( $self->events )[-1]->end;
+    my $d1 = ( $self->events )[-1]->end || now;
     my $d2 = $event->start;
     return DateTime->compare( $d1, $d2 ) == 0;
 }
