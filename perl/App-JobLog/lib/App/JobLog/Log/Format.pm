@@ -9,9 +9,10 @@ This module handles word wrapping, date formatting, and the like.
 =cut
 
 use Exporter 'import';
-our @EXPORT = qw(
+our @EXPORT_OK = qw(
   display
   duration
+  single_interval
   summary
   wrap
 );
@@ -40,7 +41,7 @@ and returns an integer representing a number of seconds.
 =cut
 
 sub summary {
-    my ( $phrase, $test ) = @_;
+    my ( $phrase, $test, $hidden ) = @_;
 
     # we skip flex days if the events are at all filtered
     my $skip_flex = $test || 0;
@@ -53,10 +54,11 @@ sub summary {
     }
     my $events = App::JobLog::Log->new->find_events( $start, $end );
     my @days = @{ _days( $start, $end, $skip_flex ) };
-    my @periods = App::JobLog::Vacation->new->periods;
+    my @periods =
+      $hidden->{vacation} ? () : App::JobLog::Vacation->new->periods;
 
     # drop the vacation days that can't be relevant
-    {
+    unless ( $hidden->{vacation} ) {
         my $e =
           App::JobLog::Log::Event->new(
             App::JobLog::Log::Line->new( time => $start ) );
@@ -89,7 +91,8 @@ sub summary {
     # add in vacation times
     for my $p (@periods) {
         for my $d (@days) {
-            if ( is_workday( $d->start ) && $p->conflicts($d->pseudo_event) ) {
+            if ( is_workday( $d->start ) && $p->conflicts( $d->pseudo_event ) )
+            {
                 my $clone = $p->clone;
                 $clone->start = $d->start;
                 if ( $clone->fixed ) {
@@ -183,7 +186,7 @@ Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
 =cut
 
 sub display {
-    my ( $days, $merge_level ) = @_;
+    my ( $days, $merge_level, $hidden ) = @_;
 
     # TODO augment events with vacation and holidays
     if (@$days) {
@@ -192,10 +195,10 @@ sub display {
 
         # in the future we will allow more of these values to be toggled
         my $columns = {
-            time        => _single_interval($merge_level),
-            tags        => 1,
-            description => 1,
-            duration    => 1
+            time => single_interval($merge_level) && !$hidden->{time},
+            tags => !$hidden->{tags},
+            description => !$hidden->{description},
+            duration    => !$hidden->{duration},
         };
         my $format = _define_format( \@synopses, $columns );
 
@@ -326,8 +329,13 @@ sub wrap {
     return \@ar;
 }
 
-# determines from merge level whether event times should be displayed
-sub _single_interval {
+=method
+
+Whether times should be displayed given the merge level.
+
+=cut
+
+sub single_interval {
     $_[0] == MERGE_ADJACENT
       || $_[0] == MERGE_ADJACENT_SAME_TAGS
       || $_[0] == MERGE_NONE;

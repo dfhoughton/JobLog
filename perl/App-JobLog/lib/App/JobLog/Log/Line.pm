@@ -27,7 +27,7 @@ our $re = qr{
      (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)
      (?<tag> ((?:[^\s:\\]|(?&escaped))++) (?{push @tags, $^N}))
      (?<escaped> \\.)
-     (?<descriptions> (?: (?&description) (?: ; (?&description) )*+ )? )
+     (?<descriptions> (?: (?&description) (?: ; \s*+ (?&description) )*+ )? )
      (?<description> ((?:[^;\\]|(?&escaped))++) (?{push @description, $^N}))
     )
 }xi;
@@ -124,8 +124,14 @@ sub parse {
             my %tags = map { $_ => 1 } @tags;
             $obj->{tags} =
               [ map { ( my $v = $_ ) =~ s/\\(.)/$1/g; $v } sort keys %tags ];
-            $obj->{description} =
-              [ map { ( my $v = $_ ) =~ s/\\(.)/$1/g; $v } @description ];
+            $obj->{description} = [
+                map {
+                    ( my $v = $_ ) =~ s/\\(.)/$1/g;
+                    $v =~ s/^\s++|\s++$//g;
+                    $v =~ s/\s++/ /g;
+                    $v
+                  } @description
+            ];
         }
         else {
             $obj->{done} = 1;

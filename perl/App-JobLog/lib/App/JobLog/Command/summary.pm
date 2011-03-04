@@ -10,11 +10,15 @@ use Class::Autouse qw(
   App::JobLog::Log
   App::JobLog::Log::Day
 );
-use autouse 'App::JobLog::TimeGrammar'   => qw(parse daytime);
-use autouse 'Carp'                       => qw(carp);
-use autouse 'Getopt::Long::Descriptive'  => qw(prog_name);
-use autouse 'App::JobLog::Config'        => qw(merge);
-use autouse 'App::JobLog::Log::Format'   => qw(display summary);
+use autouse 'App::JobLog::TimeGrammar'  => qw(parse daytime);
+use autouse 'Carp'                      => qw(carp);
+use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
+use autouse 'App::JobLog::Config'       => qw(merge);
+use autouse 'App::JobLog::Log::Format'  => qw(
+  display
+  single_interval
+  summary
+);
 use autouse 'App::JobLog::Log::Synopsis' => qw(
   MERGE_ALL
   MERGE_ADJACENT
@@ -72,13 +76,30 @@ sub execute {
             $merge_level = &$m;
         }
     }
+    my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
+    if (   ( $dateless || $opt->no_date )
+        && ( !single_interval($merge_level) || $opt->no_time )
+        && $opt->no_duration
+        && $opt->no_tags
+        && $opt->no_description )
+    {
+        $self->usage_error('you have chosen not to display anything');
+    }
 
     # parse time expression
     my $days;
-    eval { $days = summary join( ' ', @$args ), $test; };
+    eval { $days = summary join( ' ', @$args ), $test, $hidden };
     $self->usage_error($@) if $@;
+    my $hidden = {
+        vacation    => $opt->no_vacation,
+        date        => $opt->no_date,
+        time        => $opt->no_time,
+        duration    => $opt->no_duration,
+        tags        => $opt->no_tags,
+        description => $opt->no_description,
+    };
     unless ( $opt->{hidden} ) {
-        if ( $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS ) {
+        if ($dateless) {
 
             # create "day" containing all events
             my $duck_day = App::JobLog::Log::Day->new(
@@ -90,10 +111,10 @@ sub execute {
                 push @{ $duck_day->events },   @{ $d->events };
                 push @{ $duck_day->vacation }, @{ $d->vacation };
             }
-            display [$duck_day], $merge_level;
+            display [$duck_day], $merge_level, $hidden;
         }
         else {
-            display $days, $merge_level;
+            display $days, $merge_level, $hidden;
         }
     }
     my $t = 0;
@@ -312,6 +333,12 @@ sub options {
                 ]
             }
         ],
+        [ 'no-vacation|V',  'do not display vacation hours' ],
+        [ 'no-date',        'do not display a date before each distinct day' ],
+        [ 'no-time',        'do not display event start and end times' ],
+        [ 'no-duration',    'do not display event durations' ],
+        [ 'no-tags',        'do not display tags' ],
+        [ 'no-description', 'do not display event descriptions' ],
         [ 'hidden', 'display nothing', { hidden => 1 } ],
     );
 }
