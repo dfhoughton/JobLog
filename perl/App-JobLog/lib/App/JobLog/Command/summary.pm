@@ -13,8 +13,11 @@ use Class::Autouse qw(
 use autouse 'App::JobLog::TimeGrammar'  => qw(parse daytime);
 use autouse 'Carp'                      => qw(carp);
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
-use autouse 'App::JobLog::Config'       => qw(merge);
-use autouse 'App::JobLog::Log::Format'  => qw(
+use autouse 'App::JobLog::Config'       => qw(
+  is_hidden
+  merge
+);
+use autouse 'App::JobLog::Log::Format' => qw(
   display
   single_interval
   summary
@@ -78,14 +81,14 @@ sub execute {
     }
     my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
     if (
-           $opt->no_totals
-        && ( $dateless || $opt->no_date || is_hidden('date') )
+           $opt->{no_totals}
+        && ( $dateless || $opt->{no_date} || is_hidden('date') )
         && (   !single_interval($merge_level)
-            || $opt->no_time
+            || $opt->{no_time}
             || is_hidden('time') )
-        && ( $opt->no_duration    || is_hidden('duration') )
-        && ( $opt->no_tags        || is_hidden('tags') )
-        && ( $opt->no_description || is_hidden('description') )
+        && ( $opt->{no_duration}    || is_hidden('duration') )
+        && ( $opt->{no_tags}        || is_hidden('tags') )
+        && ( $opt->{no_description} || is_hidden('description') )
       )
     {
         $self->usage_error('you have chosen not to display anything');
@@ -93,13 +96,13 @@ sub execute {
 
     # record hiding options in hash reference
     my $hidden = {
-        vacation    => $opt->no_vacation,
-        date        => $opt->no_date || is_hidden('date'),
-        time        => $opt->no_time || is_hidden('time'),
-        duration    => $opt->no_duration || is_hidden('duration'),
-        tags        => $opt->no_tags || is_hidden('tags'),
-        description => $opt->no_description || is_hidden('description'),
-        totals      => $opt->no_totals,
+        vacation    => $opt->{no_vacation},
+        date        => $opt->{no_date} || is_hidden('date'),
+        time        => $opt->{no_time} || is_hidden('time'),
+        duration    => $opt->{no_duration} || is_hidden('duration'),
+        tags        => $opt->{no_tags} || is_hidden('tags'),
+        description => $opt->{no_description} || is_hidden('description'),
+        totals      => $opt->{no_totals},
     };
 
     # parse time expression
