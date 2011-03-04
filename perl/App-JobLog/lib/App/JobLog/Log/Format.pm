@@ -196,6 +196,7 @@ sub display {
         # in the future we will allow more of these values to be toggled
         my $columns = {
             time => single_interval($merge_level) && !$hidden->{time},
+            date => !$hidden->{date},
             tags => !$hidden->{tags},
             description => !$hidden->{description},
             duration    => !$hidden->{duration},
@@ -219,25 +220,27 @@ sub display {
             $previous = $d;
         }
 
-        my ( $m1, $m2 ) =
-          ( length 'TOTAL HOURS', length duration( $times->{total} ) );
-        my @keys = keys %{ $times->{tags} };
-        push @keys, 'UNTAGGED' if $times->{untagged};
-        push @keys, 'VACATION' if $times->{vacation};
-        for my $tag (@keys) {
-            my $l = length $tag;
-            $m1 = $l if $l > $m1;
-        }
-        $format = sprintf "  %%-%ds %%%ds\n", $m1, $m2;
-        printf $format, 'TOTAL HOURS', duration( $times->{total} );
-        printf $format, 'VACATION',    duration( $times->{vacation} )
-          if $times->{vacation};
-        if ( %{ $times->{tags} } ) {
-            printf $format, 'UNTAGGED', duration( $times->{untagged} )
-              if $times->{untagged};
-            for my $key ( sort keys %{ $times->{tags} } ) {
-                my $d = $times->{tags}{$key};
-                printf $format, $key, duration($d);
+        unless ( $hidden->{totals} ) {
+            my ( $m1, $m2 ) =
+              ( length 'TOTAL HOURS', length duration( $times->{total} ) );
+            my @keys = keys %{ $times->{tags} };
+            push @keys, 'UNTAGGED' if $times->{untagged};
+            push @keys, 'VACATION' if $times->{vacation};
+            for my $tag (@keys) {
+                my $l = length $tag;
+                $m1 = $l if $l > $m1;
+            }
+            $format = sprintf "  %%-%ds %%%ds\n", $m1, $m2;
+            printf $format, 'TOTAL HOURS', duration( $times->{total} );
+            printf $format, 'VACATION',    duration( $times->{vacation} )
+              if $times->{vacation};
+            if ( %{ $times->{tags} } ) {
+                printf $format, 'UNTAGGED', duration( $times->{untagged} )
+                  if $times->{untagged};
+                for my $key ( sort keys %{ $times->{tags} } ) {
+                    my $d = $times->{tags}{$key};
+                    printf $format, $key, duration($d);
+                }
             }
         }
     }

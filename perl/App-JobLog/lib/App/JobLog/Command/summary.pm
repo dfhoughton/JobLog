@@ -77,7 +77,8 @@ sub execute {
         }
     }
     my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
-    if (   ( $dateless || $opt->no_date )
+    if (   $opt->no_totals
+        && ( $dateless || $opt->no_date )
         && ( !single_interval($merge_level) || $opt->no_time )
         && $opt->no_duration
         && $opt->no_tags
@@ -86,10 +87,7 @@ sub execute {
         $self->usage_error('you have chosen not to display anything');
     }
 
-    # parse time expression
-    my $days;
-    eval { $days = summary join( ' ', @$args ), $test, $hidden };
-    $self->usage_error($@) if $@;
+    # record hiding options in hash reference
     my $hidden = {
         vacation    => $opt->no_vacation,
         date        => $opt->no_date,
@@ -97,7 +95,13 @@ sub execute {
         duration    => $opt->no_duration,
         tags        => $opt->no_tags,
         description => $opt->no_description,
+        totals      => $opt->no_totals,
     };
+
+    # parse time expression
+    my $days;
+    eval { $days = summary join( ' ', @$args ), $test, $hidden };
+    $self->usage_error($@) if $@;
     unless ( $opt->{hidden} ) {
         if ($dateless) {
 
@@ -339,6 +343,10 @@ sub options {
         [ 'no-duration',    'do not display event durations' ],
         [ 'no-tags',        'do not display tags' ],
         [ 'no-description', 'do not display event descriptions' ],
+        [
+            'no-totals',
+            'do not display the footer containing total hours worked, etc.'
+        ],
         [ 'hidden', 'display nothing', { hidden => 1 } ],
     );
 }
