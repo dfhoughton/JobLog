@@ -17,7 +17,9 @@ our @EXPORT_OK = qw(
   day_length
   dir
   editor
+  hidden_columns
   init_file
+  is_hidden
   is_workday
   log
   merge
@@ -30,8 +32,10 @@ our @EXPORT_OK = qw(
   workdays
   DAYS
   DIRECTORY
+  HIDABLE_COLUMNS
   HOURS
   MERGE
+  NONE_COLUMN
   PERIOD
   PRECISION
   SUNDAY_BEGINS_WEEK
@@ -76,6 +80,20 @@ use constant DAYS => 'S' . WORKDAYS . 'A';
 
 # default level of merging
 use constant MERGE => 'adjacent same tags';
+
+# name of hide nothing "column"
+use constant NONE_COLUMN     => 'none';
+
+# array of hidable columns
+use constant HIDABLE_COLUMNS => [
+    NONE_COLUMN, qw(
+      date
+      description
+      duration
+      tags
+      time
+      )
+];
 
 =method init_file
 
@@ -353,6 +371,33 @@ sub is_workday {
         }
     }
     return $workdays{ $date->day_of_week };
+}
+
+=method hidden_columns
+
+Returns those columns never displayed by summary command.
+
+=cut
+
+sub hidden_columns {
+    my ($value) = @_;
+    return _param( 'hidden_columns', NONE_COLUMN, 'summary', $value );
+}
+
+=method is_hidden
+
+Whether a particular column is among those hidden.
+
+=cut
+
+my %hidden_columns;
+
+sub is_hidden {
+    my ($value) = @_;
+    unless (%hidden_columns) {
+        %hidden_columns = map { $_ => 1 } split / /, hidden_columns();
+    }
+    return $hidden_columns{$value};
 }
 
 1;

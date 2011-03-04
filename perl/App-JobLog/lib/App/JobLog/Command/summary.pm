@@ -77,12 +77,16 @@ sub execute {
         }
     }
     my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
-    if (   $opt->no_totals
-        && ( $dateless || $opt->no_date )
-        && ( !single_interval($merge_level) || $opt->no_time )
-        && $opt->no_duration
-        && $opt->no_tags
-        && $opt->no_description )
+    if (
+           $opt->no_totals
+        && ( $dateless || $opt->no_date || is_hidden('date') )
+        && (   !single_interval($merge_level)
+            || $opt->no_time
+            || is_hidden('time') )
+        && ( $opt->no_duration    || is_hidden('duration') )
+        && ( $opt->no_tags        || is_hidden('tags') )
+        && ( $opt->no_description || is_hidden('description') )
+      )
     {
         $self->usage_error('you have chosen not to display anything');
     }
@@ -90,11 +94,11 @@ sub execute {
     # record hiding options in hash reference
     my $hidden = {
         vacation    => $opt->no_vacation,
-        date        => $opt->no_date,
-        time        => $opt->no_time,
-        duration    => $opt->no_duration,
-        tags        => $opt->no_tags,
-        description => $opt->no_description,
+        date        => $opt->no_date || is_hidden('date'),
+        time        => $opt->no_time || is_hidden('time'),
+        duration    => $opt->no_duration || is_hidden('duration'),
+        tags        => $opt->no_tags || is_hidden('tags'),
+        description => $opt->no_description || is_hidden('description'),
         totals      => $opt->no_totals,
     };
 
