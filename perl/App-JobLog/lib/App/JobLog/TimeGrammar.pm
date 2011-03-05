@@ -50,7 +50,11 @@ use autouse 'App::JobLog::Config' => qw(
   start_pay_period
   DIRECTORY
 );
-use autouse 'App::JobLog::Time' => qw(now today);
+use autouse 'App::JobLog::Time' => qw(
+  now
+  today
+  tz
+);
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing
@@ -596,7 +600,7 @@ sub decontextualized_numeric_date {
     $h->{year}  //= $date->year;
     $h->{month} //= $date->month;
     my $day_unspecified = !exists $h->{day};
-    $date = DateTime->new( %$h, day => $h->{day} // 1 );
+    $date = DateTime->new( time_zone => tz(), %$h, day => $h->{day} // 1 );
 
     if ( !( exists $h->{day} || $is_start ) ) {
         $date->add( months => 1 );
@@ -612,7 +616,7 @@ sub fix_date {
             init_month_abbr();
             $d->{month} = $month_abbr{ $d->{month} };
             delete $d->{type};
-            return DateTime->new(%$d);
+            return DateTime->new( time_zone => tz(), %$d );
         }
         elsif ( my $day = $d->{day} ) {
             my $date = today;
@@ -756,7 +760,7 @@ sub fix_date {
 
     # numeric date
     delete $d->{type};
-    return DateTime->new(%$d);
+    return DateTime->new( time_zone => tz(), %$d );
 }
 
 # lazy initialization of verbal -> numeric month map

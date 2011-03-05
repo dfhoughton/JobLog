@@ -117,7 +117,7 @@ sub times {
         $times->{tags}{$_} += $d for @tags;
         $times->{untagged} += $d unless @tags;
         $times->{total} += $d;
-        $times->{vacation} += $d if ref $e eq 'App::JobLog::Vacation::Period';
+        $times->{vacation} += $d if $e->isa('App::JobLog::Vacation::Period');
     }
     $times->{expected} += WORK_SECONDS
       if is_workday $self->start;
