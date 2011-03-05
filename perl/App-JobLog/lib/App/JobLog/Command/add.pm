@@ -14,11 +14,24 @@ sub execute {
     unless ($tags) {
         $tags = [] if $opt->clear_tags;
     }
-    App::JobLog::Log->new->append_event(
+    my $log        = App::JobLog::Log->new;
+    my ($last)     = $log->last_event;
+    my $is_ongoing = $last->is_open;
+    $log->append_event(
         $tags ? ( tags => $tags ) : (),
         description => [ join ' ', @$args ],
         time        => now
     );
+    if ( $is_ongoing && _different_day( $last->start, now ) ) {
+        say 'Event spans midnight. Perhaps you failed to close the last event.';
+    }
+}
+
+sub _different_day {
+    my ( $d1, $d2 ) = @_;
+    return !( $d1->year == $d2->year
+        && $d1->month == $d2->month
+        && $d1->day == $d2->day );
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' <description of event>' }

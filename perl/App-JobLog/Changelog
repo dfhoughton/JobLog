@@ -1,5 +1,9 @@
 Revision history for App::JobLog
 
+1.003
+  * added midnight check to add command
+  * fixed bug where one could close a closed event
+
 1.002 4 March, 2011
   * added normalization of whitespace in log
   * added options to summary and configuration to allow the hiding of various fields
