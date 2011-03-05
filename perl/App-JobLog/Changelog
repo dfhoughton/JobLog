@@ -1,6 +1,6 @@
 Revision history for App::JobLog
 
-1.003
+1.003 5 March, 2011
   * added midnight check to add command
   * fixed bug where one could close a closed event
   * fixed floating timezone bug in TimeGrammar
