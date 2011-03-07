@@ -505,8 +505,8 @@ sub adjust_weekday {
 sub time_unit {
     my $h = shift;
     if ( $h->{type} eq 'numeric' ) {
-        return 'years' if exists $h->{month};
-        return 'months';
+        return 'years' => 1 if exists $h->{month};
+        return 'months' => 1;
     }
     else {
         if ( my $period = $h->{period} ) {
