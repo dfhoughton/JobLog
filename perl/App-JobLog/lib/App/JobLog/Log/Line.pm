@@ -226,7 +226,7 @@ sub description : lvalue {
 sub is_malformed     { exists $_[0]->{malformed} }
 sub is_beginning     { exists $_[0]->{tags} }
 sub is_end           { $_[0]->{done} }
-sub is_event         { exists $_[0]->{time} }
+sub is_event         { $_[0]->{time} }
 sub is_comment       { exists $_[0]->{comment} }
 sub tags_unspecified { $_[0]->{tags_unspecified} }
 

@@ -93,16 +93,19 @@ sub all_events {
 
 C<validate> makes sure the log contains only valid lines, all events are 
 in chronological order, and every ending follows a beginning. Invalid lines
-are commented out and a warning is emitted.
+are commented out and a warning is emitted. The number of errors found is
+returned.
 
 =cut
 
 sub validate {
     my ($self) = @_;
     my ( $i, $previous_event ) = (0);
+    my $errors = 0;
     while ( my $line = $self->[IO][$i] ) {
         my $ll = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_malformed ) {
+            $errors++;
             print STDERR "line $i -- '$line' -- is malformed; commenting out\n";
             splice @{ $self->[IO] }, $i, 0,
               App::JobLog::Log::Line->new( comment => 'ERROR; malformed line' );
@@ -112,6 +115,7 @@ sub validate {
             if ($previous_event) {
                 if ( DateTime->compare( $previous_event->time, $ll->time ) > 0 )
                 {
+                    $errors++;
                     print STDERR
 "line $i -- '$line' -- is out of order relative to the last event; commenting out\n";
                     splice @{ $self->[IO] }, $i, 0,
@@ -120,6 +124,7 @@ sub validate {
                     $self->[IO][ ++$i ] = $ll->comment_out;
                 }
                 elsif ( $previous_event->is_end && $ll->is_end ) {
+                    $errors++;
                     print STDERR
 "line $i -- '$line' -- specifies the end of a task not yet begun; commenting out\n";
                     splice @{ $self->[IO] }, $i, 0,
@@ -132,6 +137,7 @@ sub validate {
                 }
             }
             elsif ( $ll->is_end ) {
+                $errors++;
                 print STDERR
 "line $i -- '$line' -- specifies the end of a task not yet begun; commenting out\n";
                 splice @{ $self->[IO] }, $i, 0,
@@ -145,6 +151,7 @@ sub validate {
         }
         $i++;
     }
+    return $errors;
 }
 
 =method first_event
@@ -317,10 +324,13 @@ sub find_previous {
     # if the log is empty, return empty list
     return () unless $start_event && $end_event;
 
-# if the start time (improbably but fortuitously) happens to be what we're looking
-# for, return it
+    # if the start time (improbably but fortuitously) happens to be what we're
+    # looking for, return it
     return ( $start_event, $top )
       if DateTime->compare( $start_event->start, $e ) == 0;
+
+    # likewise for the end time
+    return ( $end_event, $bottom ) if $end_event->start < $e;
 
     # return the empty list if the event in question precede the first
     # event in the log
@@ -415,16 +425,11 @@ sub _scan_for_previous {
         my $line = $io->[$index];
         my $ll   = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_event ) {
-            if ($previous) {
-                $previous->end = $ll->time if $previous->is_open;
-                last if $ll->time > $e;
-            }
+            $previous->end = $ll->time if $previous && $previous->is_open;
+            last if $ll->time > $e;
             if ( $ll->is_beginning ) {
                 $previous       = App::JobLog::Log::Event->new($ll);
                 $previous_index = $index;
-            }
-            else {
-                $previous = undef;
             }
         }
     }
@@ -571,7 +576,8 @@ sub insert {
           . ( @lines == 1 ? ''  : 's' ) . ' ha'
           . ( @lines == 1 ? 's' : 've' )
           . ' been inserted by '
-          . __PACKAGE__ );
+          . __PACKAGE__
+          . ' rather than having been appended' );
     splice @{ $self->[IO] }, $index, 0, $comment, @lines;
 }
 
