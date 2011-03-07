@@ -124,7 +124,7 @@ above non-repeating ones.
 =cut
 
 sub cmp {
-    my ( $self, $other );
+    my ( $self, $other ) = @_;
 
     # when mixed with ordinary events
     if ( ref $other eq 'App::JobLog::Log::Event' ) {
