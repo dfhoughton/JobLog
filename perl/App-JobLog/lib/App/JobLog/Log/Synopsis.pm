@@ -2,6 +2,13 @@ package App::JobLog::Log::Synopsis;
 
 # ABSTRACT: consolidates App::JobClock::Log::Event objects for display
 
+=head1 DESCRIPTION
+
+B<App::JobLog::Log::Synopsis> represents a collection of L<App::JobLog::Log::Event> objects merged
+together according to some merging rule.
+
+=cut
+
 use Exporter 'import';
 our @EXPORT_OK = qw(
   collect
@@ -39,6 +46,15 @@ use constant MERGE_SAME_TAGS          => 4;
 use constant MERGE_SAME_DAY           => 5;
 use constant MERGE_SAME_DAY_SAME_TAGS => 6;
 use constant MERGE_NONE               => 0;
+
+=method collect
+
+Only exported function of B<App::JobLog::Log::Synopsis>, C<collect> exects a reference
+to a L<App::JobLog::Log::Day> and a merge level. It then generates all the synopses
+appropriate to the given level in the given day, storing these in the day under the
+key C<synopses>.
+
+=cut
 
 # takes in a bunch of App::JobClock::Log::Event objects
 # returns a bunch of App::JobClock::Log::Synopsis objects
@@ -202,11 +218,17 @@ sub tag_string {
 
 =method events
 
-Accessor for events in Synopsis.
+Accessor for events in Synopsis. Returns these as list rather than reference.
 
 =cut
 
 sub events { @{ $_[0]->{events} } }
+
+=method last_event
+
+Accessor for last event in synopsis.
+
+=cut
 
 sub last_event { ( $_[0]->events )[-1] }
 
@@ -304,14 +326,3 @@ sub time_fmt {
 }
 
 1;
-
-__END__
-
-=pod
-
-=head1 DESCRIPTION
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
-
-=cut

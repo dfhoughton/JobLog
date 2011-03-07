@@ -9,11 +9,6 @@ use App::JobLog::Config qw(columns);
 sub opt_spec {
     my ( $class, $app ) = @_;
 
-    # my @overview = $class->overview;
-    # push @overview, [] if @overview;
-    # my @options = $class->options($app);
-    # push @overview, @options, [] if @options;
-    # return ( @overview, [ 'help' => "this usage screen" ] );
     return ( $class->options($app), [ 'help' => "this usage screen" ] );
 }
 
@@ -65,3 +60,15 @@ sub options { }
 sub validate { }
 
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+B<App::JobLog::Command> adds a small amount of specialization and functionality to L<App::Cmd> commands. In
+particular it adds a C<--help> option to every command and ensures that they all have some minimal longer
+form description that can be obtained with the C<help> command.
+
+=cut

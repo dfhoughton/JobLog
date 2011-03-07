@@ -34,9 +34,12 @@ use constant DURATION_FORMAT  => '%0.' . precision . 'f';
 
 =method time_remaining
 
-Determines the time remaining to work in the given period.
-Accepts a reference to an array of L<App::JobLog::Log::Event> objects
-and returns an integer representing a number of seconds.
+Obtains a properly filtered list of L<App::JobLog::Log::Day> objects for
+a given time expression, code reference to event filtering closure, and
+hash specifying fields to hide in report. Returns reference to list of days.
+
+If C<undef> is passed in as the code reference a dummy closure is constructed
+that returns the argument passed in unmodified.
 
 =cut
 
@@ -178,7 +181,10 @@ sub _days {
 
 =method display
 
-Formats L<App::JobLog::Log::Synopsis> objects so they fit nicely on the screen.
+Augments L<App::JobLog::Log::Day> objects with appropriate L<App::JobLog::Log::Synopsis> objects
+given the merge level and hidden fields. Expects a reference to a list of days, the merge level,
+and a reference to the hidden columns hash. Prints synopses to STDOUT along with aggregate
+statistics for the interval.
 
 =cut
 

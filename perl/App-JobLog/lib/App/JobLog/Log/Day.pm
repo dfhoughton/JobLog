@@ -125,7 +125,10 @@ sub times {
 
 =method display
 
-
+C<display> expects a previous day object, or C<undef> if there is no such object,
+a format specifying column widths, and a hash reference containing various
+pieces of formatting information. It prints a report of the events of the day
+to STDOUT.
 
 =cut
 

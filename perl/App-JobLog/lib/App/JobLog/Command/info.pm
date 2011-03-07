@@ -324,9 +324,33 @@ __END__
 
 =pod
 
+=head1 SYNOPSIS
+
+ houghton@NorthernSpy:~$ job help info
+ job info
+ 
+ Describes application and provides usage information.
+ 
+ 
+ 	-q --quiet         minimal documentation
+ 	-v --man --verbose  extensive documentation in pager
+ 	--help             this usage screen
+
+
 =head1 DESCRIPTION
 
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
+The synopsis says it all. For command specific help you should try the help command:
+
+ houghton@NorthernSpy:~$ job help summary
+ job summary [-iMmTtV] [long options...] <date or date range>
+ 
+ List events with certain properties in a particular time range. Only the portions
+ of events falling within the range will be listed.
+ 
+ Events may be filtered in numerous ways: by tag, time of day, or terms used in descriptions.
+ If tags to match are provided, only those events that contain at least one such tag will be shown. If
+ tags not to match are provided, only those events that contain none of these tags will be shown.
+ 
+ if you provide description filters to match or avoid, these will be interpreted as regexes. try 'perldoc perlre'
 
 =cut

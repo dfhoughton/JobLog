@@ -79,9 +79,40 @@ __END__
 
 =pod
 
+=head1 SYNOPSIS
+
+ houghton@NorthernSpy:~$ job add --help
+ job <command>
+ 
+ job add <description of event>
+ 	-t --tag          tag the event; multiple tags are acceptable; e.g.,
+ 	                  -t foo -t bar -t quux
+ 	-T --clear-tags   inherit no tags from preceding event; this is
+ 	                  equivalent to -t ""; this option has no effect if
+ 	                  any tag is specified
+ 	--help            this usage screen
+ houghton@NorthernSpy:~$ job add -T -t foo -t bar -t quux Staring into the Abyss.
+ houghton@NorthernSpy:~$ job a Getting stared back at.
+
 =head1 DESCRIPTION
 
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
+B<App::JobLog::Command::add> is the command you'll use most often. It appends an event to the log.
+
+=head2 TAGS
+
+You may optionally attach categories to tasks with tags. Any string can be a tag but to make the output readable you'll want them
+to be short. Also, in the logs tags are delimited by whitespace and separated from the timestamp and description by colons, so
+these characters will be escaped with a slash. If you edit the log by hand and forget to escape these characters the log will
+still parse but you will be surprised by the summaries you get.
+
+You may specify multiple tags, but each one needs its own B<--tag> flag.
+
+If you don't specify otherwise the new event will inherit the tags of the previous event, so you will need to apply
+the B<--clear-tags> option to prevent this. The reasoning behind this feature is that you change tags seldom but change tasks
+often so inheriting tags by default saves labor.
+
+=head1 SEE ALSO
+
+L<App::JobLog::Command::done>, L<App::JobLog::Command::resume>, L<App::JobLog::Command::modify>
 
 =cut

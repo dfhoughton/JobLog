@@ -2,6 +2,13 @@ package App::JobLog::Log::Line;
 
 # ABSTRACT: encapsulates one line of log text
 
+=head1 DESCRIPTION
+
+B<App::JobLog::Log::Line> encapsulates a line of text from the log -- the semantics of such
+a line and the code required to construct, parse, or serialize it.
+
+=cut
+
 use Modern::Perl;
 use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now tz);
@@ -32,7 +39,12 @@ our $re = qr{
     )
 }xi;
 
-# for composing a log line out of a hash of attributes
+=method new
+
+For composing a log line out of a hash of attributes.
+
+=cut
+
 sub new {
     my ( $class, @args ) = @_;
     $class = ref $class || $class;
@@ -93,7 +105,12 @@ sub new {
     return $self;
 }
 
-# for parsing a line in an existing log
+=method parse
+
+For parsing a line in an existing log. Expects string to parse as an argument.
+
+=cut
+
 sub parse {
     my ( $class, $text ) = @_;
     my $obj = bless { text => $text }, $class;
@@ -144,6 +161,13 @@ sub parse {
     return $obj;
 }
 
+=method clone
+
+Produces an object semantically identical to that on which it was invoked but
+stored without shared references so changes to the latter will not effect the former.
+
+=cut
+
 sub clone {
     my ($self) = @_;
     my $clone = bless {}, ref $self;
@@ -164,6 +188,12 @@ sub clone {
     }
     return $clone;
 }
+
+=method to_string
+
+Serializes object to the string that would represent it in a log.
+
+=cut
 
 sub to_string {
     my ($self) = @_;
@@ -191,6 +221,13 @@ sub to_string {
     }
 }
 
+=method time_stamp
+
+Represents optional L<DateTime> object in the format used in the log. If no
+argument is provided, the timestamp of the line itself is returned.
+
+=cut
+
 sub time_stamp {
     my ( $self, $time ) = @_;
     $time ||= $self->time;
@@ -201,21 +238,53 @@ sub time_stamp {
 
 # a bunch of attributes, here for convenience
 
+=method text
+
+Accessor to text attribute of line, if any. Should only be defined for well formed
+log lines. Is lvalue.
+
+=cut
+
 sub text : lvalue {
     $_[0]->{text};
 }
+
+=method tags
+
+Accessor to array reference containing tags, if any. Is lvalue.
+
+=cut
 
 sub tags : lvalue {
     $_[0]->{tags};
 }
 
+=method comment
+
+Accessor to comment value, if any. Should only be defined for comment lines. Is lvalue.
+
+=cut
+
 sub comment : lvalue {
     $_[0]->{comment};
 }
 
+=method time
+
+Accessor to time value, if any. Should only be defined for event lines. Lvalue.
+
+=cut
+
 sub time : lvalue {
     $_[0]->{time};
 }
+
+=method description
+
+Accessor to reference to description list. Should only be defined for lines describing the
+beginning of an event. Lvalue.
+
+=cut
 
 sub description : lvalue {
     $_[0]->{description};
@@ -223,18 +292,71 @@ sub description : lvalue {
 
 # a bunch of tests
 
+=method
+
+Whether lines is malformed.
+
+=cut
+
 sub is_malformed     { exists $_[0]->{malformed} }
+
+=method is_beginning
+
+Whether line describes the beginning of an event.
+
+=cut
+
 sub is_beginning     { exists $_[0]->{tags} }
+
+=method is_end
+
+Whether line only defines the end of an event.
+
+=cut
+
 sub is_end           { $_[0]->{done} }
+
+=method is_event
+
+Whether line defines the beginning or end of an event.
+
+=cut
+
 sub is_event         { $_[0]->{time} }
+
+=method is_comment
+
+Whether line represents a comment in the log.
+
+=cut
+
 sub is_comment       { exists $_[0]->{comment} }
+
+=method tags_unspecified
+
+Whether object was constructed from a hash of values that contained no C<tags> key.
+
+=cut
+
 sub tags_unspecified { $_[0]->{tags_unspecified} }
+
+=method is_blank
+
+Whether object represents a blank line in the log.
+
+=cut
 
 sub is_blank {
     !( $_[0]->is_malformed || $_[0]->is_comment || $_[0]->is_event );
 }
 
 # some useful methods
+
+=method comment_out
+
+Convert this into a comment line.
+
+=cut
 
 sub comment_out {
     my ($self) = @_;
@@ -243,6 +365,12 @@ sub comment_out {
     $self->{comment} = $text;
     return $self;
 }
+
+=method all_tags
+
+Expects list of tags. Returns whether all tags in list are present in object.
+
+=cut
 
 sub all_tags {
     my ( $self, @tags ) = @_;
@@ -253,6 +381,12 @@ sub all_tags {
     }
     return 1;
 }
+
+=method exists_tag
+
+Expects list of tags. Returns whether any member of list is among tags of object.
+
+=cut
 
 sub exists_tag {
     my ( $self, @tags ) = @_;
@@ -265,14 +399,3 @@ sub exists_tag {
 }
 
 1;
-
-__END__
-
-=pod
-
-=head1 DESCRIPTION
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
-
-=cut

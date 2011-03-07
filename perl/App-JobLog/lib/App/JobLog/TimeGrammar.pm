@@ -943,4 +943,15 @@ to facilitate finding them.
 
 In general C<App::JobLog::TimeGrammar> will understand most time expressions you are likely to want to use.
 
+=head2 FUTURE
+
+B<TimeGrammar> does not generally understand the future. It understants C<this> and C<last> but not C<next>. It
+understands c<today> and C<yesterday> but not C<tomorrow>. This may change (in the future), but most tasks that
+involve the log do not require explicit reference to the future, since all the events in the log are necessarily
+in the past. It would sometimes be useful to say a particular vacation date is C<tomorrow> or C<next month>, however.
+
+If you specify a period part of which is in the future, this will cause no difficulties, and in fact both endpoints
+will be parsed out correctly, but again, because the log only concerns the past the future times will have no effect
+on the output. It is simply easier to say C<this month> than C<the beginning of the month until today>.
+
 =cut

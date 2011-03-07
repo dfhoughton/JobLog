@@ -155,21 +155,33 @@ __END__
  houghton@NorthernSpy:~$ job edit --help
  job <command>
  
- job edit [-c <date and time>]
+ job edit [--validate] [-c <date and time>]
  	-c --close-task --close  add a "DONE" line to the log at the specified
  	                        moment
+ 	-v --validate           check log for errors, commenting out any found
  	--help                  this usage screen
- houghton@NorthernSpy:~$ job edit --close today at 7:37 pm
- houghton@NorthernSpy:~$
+ houghton@NorthernSpy:~$ job today
+ Monday,  7 March, 2011
+   8:01 am - ongoing  4.56  bar, foo  something to add; and still more                                                                                                  
+ 
+   TOTAL HOURS 4.56
+   bar         4.56
+   foo         4.56
+ houghton@NorthernSpy:~$ job e --close today at 8:05
+ houghton@NorthernSpy:~$ job t
+ Monday,  7 March, 2011
+   8:01 - 8:05 am  0.05  bar, foo  something to add; and still more                                                                                                  
+ 
+   TOTAL HOURS 0.05
+   bar         0.05
+   foo         0.05
  houghton@NorthernSpy:~$ job e
 
 A text editor opens up displaying the log. Appropriate edits are performed. The user saves and quits.
 
  saved backup log in /home/houghton/.joblog/log.bak
+ log is valid
  houghton@NorthernSpy:~$ 
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
 
 =head1 DESCRIPTION
 
@@ -180,6 +192,7 @@ This is when you need B<App::JobLog::Command::edit>.
 
 Most of the time you will simply need to add a missing I<DONE> line -- the B<--close> option. For this you need no text editor external to
 L<App::JobLog> itself. If you need a full function editor you will need to define the I<editor> parameter using L<App::JobLog::Command::configure>.
+Then invoke this command without any options or arguments.
 
 When you invoke the editor, L<App::JobLog> reviews the log after you save, commenting out ill-formed lines and emitting warnings.
 

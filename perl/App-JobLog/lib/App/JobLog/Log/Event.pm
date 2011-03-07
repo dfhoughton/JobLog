@@ -2,6 +2,15 @@ package App::JobLog::Log::Event;
 
 # ABSTRACT: basically adds an end time to App::JobLog::Log::Line events
 
+=head1 DESCRIPTION
+
+B<App::JobLog::Log::Event> represents an interval in time from the log, providing accessors
+to all the information about this event. It is similar to L<App::JobLog::Log::Line>, delegating
+to an instance of the latter for much functionality, but it contains additional methods to
+handle the properties of intervals of time as distinct from points.
+
+=cut
+
 use Modern::Perl;
 use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now);
@@ -41,7 +50,13 @@ sub clone {
     return $clone;
 }
 
-# the portion of an event falling within given interval
+=method overlap
+
+Expects two L<DateTime> objects as arguments. Returns the portion of this event
+overlapping the interval so defined.
+
+=cut
+
 sub overlap {
     my ( $self, $start, $end ) = @_;
 
@@ -60,33 +75,76 @@ sub overlap {
     return $clone;
 }
 
+=method data
+
+Returns L<App::JobLog::Log::Line> object on which this event is based.
+
+=cut
+
 sub data {
     $_[0]->{log};
 }
+
+=method start
+
+Start of event. Is lvalue method.
+
+=cut
 
 sub start : lvalue {
     $_[0]->data->time;
 }
 
+=method end
+
+End of event. Is lvalue method.
+
+=cut
+
 sub end : lvalue {
     $_[0]->{end};
 }
 
+=method tags
+
+Tags of event (array reference). Is lvalue method.
+
+=cut
+
 sub tags : lvalue {
     $_[0]->data->{tags};
 }
+
+=method exists_tag
+
+Expects a list of tags. Returns true if event contains any of them.
+
+=cut
 
 sub exists_tag {
     my ( $self, @tags ) = @_;
     $self->data->exists_tag(@tags);
 }
 
+=method all_tags
+
+Expects a list of tags. Returns whether event contains all of them.
+
+=cut
+
 sub all_tags {
     my ( $self, @tags ) = @_;
     $self->data->all_tags(@tags);
 }
 
-# for sorting
+=method cmp
+
+Used to sort events. E.g.,
+
+ my @sorted_events = sort { $a->cmp($b) } @unsorted;
+
+=cut
+
 sub cmp {
     my ( $self, $other ) = @_;
     carp 'argument must also be event' unless $other->isa(__PACKAGE__);
@@ -203,14 +261,3 @@ sub intersects {
 }
 
 1;
-
-__END__
-
-=pod
-
-=head1 DESCRIPTION
-
-This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
-you want the details.
-
-=cut

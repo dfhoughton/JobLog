@@ -163,7 +163,12 @@ my $re = qr{
     )
 }xi;
 
-# for parsing a line in an existing log
+=method parse
+
+Class method parsing line in F<vacation> into a vacation object.
+
+=cut
+
 sub parse {
     my ( $class, $text ) = @_;
     $class = ref $class || $class;
