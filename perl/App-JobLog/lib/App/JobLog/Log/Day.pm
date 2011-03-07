@@ -57,8 +57,8 @@ Determines how much work was done this day relative to what was expected.
 sub time_remaining {
     my ($self) = @_;
     my $t = 0;
-    $t += $_->duration for @{ $self->events }, @{ $self->vacation };
-    $t -= day_length if is_workday $self->start;
+    $t -= $_->duration for @{ $self->events }, @{ $self->vacation };
+    $t += WORK_SECONDS if is_workday $self->start;
     return $t;
 }
 

@@ -5,6 +5,7 @@ package App::JobLog::Log::Event;
 use Modern::Perl;
 use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now);
+use autouse 'Carp'              => qw(carp);
 
 # for debugging
 use overload '""' => sub {
@@ -88,6 +89,12 @@ sub all_tags {
 # for sorting
 sub cmp {
     my ( $self, $other ) = @_;
+    carp 'argument must also be event' unless $other->isa(__PACKAGE__);
+
+    # defer to subclass sort order if other is a subclass and self isn't
+    return -$other->cmp($self)
+      if ref $self eq __PACKAGE__ && ref $other ne __PACKAGE__;
+
     my $comparison = DateTime->compare( $self->start, $other->start );
     unless ($comparison) {
         if ( $self->is_closed ) {

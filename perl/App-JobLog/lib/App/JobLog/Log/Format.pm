@@ -94,15 +94,12 @@ sub summary {
             if ( is_workday( $d->start ) && $p->conflicts( $d->pseudo_event ) )
             {
                 my $clone = $p->clone;
-                $clone->start = $d->start;
                 if ( $clone->fixed ) {
-                    $clone->end = $d->end;
                     push @{ $d->events }, $clone->overlap( $d->start, $d->end );
                 }
                 else {
+                    $clone->start = $d->start->clone;
                     if ( $clone->flex ) {
-                        $clone->end = $clone->start->clone->add(
-                            seconds => $d->time_remaining );
                         $d->{deferred} = $clone;
                     }
                     else {
@@ -131,10 +128,10 @@ sub summary {
         if ($flex) {
             delete $d->{deferred};
             my $tr = $d->time_remaining;
-            if ($tr) {
+            if ($tr > 0) {
                 $flex->end = $flex->start->clone->add( seconds => $tr );
+                push @events, $flex;
             }
-            push @events, $flex;
         }
         $d->{events} = [ sort { $a->cmp($b) } @events ] if @events > 1;
     }

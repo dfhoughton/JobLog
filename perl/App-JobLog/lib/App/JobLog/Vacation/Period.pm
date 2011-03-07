@@ -364,6 +364,38 @@ sub _properties {
     return $s;
 }
 
+=method overlap
+
+Adjust start and end times for annual or monthly periods then delegates to
+superclass method in L<App::JobLog::Log::Event>.
+
+=cut
+
+sub overlap {
+    my ( $self, $start, $end ) = @_;
+    if ( $self->annual || $self->monthly ) {
+
+        # cloning here should be duplicated work, but better safe than sorry
+        my $cloned = 0;
+        if (   $self->annual
+            || $self->monthly && $self->start->year != $start->year )
+        {
+            $self   = $self->clone;
+            $cloned = 1;
+            my $delta = $start->year - $self->start->year;
+            $self->start->add( years => $delta );
+            $self->end->add( years => $delta );
+        }
+        if ( $self->monthly && $self->start->month != $start->month ) {
+            $self = $self->clone unless $cloned;
+            my $delta = $start->month - $self->start->month;
+            $self->start->add( months => $delta );
+            $self->end->add( months => $delta );
+        }
+    }
+    return $self->SUPER::overlap( $start, $end );
+}
+
 # tag part of summary
 sub _tags {
     my ($self) = @_;
