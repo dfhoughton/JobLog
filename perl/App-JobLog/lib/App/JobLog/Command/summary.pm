@@ -2,8 +2,6 @@ package App::JobLog::Command::summary;
 
 # ABSTRACT: show what you did during a particular period
 
-# TODO: hide vacation; hide time and tags columns
-
 use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw(
@@ -96,11 +94,11 @@ sub execute {
 
     # record hiding options in hash reference
     my $hidden = {
-        vacation    => $opt->{no_vacation},
-        date        => $opt->{no_date} || is_hidden('date'),
-        time        => $opt->{no_time} || is_hidden('time'),
-        duration    => $opt->{no_duration} || is_hidden('duration'),
-        tags        => $opt->{no_tags} || is_hidden('tags'),
+        vacation => $opt->{no_vacation},
+        date     => $dateless || $opt->{no_date} || is_hidden('date'),
+        time        => $opt->{no_time}        || is_hidden('time'),
+        duration    => $opt->{no_duration}    || is_hidden('duration'),
+        tags        => $opt->{no_tags}        || is_hidden('tags'),
         description => $opt->{no_description} || is_hidden('description'),
         totals      => $opt->{no_totals},
     };
@@ -370,9 +368,15 @@ __END__
 
 =pod
 
+=head1 SYNOPSIS
+
 =head1 DESCRIPTION
 
 This wasn't written to be used outside of C<App::JobLog>. The code itself contains interlinear comments if
 you want the details.
+
+=head1 SEE ALSO
+
+L<App::JobLog::Command::today>, L<App::JobLog::Command::last>
 
 =cut
