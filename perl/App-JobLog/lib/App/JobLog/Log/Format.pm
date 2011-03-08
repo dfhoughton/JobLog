@@ -29,7 +29,7 @@ use Text::WrapI18N qw();
 use App::JobLog::TimeGrammar qw(parse);
 
 use constant TAG_COLUMN_LIMIT => 10;
-use constant MARGIN           => 30;
+use constant MARGIN           => 35;
 use constant DURATION_FORMAT  => '%0.' . precision . 'f';
 
 =method time_remaining

@@ -1,5 +1,8 @@
 Revision history for App::JobLog
 
+1.004
+  * increasing size of right margin in reports
+
 1.003 7 March, 2011
   * added midnight check to add command
   * fixed bug where one could close a closed event
