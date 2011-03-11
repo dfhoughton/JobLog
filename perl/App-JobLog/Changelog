@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * fixed problem with hidden wrap option
 
 1.005     2011-03-11 12:21:17 America/New_York
   * added check for unclosed tasks to summary command

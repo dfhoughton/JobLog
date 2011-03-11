@@ -113,7 +113,7 @@ sub execute {
 
         # figure out how wide to make things
         my $screen_width;
-        if ( $opt->wrap ) {
+        if ( $opt->{wrap} ) {
             if ( $opt->no_wrap ) {
                 $screen_width = -1;
             }
