@@ -1,7 +1,7 @@
 Revision history for App::JobLog
 
 1.004
-  * increasing size of right margin in reports
+  * fixed column count detection bug
 
 1.003 7 March, 2011
   * added midnight check to add command

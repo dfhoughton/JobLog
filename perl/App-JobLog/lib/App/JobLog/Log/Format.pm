@@ -29,7 +29,7 @@ use Text::WrapI18N qw();
 use App::JobLog::TimeGrammar qw(parse);
 
 use constant TAG_COLUMN_LIMIT => 10;
-use constant MARGIN           => 35;
+use constant MARGIN           => 5;
 use constant DURATION_FORMAT  => '%0.' . precision . 'f';
 
 =method time_remaining
@@ -304,7 +304,7 @@ sub _define_format {
         $margins++;
         my $max_description = columns;
         for my $col (qw(time duration tags)) {
-            $max_description -= $hash->{widths}{col} || 0;
+            $max_description -= $hash->{widths}{$col} || 0;
         }
         $max_description -= $margins * 2;    # left margins
         $max_description -= MARGIN;          # margin on the right
