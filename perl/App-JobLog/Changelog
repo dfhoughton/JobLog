@@ -1,7 +1,8 @@
 Revision history for App::JobLog
 
-1.004
+{{$NEXT}}
   * fixed column count detection bug
+  * added --columns and --no-wrap options
 
 1.003 7 March, 2011
   * added midnight check to add command
