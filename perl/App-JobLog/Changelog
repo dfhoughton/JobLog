@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * added File::ReadBackwards prerequisite to dist.ini
+  * added missing options to documentation for summary
 
 1.006     2011-03-11 16:13:57 America/New_York
   * fixed problem with hidden wrap option
