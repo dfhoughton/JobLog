@@ -217,9 +217,9 @@ sub split_days {
         do {
             my $clone = $self->clone;
             $clone->start = $s;
-            $clone->end   = $days_end;
+            $s            = $days_end->clone;
+            $clone->end   = $s;
             push @splits, $clone;
-            $s = $days_end->clone;
             $days_end->add( days => 1 );
         } while ( $days_end < $self->end );
         my $clone = $self->clone;
