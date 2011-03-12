@@ -283,7 +283,7 @@ sub _bnf {
               <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
             <full_no_time> = <dm_full> | <md_full>
             <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
-                     <iso> = d{4} ( <divider> ) d{1,2} \\1 d{1,2}
+                     <iso> = d{4} ( <divider> ) d{1,2} \1 d{1,2}
                       <md> = d{1,2} <divider> d{1,2}
                  <md_full> = <month> s d{1,2} "," s d{4}
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
@@ -296,9 +296,10 @@ sub _bnf {
        <month_day_no_time> = <month_first> | <day_first>
              <month_first> = <month> s d{1,2}
           <month_modifier> = <modifier> | <termini> [ s "of" ]
+                      <my> = <month> [","] s <year>
             <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period> 
                      <now> = "now"
-                 <numeric> = <year> | <at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
+                 <numeric> = <year> | <ym> |<at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
                   <period> = "week" | "month" | "year" | <pay>
@@ -311,10 +312,11 @@ sub _bnf {
                  <termini> = [ "the" s ] ( <beginning> | "end" )
                     <time> = d{1,2} [ : d{2} [ : d{2} ] ] [ s* <time_suffix> ]
              <time_suffix> = ( "a" | "p" ) ( "m" | ".m." )
-                      <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
-                  <verbal> = <named_period> | <relative_period> | <month_day> | <full>  
+                      <us> = d{1,2} ( <divider> ) d{1,2} \1 d{4}
+                  <verbal> = <my> | <named_period> | <relative_period> | <month_day> | <full>  
                  <weekday> = <full_weekday> | <short_weekday>
                     <year> = d{4}
+                      <ym> = <year> <divider> d{1,2}
 END
 }
 
