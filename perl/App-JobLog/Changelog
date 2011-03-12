@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.007     2011-03-12 12:32:32 America/New_York
   * added File::ReadBackwards prerequisite to dist.ini
   * added missing options to documentation for summary
   * fixed bug in split_days
