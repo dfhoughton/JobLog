@@ -2,3 +2,4 @@ complete test suite
 remove unused code
 refactor repeated code into methods
 add CSV output
+figure out why checksum identity comparison is not working
