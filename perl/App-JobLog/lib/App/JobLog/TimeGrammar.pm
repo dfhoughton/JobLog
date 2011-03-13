@@ -821,12 +821,18 @@ sub before_now {
       ( decontextualized_date( $h1, 1 ), decontextualized_date($h2) );
     $h2 = adjust_weekday( $h2, $now ) unless ref $h2 eq 'DateTime';
     $h1 = adjust_weekday( $h1, $now ) unless ref $h1 eq 'DateTime';
-    while ( DateTime->compare( $now, $h2 ) < 0 ) {
+    while ( $now < $h2 ) {
         $h2->subtract( $u2 => $amt2 );
     }
-    while ( DateTime->compare( $h2, $h1 ) < 0 ) {
+    while ( $h2 < $h1 ) {
         $h1->subtract( $u1 => $amt1 );
     }
+
+    # move the two dates as close together as possible
+    while ( $h1 < $h2 ) {
+        $h2->subtract( $u2 => $amt2 );
+    }
+    $h2->add( $u2 => $amt2 );
     return $h1, $h2;
 }
 
