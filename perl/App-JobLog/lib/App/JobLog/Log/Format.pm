@@ -38,7 +38,8 @@ use constant DURATION_FORMAT => '%0.' . precision . 'f';
 
 Obtains a properly filtered list of L<App::JobLog::Log::Day> objects for
 a given time expression, code reference to event filtering closure, and
-hash specifying fields to hide in report. Returns reference to list of days.
+hash specifying fields to hide in report. Returns reference to list of days
+and whether the year should be shown in dates.
 
 If C<undef> is passed in as the code reference a dummy closure is constructed
 that returns the argument passed in unmodified.
@@ -52,6 +53,7 @@ sub summary {
     my $skip_flex = $test || 0;
     $test //= sub { $_[0] };
     my ( $start, $end ) = parse $phrase;
+    my $show_year = $start->year < $end->year;
     unless ($skip_flex) {
 
      # if we are chopping off any of the first and last days we ignore flex time
@@ -141,7 +143,7 @@ sub summary {
         $d->{events} = [ sort { $a->cmp($b) } @events ] if @events > 1;
     }
 
-    return \@days;
+    return \@days, $show_year;
 }
 
 # whether the date is the first moment in its day
@@ -184,21 +186,20 @@ sub _days {
 =method display
 
 Augments L<App::JobLog::Log::Day> objects with appropriate L<App::JobLog::Log::Synopsis> objects
-given the merge level and hidden fields. Expects a reference to a list of days, the merge level,
-and a reference to the hidden columns hash. Prints synopses to STDOUT along with aggregate
+given the merge level and hidden fields. Expects a reference to a list of days, the merge level, 
+a reference to the hidden columns hash, the width of the screen in columns, and whether the year
+should be displayed when showing dates. Prints synopses to STDOUT along with aggregate
 statistics for the interval.
 
 =cut
 
 sub display {
-    my ( $days, $merge_level, $hidden, $screen_width ) = @_;
+    my ( $days, $merge_level, $hidden, $screen_width, $show_year ) = @_;
 
-    # TODO augment events with vacation and holidays
     if (@$days) {
         collect $_, $merge_level for @$days;
         my @synopses = map { @{ $_->synopses } } @$days;
 
-        # in the future we will allow more of these values to be toggled
         my $columns = {
             time => single_interval($merge_level) && !$hidden->{time},
             date => !$hidden->{date},
@@ -206,6 +207,7 @@ sub display {
             description => !$hidden->{description},
             duration    => !$hidden->{duration},
         };
+        $show_year &&= $columns->{date};
         my $format = _define_format( \@synopses, $columns, $screen_width );
 
         # keep track of various durations
@@ -218,11 +220,9 @@ sub display {
         };
 
         # display synopses and add up durations
-        my $previous;
         for my $d (@$days) {
             $d->times($times);
-            $d->display( $previous, $format, $columns, $screen_width );
-            $previous = $d;
+            $d->display( $format, $columns, $screen_width, $show_year );
         }
 
         unless ( $hidden->{totals} ) {
@@ -303,20 +303,21 @@ sub _define_format {
         $hash->{formats}{duration} = sprintf '%%%ds', $hash->{widths}{duration};
     }
     if ( $hash->{description} ) {
-        if ($screen_width == -1) {
+        if ( $screen_width == -1 ) {
             $hash->{formats}{description} = '%s';
-        } else {
-        $margins++;
-        my $max_description = $screen_width;
-        for my $col (qw(time duration tags)) {
-            $max_description -= $hash->{widths}{$col} || 0;
         }
-        $max_description -= $margins * 2;    # left margins
-        $max_description -= MARGIN;          # margin on the right
-        $max_description = MIN_WIDTH if $max_description < MIN_WIDTH;
-        $hash->{widths}{description} = $max_description;
-        $hash->{formats}{description} = sprintf '%%-%ds', $max_description;
-    }
+        else {
+            $margins++;
+            my $max_description = $screen_width;
+            for my $col (qw(time duration tags)) {
+                $max_description -= $hash->{widths}{$col} || 0;
+            }
+            $max_description -= $margins * 2;    # left margins
+            $max_description -= MARGIN;          # margin on the right
+            $max_description = MIN_WIDTH if $max_description < MIN_WIDTH;
+            $hash->{widths}{description} = $max_description;
+            $hash->{formats}{description} = sprintf '%%-%ds', $max_description;
+        }
     }
 
     my $format = '';

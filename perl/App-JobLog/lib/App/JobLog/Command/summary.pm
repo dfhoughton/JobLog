@@ -106,8 +106,8 @@ sub execute {
     };
 
     # parse time expression
-    my $days;
-    eval { $days = summary join( ' ', @$args ), $test, $hidden };
+    my ($days, $show_year);
+    eval { ($days, $show_year) = summary join( ' ', @$args ), $test, $hidden };
     $self->usage_error($@) if $@;
     unless ( $opt->{hidden} ) {
 
@@ -139,7 +139,7 @@ sub execute {
             display [$duck_day], $merge_level, $hidden, $screen_width;
         }
         else {
-            display $days, $merge_level, $hidden, $screen_width;
+            display $days, $merge_level, $hidden, $screen_width, $show_year;
         }
 
         # check for long task
