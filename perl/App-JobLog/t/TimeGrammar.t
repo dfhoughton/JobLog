@@ -23,8 +23,9 @@ $App::JobLog::Time::now = $now;
 
 subtest 'regressions' => sub {
     my %dates = (
-        'jan 1 - 10' => [ [qw(2011 1 1 0 0 0)], [qw(2011 1 10 23 59 59)] ],
-        'jan 1'      => [ [qw(2011 1 1 0 0 0)], [qw(2011 1 1 23 59 59)] ],
+        'jan 1 - 10'    => [ [qw(2011 1 1 0 0 0)],  [qw(2011 1 10 23 59 59)] ],
+        'jan 1'         => [ [qw(2011 1 1 0 0 0)],  [qw(2011 1 1 23 59 59)] ],
+        'december 2010' => [ [qw(2010 12 1 0 0 0)], [qw(2010 12 31 23 59 59)] ],
     );
     plan tests => 2 * keys %dates;
     for my $date ( sort keys %dates ) {
