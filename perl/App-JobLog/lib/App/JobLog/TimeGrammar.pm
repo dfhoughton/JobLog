@@ -396,10 +396,11 @@ sub parse {
         my $unit = delete $h1->{unit};
         normalize($h1);
         if ($unit) {
+
             # $h1 is necessarily fixed and there is no time associated
-    $h1 = fix_date( $h1, 1 );
-    my $h2 = $h1->clone->add($unit => 1)->subtract(seconds=>1);
-    return $h1, $h2, 1;
+            $h1 = fix_date( $h1, 1 );
+            my $h2 = $h1->clone->add( $unit => 1 )->subtract( seconds => 1 );
+            return $h1, $h2, 1;
         }
         else {
             my %t1 = extract_time( $h1, 1 );
@@ -674,8 +675,11 @@ sub fix_date {
                         $date->add( months => 1 ) unless $is_start;
                     }
                     when ('wee') {
+                        my $is_sunday = $date->day_of_week == 7;
                         $date->truncate( to => 'week' );
-                        $date->subtract( days => 1 ) if sunday_begins_week();
+                        if (sunday_begins_week) {
+                            $date->subtract( days => $is_sunday ? -6 : 1 );
+                        }
                         $date->add( weeks => 1 ) unless $is_start;
                     }
                     when ('yea') {
@@ -706,8 +710,11 @@ sub fix_date {
                         }
                     }
                     when ('wee') {
+                        my $is_sunday = $date->day_of_week == 7;
                         $date->truncate( to => 'week' );
-                        $date->subtract( days => 1 ) if sunday_begins_week();
+                        if (sunday_begins_week) {
+                            $date->subtract( days => $is_sunday ? -6 : 1 );
+                        }
                         if ($is_start) {
                             $date->subtract( weeks => 1 );
                         }
