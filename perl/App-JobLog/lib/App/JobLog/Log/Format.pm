@@ -80,11 +80,12 @@ sub summary {
     }
 
     # collect events into days
+    my @gathered;
     for my $big_e (@$events) {
         for my $e ( $big_e->split_days ) {
             if ( $e = $test->($e) ) {
+                push @gathered, shift @days while $days[0]->end < $e->start;
                 for my $d (@days) {
-                    next if $e->start > $d->end;
                     if ( $e->intersects( $d->pseudo_event ) ) {
                         push @{ $d->events }, $e;
                         last;
@@ -94,6 +95,7 @@ sub summary {
             }
         }
     }
+    unshift @days, @gathered;
 
     # add in vacation times
     for my $p (@periods) {
