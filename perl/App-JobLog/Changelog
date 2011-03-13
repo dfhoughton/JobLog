@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * fixed "last/this week" bug due to DateTime choosing Monday as first day in week
+  * fixed edit command so checksums are calculated correctly and backup is only saved in case of change
 
 1.009     2011-03-13 15:14:27 America/New_York
   * changed date format code to show year if span in question stretches over more than one year
