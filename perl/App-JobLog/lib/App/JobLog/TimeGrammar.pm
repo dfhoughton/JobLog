@@ -426,7 +426,7 @@ sub parse {
                 ( $h1, $h2 ) = fixed_end( $h1, $h2 );
             }
             else {
-                ( $h1, $h2 ) = before_now( $h1, $h2 );
+                ( $h1, $h2 ) = before_now( $h1, $h2, $count == 2 );
             }
             croak "dates in \"$phrase\" are out of order"
               unless DateTime->compare( $h1, $h2 ) <= 0;
@@ -814,7 +814,7 @@ sub init_hash {
 # produces interpretation of date expression such that neither date ends after
 # the present
 sub before_now {
-    my ( $h1, $h2 ) = @_;
+    my ( $h1, $h2, $two_endpoints ) = @_;
     my $now = today;
     my ( $u1, $amt1, $u2, $amt2 ) = ( time_unit($h1), time_unit($h2) );
     ( $h1, $h2 ) =
@@ -828,11 +828,14 @@ sub before_now {
         $h1->subtract( $u1 => $amt1 );
     }
 
-    # move the two dates as close together as possible
-    while ( $h1 < $h2 ) {
-        $h2->subtract( $u2 => $amt2 );
+    if ($two_endpoints) {
+
+        # move the two dates as close together as possible
+        while ( $h1 < $h2 ) {
+            $h2->subtract( $u2 => $amt2 );
+        }
+        $h2->add( $u2 => $amt2 );
     }
-    $h2->add( $u2 => $amt2 );
     return $h1, $h2;
 }
 
