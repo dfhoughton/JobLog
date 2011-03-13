@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * changed date format code to show year if span in question stretches over more than one year
+  * unrolled slow loop in summary after Devel::NYTProf profiling
 
 1.007     2011-03-12 12:32:32 America/New_York
   * added File::ReadBackwards prerequisite to dist.ini
