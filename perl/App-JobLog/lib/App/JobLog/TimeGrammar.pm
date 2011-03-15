@@ -819,6 +819,7 @@ sub init_hash {
 # the present
 sub before_now {
     my ( $h1, $h2, $two_endpoints ) = @_;
+    infer_missing( $h1, $h2 ) if $two_endpoints;
     my $now = today;
     my ( $u1, $amt1, $u2, $amt2 ) = ( time_unit($h1), time_unit($h2) );
     ( $h1, $h2 ) =
@@ -841,6 +842,30 @@ sub before_now {
         $h2->add( $u2 => $amt2 );
     }
     return $h1, $h2;
+}
+
+# fill in missing fields in two date hashes, each using the other as context
+# this is a bit of a hack, but a natural hack
+sub infer_missing {
+    my ( $h1, $h2 ) = @_;
+    if ( $h1->{type} eq $h2->{type} ) {
+        while ( my ( $k, $v ) = each %$h1 ) {
+            $h2->{$k} //= $v;
+        }
+        while ( my ( $k, $v ) = each %$h2 ) {
+            $h1->{$k} //= $v;
+        }
+    }
+    elsif ( $h2->{type} eq 'numeric' ) {
+        if ( $h1->{month} && !$h2->{month} ) {
+            init_month_abbr();
+            $h2->{month} = $month_abbr{ $h1->{month} };
+        }
+    }
+    else {
+
+        # I don't think we have any problems in this case
+    }
 }
 
 # normalizes string values
