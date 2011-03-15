@@ -5,6 +5,7 @@ Revision history for App::JobLog
   * fixed edit command so checksums are calculated correctly and backup is only saved in case of change
   * fixed TimeGrammar; "jan 1 - 10" and such are properly handled
   * fixed TimeGrammar; '2010' and such are properly handled
+  * fixed bug caused by end of month wrapping in DateTime
 
 1.009     2011-03-13 15:14:27 America/New_York
   * changed date format code to show year if span in question stretches over more than one year
