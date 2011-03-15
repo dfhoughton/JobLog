@@ -420,7 +420,7 @@ sub parse {
             my ( $s1, $s2 ) = ( $t1{suffix}, $t2{suffix} );
             delete $t1{suffix}, delete $t2{suffix};
             if ( is_fixed($h1) ) {
-                ( $h1, $h2 ) = fixed_start( $h1, $h2 );
+                ( $h1, $h2 ) = fixed_start( $h1, $h2, $count == 2 );
             }
             elsif ( is_fixed($h2) ) {
                 ( $h1, $h2 ) = fixed_end( $h1, $h2 );
@@ -542,8 +542,14 @@ sub time_unit {
 
 # produces interpretation of date expression consistent with a fixed start date
 sub fixed_start {
-    my ( $h1, $h2 ) = @_;
+    my ( $h1, $h2, $two_endpoints ) = @_;
     $h1 = fix_date( $h1, 1 );
+    unless ( $two_endpoints || $h2->{type} ne 'numeric' ) {
+        return $h1, $h1->clone if defined $h2->{day};
+        return $h1, $h1->clone->add( months => 1 )->subtract( days => 1 )
+          if defined $h2->{day};
+        return $h1, $h1->clone->add( years => 1 )->subtract( days => 1 );
+    }
     if ( is_fixed($h2) ) {
         $h2 = fix_date($h2);
     }
