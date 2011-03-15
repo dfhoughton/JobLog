@@ -546,8 +546,6 @@ sub fixed_start {
     $h1 = fix_date( $h1, 1 );
     unless ( $two_endpoints || $h2->{type} ne 'numeric' ) {
         return $h1, $h1->clone if defined $h2->{day};
-        return $h1, $h1->clone->add( months => 1 )->subtract( days => 1 )
-          if defined $h2->{day};
         return $h1, $h1->clone->add( years => 1 )->subtract( days => 1 );
     }
     if ( is_fixed($h2) ) {
