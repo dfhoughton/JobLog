@@ -968,7 +968,7 @@ to facilitate finding them.
               <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
             <full_no_time> = <dm_full> | <md_full>
             <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
-                     <iso> = d{4} ( <divider> ) d{1,2} \1 d{1,2}
+                     <iso> = d{4} ( <divider> ) d{1,2} \\1 d{1,2}
                       <md> = d{1,2} <divider> d{1,2}
                  <md_full> = <month> s d{1,2} "," s d{4}
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
@@ -997,7 +997,7 @@ to facilitate finding them.
                  <termini> = [ "the" s ] ( <beginning> | "end" )
                     <time> = d{1,2} [ : d{2} [ : d{2} ] ] [ s* <time_suffix> ]
              <time_suffix> = ( "a" | "p" ) ( "m" | ".m." )
-                      <us> = d{1,2} ( <divider> ) d{1,2} \1 d{4}
+                      <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
                   <verbal> = <my> | <named_period> | <relative_period> | <month_day> | <full>  
                  <weekday> = <full_weekday> | <short_weekday>
                     <year> = d{4}

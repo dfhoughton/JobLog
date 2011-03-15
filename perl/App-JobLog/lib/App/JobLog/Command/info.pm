@@ -199,13 +199,82 @@ to add a new line to the log with the same description and tags as the last task
 
 ==head2 Summary Commands
 
+The log is of little use if you cannot extract useful reports of what it contains. For this there are a
+variety of commands.
+
+==over 8
+
+==item B<@{[App::JobLog::Command::summary->name]}>
+
+The most extensive and featureful log report command. Example:
+
+ \$ job summary yesterday
+ Monday, 14 March
+    9:46 - 10:11 am  0.41  widgets  modifying name normalization code to use dates                                                                                
+   10:17 - 10:55 am  0.62  widgets  modifying name normalization code to use dates                                                                                
+     1:49 - 2:08 pm  0.32  widgets  testing PGA file to see whether Felix Frankfurter is still there                                                              
+ 
+   TOTAL HOURS 1.35
+    widgets    1.35
+
+==item B<@{[App::JobLog::Command::last->name]}>
+
+The last event recorded. Example:
+
+ \$ job last
+ Tuesday, 15 March
+   5:07 pm - ongoing  0.00  foo  muttering                                                                                                                         
+
+   TOTAL HOURS 0.00
+   foo         0.00
+
+==item B<@{[App::JobLog::Command::today->name]}>
+
+Everything you've done today. Example:
+
+ \$ job today
+ Tuesday, 15 March
+   11:33 - 11:35 am  0.04  widgets  checking up on Lem's issue with pipeline                                                                                     
+   11:38 - 11:46 am  0.12  widgets  checking up on Lem's issue with pipeline; figuring out null pointer in multi-threaded code                                   
+    12:40 - 1:11 pm  0.52  widgets  debugging null pointers                                                                                                       
+
+   TOTAL HOURS 0.68
+    widgets    0.68
+
+==back
+
 ==head2 Obtaining Further Information
 
 If you wish further information there are severals routes:
 
 ==over 8
 
-==item
+==item B<$executable>
+
+If you invoke B<Job Log> without any arguments you will receive a list of its commands.
+
+==item B<$executable commands>
+
+Another way to obtain a list of commands.
+
+==item B<--help>
+
+Every command has a C<--help> option which will provide minimal help text and a complete list of the options the command
+understands.
+
+==item B<$executable help <command>>
+
+The C<help> command will provide a command's full usage text.
+
+==item B<$executable @{[__PACKAGE__->name]} --man>
+
+This command's C<--man> option provides still more extensive help text.
+
+==item B<perldoc>
+
+The Perl modules of which this application is composed each have their own documentation. For example, try
+
+  perldoc App::JobLog
 
 ==back
 
@@ -236,7 +305,7 @@ configuration parameters.
 
 All other configuration is done through the B<@{[App::JobLog::Command::configure->name]}> command.
 
-==head1 Date Grammar
+==head1 Time Expressions
 
 B<Job Log> goes to considerable trouble to interpret whatever time expressions you might throw at it.
 For example, it understands all of the following:
@@ -265,7 +334,18 @@ For example, it understands all of the following:
 Every expression represents an interval of time. It either names an interval or defines it as the span from
 the beginning of one interval to the end of another.
 
-TODO provide the BNF grammar used in time parsing
+==head2 Time Grammar
+
+Here is a complete BNF-style grammar of the time expressions understood by B<Job Log>. In this set of rules
+C<s> represents some amount of whitespace, C<d> represents a digit, and C<\\x>, where C<x> is a number,
+represents a back reference to the corresponding matched group in the same rule. After the first three
+rules the remainder are alphabetized to facilitate finding them in the list. All expressions must match the
+first rule.
+
+If you find this system of rules opaque or unwieldy, you can use the B<@{[App::JobLog::Command::parse->name]}> 
+command to test an expression and see what time interval it is interpreted as.
+
+@{[_bnf()]}
 END
 }
 
@@ -303,7 +383,7 @@ sub _bnf {
               <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
             <full_no_time> = <dm_full> | <md_full>
             <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
-                     <iso> = d{4} ( <divider> ) d{1,2} \1 d{1,2}
+                     <iso> = d{4} ( <divider> ) d{1,2} \\1 d{1,2}
                       <md> = d{1,2} <divider> d{1,2}
                  <md_full> = <month> s d{1,2} "," s d{4}
           <modifiable_day> = <at_time_on> <modifiable_day_no_time> | <modifiable_day_no_time> <at_time>
@@ -332,7 +412,7 @@ sub _bnf {
                  <termini> = [ "the" s ] ( <beginning> | "end" )
                     <time> = d{1,2} [ : d{2} [ : d{2} ] ] [ s* <time_suffix> ]
              <time_suffix> = ( "a" | "p" ) ( "m" | ".m." )
-                      <us> = d{1,2} ( <divider> ) d{1,2} \1 d{4}
+                      <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
                   <verbal> = <my> | <named_period> | <relative_period> | <month_day> | <full>  
                  <weekday> = <full_weekday> | <short_weekday>
                     <year> = d{4}

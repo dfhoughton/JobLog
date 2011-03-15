@@ -7,6 +7,8 @@ Revision history for App::JobLog
   * fixed TimeGrammar; '2010' and such are properly handled
   * fixed bug caused by end of month wrapping in DateTime
   * changing the options for the info command so minimal information is returned by default
+  * improved text wrapping of full description for commands
+  * finished text of info command
 
 1.009     2011-03-13 15:14:27 America/New_York
   * changed date format code to show year if span in question stretches over more than one year
