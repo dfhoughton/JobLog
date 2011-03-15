@@ -540,6 +540,6 @@ concerned with filtering events and formatting the report.
 
 =head1 SEE ALSO
 
-L<App::JobLog::Command::today>, L<App::JobLog::Command::last>, L<App::JobLog::TimeGrammar>
+L<App::JobLog::Command::today>, L<App::JobLog::Command::last>, L<App::JobLog::Command::parse>, L<App::JobLog::TimeGrammar>
 
 =cut

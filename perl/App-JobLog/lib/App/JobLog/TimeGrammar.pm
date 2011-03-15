@@ -1016,4 +1016,8 @@ If you specify a period part of which is in the future, this will cause no diffi
 will be parsed out correctly, but again, because the log only concerns the past the future times will have no effect
 on the output. It is simply easier to say C<this month> than C<the beginning of the month until today>.
 
+=head1 SEE ALSO
+
+L<App::JobLog::Command::parse>
+
 =cut

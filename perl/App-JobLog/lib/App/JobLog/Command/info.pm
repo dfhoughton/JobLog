@@ -20,13 +20,10 @@ sub execute {
     my ( $self, $opt, $args ) = @_;
     my ( $fh, $fn ) = tempfile( UNLINK => 1 );
     my $executable = prog_name($0);
-    my $text =
-        $self->_header($executable)
-      . $self->_basic_usage($executable)
-      . $self->_footer($executable);
+    my $text;
     my @options = ( -verbose => 2, -exitval => 0, -input => $fn );
     given ( $opt->verbosity ) {
-        when ('verbose') {
+        when ('man') {
             $text =
                 $self->_header($executable)
               . $self->_body($executable)
@@ -38,11 +35,17 @@ sub execute {
                 push @options, -noperldoc => 1;
             }
         }
-        when ('quiet') {
+        when ('verbose') {
+            $text =
+                $self->_header($executable)
+              . $self->_basic_usage($executable)
+              . $self->_footer($executable);
+            push @options, -noperldoc => 1;
+        }
+        default {
             $text = $self->_header($executable) . $self->_footer($executable);
             push @options, -noperldoc => 1;
         }
-        default { push @options, -noperldoc => 1 }
     }
 
     $text = <<END;
@@ -70,8 +73,8 @@ sub options {
         [
             "verbosity" => hidden => {
                 one_of => [
-                    [ 'quiet|q'       => 'minimal documentation' ],
-                    [ 'verbose|man|v' => 'extensive documentation in pager' ],
+                    [ 'verbose|v' => 'longer documentation' ],
+                    [ 'man'       => 'extensive documentation in pager' ],
                 ],
             }
         ]
@@ -194,11 +197,23 @@ When you come back to work you can type
 
 to add a new line to the log with the same description and tags as the last task you began.
 
-TODO talk about summary and obtaining full list of commands
+==head2 Summary Commands
+
+==head2 Obtaining Further Information
+
+If you wish further information there are severals routes:
+
+==over 8
+
+==item
+
+==back
 
 B<TIP:> any unambigous prefix of a command will do. All the following are equivalent:
 
 @{[join "\n", map {"   $executable $_ doing something"} $self->_unambiguous_prefixes(App::JobLog::Command::add->name)]}
+
+This means that for almost all commands you need only use the first letter of the command name.
 END
 }
 
@@ -208,16 +223,16 @@ sub _advanced_usage {
     
 ==head1 Environment Variables
 
-B<Job Log> may be configured in part by two environment variables:
+B<Job Log> is sensitive to a single environment variable:
 
-==over 8
+==head2 @{[DIRECTORY()]}
 
-==item @{[DIRECTORY()]}
-
-By default B<Job Log> keeps the log and all other files in a hidden directory called .joblog in your home
-directory. If @{[DIRECTORY()]} is set, however, it will keep this files here.
-
-==back
+By default B<Job Log> keeps the log and all other files in a hidden directory called F<.joblog> in your home
+directory. If @{[DIRECTORY()]} is set, however, it will keep this files here. This is mostly useful for
+testing, though if you find F<.joblog> already is in use by some other application you can use this variable
+to prevent collisions. Collisions will only occur if the files F<log> or F<config.ini> exist in this
+directory, and B<Job Log> will only alter these files if you append an event to the log or modify some
+configuration parameters.
 
 All other configuration is done through the B<@{[App::JobLog::Command::configure->name]}> command.
 
@@ -241,6 +256,11 @@ For example, it understands all of the following:
    june 14
    last month - 6.14
    pay period
+   2010
+   June 2010
+   2010/6
+   Feb 1 - 14
+   ever
 
 Every expression represents an interval of time. It either names an interval or defines it as the span from
 the beginning of one interval to the end of another.
@@ -354,5 +374,12 @@ The synopsis says it all. For command specific help you should try the help comm
  tags not to match are provided, only those events that contain none of these tags will be shown.
  
  if you provide description filters to match or avoid, these will be interpreted as regexes. try 'perldoc perlre'
+
+This module is basically a number of globs of POD munged a bit, concatenated in various ways, and passed
+to L<Pod::Usage>.
+
+=head1 SEE ALSO
+
+L<Pod::Usage>, L<App::JobLog::Command::help>
 
 =cut
