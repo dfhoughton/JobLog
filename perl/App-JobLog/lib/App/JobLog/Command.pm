@@ -29,13 +29,38 @@ sub description {
     }
 
     # make sure things are wrapped nicely
-    require Text::WrapI18N;
-    $Text::WrapI18N::columns = columns;
-    $desc = Text::WrapI18N::wrap( '', '', $desc );
+    _wrap( \$desc );
 
     # space between description and options text
     $desc .= "\n";
     return $desc;
+}
+
+# performs text wrapping while preserving the formatting of lines beginning which whitespace
+sub _wrap {
+    my $desc = shift;
+    require Text::WrapI18N;
+    $Text::WrapI18N::columns = columns;
+    my ( $current, @gathered );
+    for my $line ( $$desc =~ /^(.*?)\s*$/mg ) {
+        if ( $line =~ /^\S/ ) {
+            if ($current) {
+                $current .= " $line";
+            }
+            else {
+                $current = $line;
+            }
+        }
+        else {
+            push @gathered, Text::WrapI18N::wrap( '', '', $current )
+              if defined $current;
+            push @gathered, $line;
+            $current = undef;
+        }
+    }
+    push @gathered, Text::WrapI18N::wrap( '', '', $current )
+      if defined $current;
+    $$desc = join "\n", @gathered;
 }
 
 # override to make full description

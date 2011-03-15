@@ -91,7 +91,7 @@ Closing an open task is the only edit you'll commonly have to make (it's
 easy to forget to close the last task of the day). Fortunately, it is the easiest
 edit to perform. You simply type
 
-@{[prog_name]} @{[__PACKAGE__->name]} --close yesterday at 8:00 pm
+  @{[prog_name]} @{[__PACKAGE__->name]} --close yesterday at 8:00 pm
 
 for example and @{[prog_name]} will insert the appropriate line if it can do so.
 If it can't because there is no open task at the time specified, it will emit a warning
