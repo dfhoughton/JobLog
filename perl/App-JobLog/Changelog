@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.011     2011-03-16 05:44:21 America/New_York
   * cosmetic changes to info command
   * further improvement to perldocs
   * added time zone configuration parameter with Cygwin test so the Cygwin smoke test will pass
