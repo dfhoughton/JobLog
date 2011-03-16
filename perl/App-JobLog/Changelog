@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * cosmetic changes to info command
+  * further improvement to perldocs
 
 1.010     2011-03-15 17:26:53 America/New_York
   * fixed "last/this week" bug due to DateTime choosing Monday as first day in week
