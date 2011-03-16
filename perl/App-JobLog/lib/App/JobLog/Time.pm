@@ -19,6 +19,7 @@ our @EXPORT_OK = qw(
 use Modern::Perl;
 use DateTime;
 use DateTime::TimeZone;
+use App::JobLog::Config qw(time_zone);
 
 # cached values
 our ( $today, $now, $tz );
@@ -55,7 +56,7 @@ has been set.
 =cut
 
 sub tz {
-    $tz //= DateTime::TimeZone->new( name => 'local' );
+    $tz //= DateTime::TimeZone->new( name => time_zone );
     return $tz;
 }
 

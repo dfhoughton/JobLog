@@ -28,6 +28,7 @@ our @EXPORT_OK = qw(
   readme
   start_pay_period
   sunday_begins_week
+  time_zone
   vacation
   workdays
   DAYS
@@ -39,6 +40,7 @@ our @EXPORT_OK = qw(
   PERIOD
   PRECISION
   SUNDAY_BEGINS_WEEK
+  TIME_ZONE
   WORKDAYS
 );
 
@@ -82,7 +84,7 @@ use constant DAYS => 'S' . WORKDAYS . 'A';
 use constant MERGE => 'adjacent same tags';
 
 # name of hide nothing "column"
-use constant NONE_COLUMN     => 'none';
+use constant NONE_COLUMN => 'none';
 
 # array of hidable columns
 use constant HIDABLE_COLUMNS => [
@@ -94,6 +96,9 @@ use constant HIDABLE_COLUMNS => [
       time
       )
 ];
+
+# default time zone; necessary because Cygwin doesn't support local
+use constant TIME_ZONE => $^O eq 'cygwin' ? 'floating' : 'local';
 
 =method init_file
 
@@ -398,6 +403,17 @@ sub is_hidden {
         %hidden_columns = map { $_ => 1 } split / /, hidden_columns();
     }
     return $hidden_columns{$value};
+}
+
+=method time_zone
+
+Time zone used for time calculations.
+
+=cut
+
+sub time_zone {
+    my ($value) = @_;
+    return _param( 'time_zone', TIME_ZONE, 'time', $value );
 }
 
 1;

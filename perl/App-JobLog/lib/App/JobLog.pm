@@ -73,6 +73,7 @@ __END__
  precision                           2
  start pay period           2009-01-11
  sunday begins week               true
+ time zone                       local
  workdays                        MTWHF
  houghton@NorthernSpy:~$ job conf --precision 1
  precision set to 1

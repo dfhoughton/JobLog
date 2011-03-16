@@ -13,6 +13,7 @@ use App::JobLog::Config qw(
   precision
   start_pay_period
   sunday_begins_week
+  time_zone
   workdays
   DAYS
   HIDABLE_COLUMNS
@@ -22,6 +23,7 @@ use App::JobLog::Config qw(
   PERIOD
   PRECISION
   SUNDAY_BEGINS_WEEK
+  TIME_ZONE
   WORKDAYS
 );
 use autouse 'App::JobLog::TimeGrammar' => qw(parse);
@@ -90,6 +92,10 @@ sub execute {
         $value = hidden_columns($value);
         say "hidden columns: $value";
     }
+    if ( defined $opt->time_zone ) {
+        my $value = time_zone( $opt->time_zone );
+        say "time zone is now $value";
+    }
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
@@ -110,6 +116,10 @@ sub options {
             'the first day of some pay period; '
               . 'pay period boundaries will be calculated based on this date and the pay period length; '
               . 'e.g., --start-pay-period="June 14, 1912"'
+        ],
+        [
+            'time-zone=s',
+            'time zone used in calendar calculations; default is ' . TIME_ZONE
         ],
         [
             'sunday-begins-week=s',
@@ -148,7 +158,7 @@ sub options {
               . App::JobLog::Command::summary->name
               . ' command; '
               . 'available options are: '
-              . join( ', ', map { "'$_'" } @{HIDABLE_COLUMNS()} ) . '; '
+              . join( ', ', map { "'$_'" } @{ HIDABLE_COLUMNS() } ) . '; '
               . "default is '@{[NONE_COLUMN]}'; "
               . 'multiple columns may be specified'
         ],
@@ -170,6 +180,7 @@ sub _list_params {
       pay_period_length
       start_pay_period
       sunday_begins_week
+      time_zone
       workdays
     );
     my %booleans = map { $_ => 1 } qw(
@@ -218,7 +229,7 @@ sub validate {
         }
     }
     if ( defined $opt->hidden_columns ) {
-        my %h = map { $_ => 1 } @{HIDABLE_COLUMNS()};
+        my %h = map { $_ => 1 } @{ HIDABLE_COLUMNS() };
         my ( $found_none, $found_something ) = ( 0, 0 );
         for my $c ( @{ $opt->hidden_columns } ) {
             my $col = lc $c;
@@ -254,6 +265,8 @@ __END__
  	                          period boundaries will be calculated based
  	                          on this date and the pay period length;
  	                          e.g., --start-pay-period="June 14, 1912"
+	--time-zone               time zone used in calendar calculations;
+	                          default is local
  	--sunday-begins-week      whether Sundays should be regarded as the
  	                          first day in the week; the alternative is
  	                          Monday; default is TRUE
@@ -287,6 +300,7 @@ __END__
  precision                           1
  start pay period           2009-01-11
  sunday begins week               true
+ time zone                       local
  workdays                        MTWHF
  houghton@NorthernSpy:~$ job configure --precision 2
  precision set to 2
@@ -299,6 +313,7 @@ __END__
  precision                           2
  start pay period           2009-01-11
  sunday begins week               true
+ time zone                       local
  workdays                        MTWHF
 
 =head1 DESCRIPTION
@@ -364,6 +379,11 @@ L<App::JobLog> uses L<DateTime> for all calendar math. L<DateTime> regards Monda
 Another convention is to regard Sunday as the first day of the week. This is significant because it changes the
 meaning of phrases such as I<this week> and I<March 1 until the end of the week>. Use this parameter to choose
 your preferred interpretation of such phrases.
+
+=item time zone
+
+This is the time zone used for converting the system time to the time of the day. Most likely you will not need
+to set this parameter, but go here if your times look funny.
 
 =item workdays
 
