@@ -43,7 +43,12 @@ sub execute {
             push @options, -noperldoc => 1;
         }
         default {
-            $text = $self->_header($executable) . $self->_footer($executable);
+            $text = $self->_header($executable) . <<END . $self->_footer($executable);
+
+==head1 For More Information
+
+  $executable info --help
+END
             push @options, -noperldoc => 1;
         }
     }
@@ -356,7 +361,7 @@ sub _footer {
 ==head1 License etc.
 
  Author        David Houghton
-               dfhoughton at gmail dot com
+               dfhoughton\@gmail.com
  Copyright (c) 2011
  License       Perl_5
 END
