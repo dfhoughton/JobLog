@@ -19,10 +19,10 @@ our @EXPORT_OK = qw(
 use Modern::Perl;
 use DateTime;
 use DateTime::TimeZone;
-use App::JobLog::Config qw(time_zone);
+use App::JobLog::Config qw(_tz);
 
 # cached values
-our ( $today, $now, $tz );
+our ( $today, $now );
 
 =method now
 
@@ -56,16 +56,7 @@ has been set.
 =cut
 
 sub tz {
-    if ( undefined $ts) {
-        eval { $tz = DateTime::TimeZone->new( name => time_zone ) };
-        if ($@) {
-            print STDERR 'DateTime::TimeZone doesn\'t like the time zone '
-              . time_zone
-              . "\nreverting to floating time\n full error: $@";
-            $tz = DateTime::TimeZone->new( name => 'floating' );
-        }
-    }
-    return $tz;
+    _tz;
 }
 
 1;

@@ -29,6 +29,7 @@ our @EXPORT_OK = qw(
   start_pay_period
   sunday_begins_week
   time_zone
+  _tz
   vacation
   workdays
   DAYS
@@ -287,9 +288,10 @@ sub start_pay_period {
     if ($value) {
         my @parts = split / /, $value;
         return DateTime->new(
-            year  => $parts[0],
-            month => $parts[1],
-            day   => $parts[2]
+            year      => $parts[0],
+            month     => $parts[1],
+            day       => $parts[2],
+            time_zone => _tz(),
         );
     }
     return undef;
@@ -414,6 +416,23 @@ Time zone used for time calculations.
 sub time_zone {
     my ($value) = @_;
     return _param( 'time_zone', TIME_ZONE, 'time', $value );
+}
+
+our $tz;
+
+# removed from App::JobLog::Time to prevent dependency cycle
+sub _tz {
+    if ( !defined $tz ) {
+        require DateTime::TimeZone;
+        eval { $tz = DateTime::TimeZone->new( name => time_zone() ) };
+        if ($@) {
+            print STDERR 'DateTime::TimeZone doesn\'t like the time zone '
+              . time_zone()
+              . "\nreverting to floating time\n full error: $@";
+            $tz = DateTime::TimeZone->new( name => 'floating' );
+        }
+    }
+    return $tz;
 }
 
 1;
