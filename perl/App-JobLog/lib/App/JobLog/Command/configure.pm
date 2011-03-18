@@ -245,6 +245,15 @@ sub validate {
 "you have specified that something should be hidden and that nothing should be hidden"
         ) if $found_none && $found_something;
     }
+    if ( defined $opt->time_zone ) {
+        require DateTime::TimeZone;
+        eval { DateTime::TimeZone->new( name => $opt->time_zone ) };
+        $self->usage_error(
+                'DateTime::TimeZone does not like the time zone name '
+              . $opt->time_zone
+              . "\n$@" )
+          if $@;
+    }
 }
 
 1;

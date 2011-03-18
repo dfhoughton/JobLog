@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * added error handling for time zones unfamiliar to DateTime::TimeZone
 
 1.011     2011-03-16 05:44:21 America/New_York
   * cosmetic changes to info command

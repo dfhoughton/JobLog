@@ -56,7 +56,15 @@ has been set.
 =cut
 
 sub tz {
-    $tz //= DateTime::TimeZone->new( name => time_zone );
+    if ( undefined $ts) {
+        eval { $tz = DateTime::TimeZone->new( name => time_zone ) };
+        if ($@) {
+            print STDERR 'DateTime::TimeZone doesn\'t like the time zone '
+              . time_zone
+              . "\nreverting to floating time\n full error: $@";
+            $tz = DateTime::TimeZone->new( name => 'floating' );
+        }
+    }
     return $tz;
 }
 
