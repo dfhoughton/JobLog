@@ -16,7 +16,7 @@ sub execute {
     }
     my $log        = App::JobLog::Log->new;
     my ($last)     = $log->last_event;
-    my $is_ongoing = $last->is_open;
+    my $is_ongoing = $last && $last->is_open;
     $log->append_event(
         $tags ? ( tags => $tags ) : (),
         description => [ join ' ', @$args ],
