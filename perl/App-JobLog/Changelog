@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.014     2011-03-20 05:15:15 America/New_York
   * fixed more empty log bugs
 
 1.013     2011-03-19 20:37:32 America/New_York
