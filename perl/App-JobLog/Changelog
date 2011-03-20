@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * more monkeying with dist.ini to get the dependencies to list in the right order
+  * fixed empty log bug in summary command
 
 1.012     2011-03-19 14:18:26 America/New_York
   * added error handling for time zones unfamiliar to DateTime::TimeZone
