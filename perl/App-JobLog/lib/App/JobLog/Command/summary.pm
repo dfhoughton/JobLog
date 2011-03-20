@@ -106,8 +106,8 @@ sub execute {
     };
 
     # parse time expression
-    my ($days, $show_year);
-    eval { ($days, $show_year) = summary join( ' ', @$args ), $test, $hidden };
+    my ( $days, $show_year );
+    eval { ( $days, $show_year ) = summary join( ' ', @$args ), $test, $hidden };
     $self->usage_error($@) if $@;
     unless ( $opt->{hidden} ) {
 
@@ -144,7 +144,7 @@ sub execute {
 
         # check for long task
         my ($last_e) = App::JobLog::Log->new->last_event;
-        if ( $last_e->is_open ) {
+        if ( $last_e && $last_e->is_open ) {
             my ( $then, $today ) = ( $last_e->start, today );
             if (
                 !(
