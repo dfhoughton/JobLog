@@ -11,7 +11,7 @@ sub execute {
 
     my $log = App::JobLog::Log->new;
     my ($last) = $log->last_event;
-    if ( $last->is_open ) {
+    if ( $last && $last->is_open ) {
         $log->append_event( done => 1 );
     }
     else {

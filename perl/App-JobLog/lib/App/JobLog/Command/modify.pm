@@ -11,6 +11,7 @@ sub execute {
 
     my $log = App::JobLog::Log->new;
     my ( $e, $i ) = $log->last_event;
+    $self->usage_error('empty log') unless $e;
     my $ll = $e->data;
     if ( $opt->clear_tags ) {
         $ll->tags = [];
