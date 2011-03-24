@@ -1008,7 +1008,7 @@ In general C<App::JobLog::TimeGrammar> will understand most time expressions you
 =head2 FUTURE
 
 B<TimeGrammar> does not generally understand the future. It understants C<this> and C<last> but not C<next>. It
-understands c<today> and C<yesterday> but not C<tomorrow>. This may change (in the future), but most tasks that
+understands C<today> and C<yesterday> but not C<tomorrow>. This may change (in the future), but most tasks that
 involve the log do not require explicit reference to the future, since all the events in the log are necessarily
 in the past. It would sometimes be useful to say a particular vacation date is C<tomorrow> or C<next month>, however.
 
