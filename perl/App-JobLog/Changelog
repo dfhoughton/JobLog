@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * fixed --columns option of summary command
 
 1.014     2011-03-20 05:15:15 America/New_York
   * fixed more empty log bugs
