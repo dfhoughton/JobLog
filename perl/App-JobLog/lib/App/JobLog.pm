@@ -27,6 +27,7 @@ __END__
        parse: parse a time expression
       resume: resume last closed task
      summary: list tasks with certain properties in a particular time range
+        tags: list tags employed in log or some subrange thereof
        today: what has happened today
     vacation: list or define days off
 
@@ -192,6 +193,10 @@ Resumes the last closed event in the log. See L<App::JobLog::Command::resume>.
 
 Presents a portion of the log in more human readable form. See L<App::JobLog::Command::summary>.
 
+=item L<tags|App::JobLog::Command::tags>
+
+List only the tags used to categorize tasks. See L<App::JobLog::Command::tags>.
+
 =item L<today|App::JobLog::Command::today>
 
 Summarizes everything done today. See L<App::JobLog::Command::today>.
@@ -211,7 +216,7 @@ and we want fewer of those. And except in extraordinary circumstances we are onl
 will only be interested in the most recent ones. Even when we don't just want the most recent events we
 don't need truly random access to the whole log but an interval -- all the lines from one point to another.
 We only need a slightly glorified log. A database is overkill. Finally, as soon as we maintain our data in
-a database it becomes an opaque blob of data and our editing interface becomes much more complicated to
+a database it becomes an opaque blob and our editing interface becomes much more complicated to
 write, use, and maintain. We need to write a shell, GUI, or ncurses interface and figure out how to provide
 the editor with search facilities, the context in which she is making edits, and perhaps an undo/redo stack.
 If it's a text file we just pop up an editor and validate the log on close. So I stuck with a log.

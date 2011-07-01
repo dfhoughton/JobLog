@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * added some missing documentation
 
 1.016     2011-06-30 22:30:45 America/New_York
   * added tags command to list tags used in log
