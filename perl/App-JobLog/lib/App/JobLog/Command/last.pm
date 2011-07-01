@@ -51,7 +51,7 @@ event will inherit, what task you would be resuming, and so forth.
 
 =head1 SEE ALSO
 
-L<App::JobLog::Command::summary>, L<App::JobLog::Command::today>, L<App::JobLog::Command::resume>,
+L<App::JobLog::Command::summary>, L<App::JobLog::Command::today>, L<App::JobLog::Command::resume>, L<App::JobLog::Command::tags>,
 L<App::JobLog::Command::modify>
 
 =cut

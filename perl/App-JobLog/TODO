@@ -2,3 +2,4 @@ complete test suite
 remove unused code
 refactor repeated code into methods
 add CSV output
+add truncate command shorten the log to recent entries

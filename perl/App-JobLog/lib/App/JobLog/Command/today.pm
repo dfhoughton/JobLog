@@ -133,7 +133,7 @@ incarnation of this application one obtained it by passing in the option C<-p> a
 
 =head1 SEE ALSO
 
-L<App::JobLog::Command::summary>, L<App::JobLog::Command::last>, L<App::JobLog::Command::configure>,
+L<App::JobLog::Command::summary>, L<App::JobLog::Command::last>, L<App::JobLog::Command::tags>, L<App::JobLog::Command::configure>,
 L<App::JobLog::Command::vacation>
 
 =cut
