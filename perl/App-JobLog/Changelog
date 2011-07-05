@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * fixed pay period arithmetic; s/subtract_datetime/delta_days/g
 
 1.017     2011-07-01 06:39:00 America/New_York
   * added some missing documentation
