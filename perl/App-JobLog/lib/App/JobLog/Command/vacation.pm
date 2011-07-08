@@ -103,7 +103,7 @@ sub options {
                     [ 'add|a=s', 'add date or range; e.g., -a "May 17, 1951"' ],
                     [
                         'remove|r=i',
-'remove period with given index from list (see --list); e.g., -d 1'
+'remove period with given index from list (see --list); e.g., -r 1'
                     ],
                 ]
             }

@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * fixed error in description of vacation command options
 
 1.018     2011-07-05 09:15:01 America/New_York
   * fixed pay period arithmetic; s/subtract_datetime/delta_days/g
