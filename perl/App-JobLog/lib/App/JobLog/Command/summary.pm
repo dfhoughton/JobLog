@@ -162,9 +162,6 @@ END
             }
         }
     }
-    my $t = 0;
-    $t += $_->time_remaining for @$days;
-    return $t;
 }
 
 # Construct a test from the tags, excluded-tags, match, no-match, and time options.
