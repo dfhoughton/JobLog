@@ -115,7 +115,7 @@ or 'pp').
 
 It is possible that you won't want all tasks in the log in the given period included in the 
 time worked sum. As with the summary command, events may be filtered in numerous ways: by tag,
-time of day, or terms used in descriptions.  If tags to match are provided, only those events
+or terms used in descriptions.  If tags to match are provided, only those events
 that contain at least one such tag will be shown. If tags not to match are provided, only those
 events that contain none of these tags will be shown.
 
@@ -170,7 +170,7 @@ __END__
 
 =head1 SYNOPSIS
 
- houghton@NorthernSpy:~/git_projects/JobLog/perl/App-JobLog$ perl -Ilib/ bin/job when --help
+ houghton@NorthernSpy:~job when --help
  job <command> 
 
  job when [-MmTtV] [long options...] <date or date range>
@@ -188,45 +188,20 @@ __END__
 	                      regex; multiple regexes may be specified
 	-V --no-vacation      do not display vacation hours
 	--help                this usage screen
- houghton@NorthernSpy:~$ job t
- Monday,  7 March, 2011
-   8:01 am - ongoing  1.33  bar, foo  something to add; and still more                                                                                                  
+ houghton@NorthernSpy:~$ job w payperiod
  
-   TOTAL HOURS 1.33
-   bar         1.33
-   foo         1.33
- houghton@NorthernSpy:~$ job t --finished payperiod
- Monday,  7 March, 2011
-   8:01 am - ongoing  1.34  bar, foo  something to add; and still more                                                                                                  
- 
-   TOTAL HOURS 1.34
-   bar         1.34
-   foo         1.34
- 
- you will be finished at  7:17:32 pm on monday, march 07, 2011
+ you will be finished at  7:17:32 pm
 
 =head1 DESCRIPTION
 
-B<App::JobLog::Command::today> serves two functions:
+B<App::JobLog::Command::when> says when you will be able to punch out for the day. It does this by iterating over
+the days in some range of dates, adding up the time worked and subtracted the work hours expected. If no argument
+is given, the range only includes the current day. (See the C<workday> parameter of L<App::JobLog::Command::configure>.)
+If you wish to use the pay period as your interval, you need to have defined the C<start pay period> parameter of
+L<App::JobLog::Command::configure>.
 
-=over 8
-
-=item 1
-
-Reviewing the current day's events. In this it is completely equivalent to L<App::JobLog::Command::summary> given an
-option like C<today>, C<now>, or whatever might be the current date.
-
-=item 2
-
-Determining when you will be able to punch out for the day.
-
-=back
-
-The latter feature requires the C<--finished> option, which takes as its value the starting date for the period over
-which working time is to be calculated. L<App::JobLog> then iterates over all of the days in the interval so delimited,
-tallying up all the work hours for the work days (see the C<workday> parameter of L<App::JobLog::Command::configure>) and
-subtracting vacation time and time worked. If you wish to use the pay period as your interval, you need to have defined
-the C<start pay period> parameter of L<App::JobLog::Command::configure>.
+Various options are provided to facilitate eliminating certain tasks from the calculation. This is useful if you
+have more than one employer and you are committed to working a certain number of hours a day for each.
 
 =head1 ACKNOWLEDGEMENTS
 
