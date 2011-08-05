@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.019     2011-08-05 10:53:20 America/New_York
   * fixed error in description of vacation command options
   * refactored "when done" functionality in "when" command and added task filtering options
   * added mention of when command to App::JobLog pod
