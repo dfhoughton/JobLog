@@ -54,13 +54,13 @@ __END__
  houghton@NorthernSpy:~$ job add --clear-tags messing around
  houghton@NorthernSpy:~$ job a messing around some more
  houghton@NorthernSpy:~$ job done
- houghton@NorthernSpy:~$ job t
+ houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
    9:02 - 9:03 am  0.01  messing around; messing around some more                                                                                            
  
    TOTAL HOURS 0.01
  houghton@NorthernSpy:~$ job resume
- houghton@NorthernSpy:~$ job t
+ houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
       9:02 - 9:03 am  0.01  messing around; messing around some more                                                                                            
    9:03 am - ongoing  0.00  messing around some more                                                                                                            
@@ -79,14 +79,14 @@ __END__
  workdays                        MTWHF
  houghton@NorthernSpy:~$ job conf --precision 1
  precision set to 1
- houghton@NorthernSpy:~$ job t
+ houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
       9:02 - 9:03 am  0.0  messing around; messing around some more                                                                                            
    9:03 am - ongoing  0.0  messing around some more                                                                                                            
  
    TOTAL HOURS 0.0
  houghton@NorthernSpy:~$ job d
- houghton@NorthernSpy:~$ job t
+ houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
    9:02 - 9:03 am  0.0  messing around; messing around some more                                                                                            
    9:03 - 9:06 am  0.0  messing around some more                                                                                                            

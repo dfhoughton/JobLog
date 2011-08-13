@@ -3,4 +3,4 @@ remove unused code
 refactor repeated code into methods
 add CSV output
 add truncate command shorten the log to recent entries
-create separate "when I'll be done" command
+figure out 'job when' bug where the time you finished keeps advancing

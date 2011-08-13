@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * fixed yet another documentation error in App::JobLog pod
 
 1.019     2011-08-05 10:53:20 America/New_York
   * fixed error in description of vacation command options
