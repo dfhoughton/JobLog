@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.020     2011-08-28 17:51:12 America/New_York
   * fixed yet another documentation error in App::JobLog pod
   * finished truncate command
   * added missing Term::ReadKey dependency
