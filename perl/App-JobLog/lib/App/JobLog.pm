@@ -29,6 +29,7 @@ __END__
      summary: list tasks with certain properties in a particular time range
         tags: list tags employed in log or some subrange thereof
        today: what has happened today
+    truncate: shorten the log to contain only those moments after a given date
     vacation: list or define days off
         when: report when work is done for the day
 
@@ -126,8 +127,7 @@ worry about character encoding so the log has to be in Unicode (utf8).
 
 B<App::JobLog> keeps its documents, by default, in a hidden directory in your home directory called F<.joblog/>. These
 documents are a README file explaining to anyone who stumbles across the directory what it's function is, a log, called
-F<log>, a configuration file, called F<config.ini>, a vacation file, called F<vacation>, and perhaps a backup of the
-log called F<log.bak>.
+F<log>, a configuration file, called F<config.ini>, a vacation file, called F<vacation>, and perhaps log backups.
 
 To perform any action with B<App::JobLog> one invokes the executable with a command and a list of options. These commands
 are listed below.
@@ -201,6 +201,10 @@ List only the tags used to categorize tasks. See L<App::JobLog::Command::tags>.
 =item L<today|App::JobLog::Command::today>
 
 Summarizes everything done today. See L<App::JobLog::Command::today>.
+
+=item L<truncate|App::JobLog::Command::truncate>
+
+Pares off and stores the older portion of the log. See L<App::JobLog::Command::truncate>.
 
 =item L<vacation|App::JobLog::Command::vacation>
 
