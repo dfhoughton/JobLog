@@ -132,7 +132,9 @@ sub validate {
     }
 }
 
-sub usage_desc { '%c ' . __PACKAGE__->name }
+sub usage_desc {
+    '%c ' . __PACKAGE__->name . ' %o <date>';
+}
 
 sub abstract {
     'shorten the log to contain only those moments after a given date';
