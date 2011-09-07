@@ -235,7 +235,7 @@ If it's a text file we just pop up an editor and validate the log on close. So I
 =head1 ACKNOWLEDGEMENTS
 
 Thanks to Ricardo Signes for the redoubtable L<App::Cmd> which wires this all together, Dave Rolsky for L<DateTime>,
-which does all the calendar math, and Ingy dE<ouml>t Net for L<IO:All>, which, via L<Tie::File> (thanks, Mark Jason
+which does all the calendar math, and Ingy dE<ouml>t Net for L<IO::All>, which, via L<Tie::File> (thanks, Mark Jason
 Dominus), makes random access to a log file trivial.
 
 Thanks also to my wife Paula, who was my only beta tester other than myself.
