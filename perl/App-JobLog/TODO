@@ -2,5 +2,5 @@ complete test suite
 remove unused code
 refactor repeated code into methods
 add CSV output
-add truncate command shorten the log to recent entries
 figure out 'job when' bug where the time you finished keeps advancing
+add tag option to last command and resume command so you can see the last task with a particular tag or resume the last task with a particular tag
