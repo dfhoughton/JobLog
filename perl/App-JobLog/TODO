@@ -4,3 +4,4 @@ refactor repeated code into methods
 add CSV output
 figure out 'job when' bug where the time you finished keeps advancing
 add tag option to last command and resume command so you can see the last task with a particular tag or resume the last task with a particular tag
+use Class::XSAccessor to speed things up (assuming the speedup is worth loading the module)
