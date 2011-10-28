@@ -17,7 +17,7 @@ sub execute {
         my $start = $e->start->strftime('%F at %H:%M:%S %p');
         my $end = $e->is_open ? 'now' : $e->end->strftime('%F at %H:%M:%S %p');
         $opt->{merge} = 'no_merge';
-        'App::JobLog::Command::summary'->execute( $opt, ["$start - $end"] );
+        App::JobLog::Command::summary->execute( $opt, ["$start - $end"] );
     }
     else {
         say 'empty log';
