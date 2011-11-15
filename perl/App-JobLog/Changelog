@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * improved help doc for truncate command
+  * removed incorrect examples from configure command help
 
 1.020     2011-08-28 17:51:12 America/New_York
   * fixed yet another documentation error in App::JobLog pod
