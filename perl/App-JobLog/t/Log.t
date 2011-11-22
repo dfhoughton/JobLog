@@ -179,6 +179,15 @@ subtest 'iterating over events in reverse' => sub {
         my ( $e1, $e2 ) = ( $events[$i], $reversed_events[$i] );
         ok( $e1->cmp($e2) == 0, "same time for event $i" );
     }
+
+    # see if we can iterate from an event midway in the log
+    for my $index ( 0 .. $#events ) {
+        $count = 0;
+        $i     = $log->reverse_iterator( $events[$index] );
+        while ( $i->() ) { $count++ }
+        ok( $count == @events - $index,
+            "found correct number of events iterating from event $index" );
+    }
 };
 
 done_testing();
