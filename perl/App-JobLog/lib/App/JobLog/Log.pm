@@ -215,6 +215,60 @@ sub last_event {
     return $e, $i;
 }
 
+=method reverse_iterator
+
+C<reverse_iterator> returns a closure that allows you to iterate
+over the events in the log in reverse. Every time you call the closure
+it returns the next unvisited event.
+
+If you pass this method an optional argument, either a L<DateTime> or a 
+L<App::JobLog::Log::Event>, it will iterate from the event beginning at or
+after this event or time.
+
+=cut
+
+sub reverse_iterator {
+    my ( $self, $event ) = @_;
+    if ( ref $event ) {
+        if ( $event->isa('DateTime') ) {
+            my $events =
+              $self->find_events( $event, $self->first_event->start );
+            if (@$events) {
+                $event = $events->[$#$events];
+            }
+            else {
+                $event = undef;
+            }
+        }
+    }
+    else {
+        ($event) = $self->last_event;
+    }
+    return sub { }
+      unless $event;
+    my ( undef, $index, $io ) =
+      ( $self->find_previous( $event->start ), $self->[IO] );
+    return sub {
+        return undef unless $event;
+        my $e        = $event;
+        my $end_time = $event->start;
+        $event = undef;
+        while ( --$index >= 0 ) {
+            my $line = $io->[$index];
+            my $ll   = App::JobLog::Log::Line->parse($line);
+            if ( $ll->is_beginning ) {
+                $event = App::JobLog::Log::Event->new($ll);
+                $event->end = $end_time;
+                last;
+            }
+            elsif ( $ll->is_end ) {
+                $end_time = $ll->time;
+            }
+        }
+        return $e;
+    };
+}
+
 =method find_events
 
 C<find_events> expects two L<DateTime> objects representing the

@@ -28,6 +28,20 @@ sub usage_desc { '%c ' . __PACKAGE__->name }
 
 sub abstract { 'describe the last task recorded' }
 
+sub options {
+    return (
+        [
+            'tag|t=s@',
+            'find the last event with one of these tags; '
+              . 'multiple tags may be specified'
+        ],
+        [
+            'without|w=s@',
+            'find the last event which does not have any of these tags; '
+              . 'multiple tags may be specified'
+        ],
+    );
+}
 1;
 
 __END__
