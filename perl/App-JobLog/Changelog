@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.021     2011-11-23 06:15:30 EST5EDT
   * improved help doc for truncate command
   * removed incorrect examples from configure command help
   * added reverse_iterator method to App::JobLog::Log to facilitate iterating
