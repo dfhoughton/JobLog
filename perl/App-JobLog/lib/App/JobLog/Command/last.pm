@@ -74,6 +74,7 @@ sub options {
         ],
     );
 }
+
 1;
 
 __END__
@@ -91,9 +92,12 @@ __END__
 
 =head1 DESCRIPTION
 
-B<App::JobLog::Command::last> simply tells you the last event in the log. This is useful if you
-want to know whether you ever punched out, for example, or if you want to know what tags a new
-event will inherit, what task you would be resuming, and so forth.
+Without options specified B<App::JobLog::Command::last> simply tells you the last event in the log. 
+This is useful if you want to know whether you ever punched out, for example, or if you want to know 
+what tags a new event will inherit, what task you would be resuming, and so forth.
+
+You may specify tags or tags to avoid, in which case B<last> will describe the last event matching
+this restriction.
 
 =head1 SEE ALSO
 
