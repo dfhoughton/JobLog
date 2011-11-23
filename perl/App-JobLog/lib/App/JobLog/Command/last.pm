@@ -12,7 +12,39 @@ use Class::Autouse qw(
 sub execute {
     my ( $self, $opt, $args ) = @_;
 
-    my ($e) = App::JobLog::Log->new->last_event;
+    # construct event test
+    my %must   = map { $_ => 1 } @{ $opt->tag     || [] };
+    my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
+    my $test   = sub {
+        my $event = shift;
+        my $good  = 1;
+        if (%must) {
+            $good = 0;
+            for my $tag ( @{ $event->tags } ) {
+                if ( $must{$tag} ) {
+                    $good = 1;
+                    last;
+                }
+            }
+        }
+        if ( $good && %mustnt ) {
+            for my $tag ( @{ $event->tags } ) {
+                if ( $mustnt{$tag} ) {
+                    $good = 0;
+                    last;
+                }
+            }
+        }
+        return $good;
+    };
+
+    # find event
+    my ( $i, $count, $e ) = ( App::JobLog::Log->new->reverse_iterator, 0 );
+    while ( $e = $i->() ) {
+        $count++;
+        last if $test->($e);
+    }
+
     if ($e) {
         my $start = $e->start->strftime('%F at %H:%M:%S %p');
         my $end = $e->is_open ? 'now' : $e->end->strftime('%F at %H:%M:%S %p');
@@ -20,7 +52,7 @@ sub execute {
         App::JobLog::Command::summary->execute( $opt, ["$start - $end"] );
     }
     else {
-        say 'empty log';
+        say $count ? 'no matching event' : 'empty log';
     }
 }
 
