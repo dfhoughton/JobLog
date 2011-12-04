@@ -22,7 +22,7 @@ sub execute {
     my $executable = prog_name($0);
     my $text;
     my @options = ( -verbose => 2, -exitval => 0, -input => $fn );
-    given ( $opt->verbosity ) {
+    for ( $opt->verbosity ) {
         when ('man') {
             $text =
                 $self->_header($executable)
@@ -43,7 +43,8 @@ sub execute {
             push @options, -noperldoc => 1;
         }
         default {
-            $text = $self->_header($executable) . <<END . $self->_footer($executable);
+            $text =
+              $self->_header($executable) . <<END . $self->_footer($executable);
 
 ==head1 For More Information
 

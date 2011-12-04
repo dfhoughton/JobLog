@@ -149,7 +149,8 @@ sub show {
         }
     }
     return [] unless @parts;
-    my $format = sprintf "%%%dd) %%%ds %%-%ds %%-%ds %%-%ds\n", length scalar(@parts),
+    my $format = sprintf "%%%dd) %%%ds %%-%ds %%-%ds %%-%ds\n",
+      length scalar(@parts),
       @$widths;
     for my $i ( 0 .. $#parts ) {
         $parts[$i] = sprintf $format, $i + 1, @{ $parts[$i] };

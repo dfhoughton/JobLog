@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * replaced deprecated "given" construct everywhere with "for"
 
 1.021     2011-11-23 06:15:30 EST5EDT
   * improved help doc for truncate command

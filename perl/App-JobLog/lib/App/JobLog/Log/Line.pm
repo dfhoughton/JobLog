@@ -298,7 +298,7 @@ Whether lines is malformed.
 
 =cut
 
-sub is_malformed     { exists $_[0]->{malformed} }
+sub is_malformed { exists $_[0]->{malformed} }
 
 =method is_beginning
 
@@ -306,7 +306,7 @@ Whether line describes the beginning of an event.
 
 =cut
 
-sub is_beginning     { exists $_[0]->{tags} }
+sub is_beginning { exists $_[0]->{tags} }
 
 =method is_end
 
@@ -314,7 +314,7 @@ Whether line only defines the end of an event.
 
 =cut
 
-sub is_end           { $_[0]->{done} }
+sub is_end { $_[0]->{done} }
 
 =method is_event
 
@@ -322,7 +322,7 @@ Whether line defines the beginning or end of an event.
 
 =cut
 
-sub is_event         { $_[0]->{time} }
+sub is_event { $_[0]->{time} }
 
 =method is_comment
 
@@ -330,7 +330,7 @@ Whether line represents a comment in the log.
 
 =cut
 
-sub is_comment       { exists $_[0]->{comment} }
+sub is_comment { exists $_[0]->{comment} }
 
 =method tags_unspecified
 

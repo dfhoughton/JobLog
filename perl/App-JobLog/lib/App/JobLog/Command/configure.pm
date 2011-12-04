@@ -66,10 +66,10 @@ sub execute {
     }
     if ( defined $opt->sunday_begins_week ) {
         my $bool;
-        given ( $opt->sunday_begins_week ) {
+        for ( $opt->sunday_begins_week ) {
             when (/true/i)  { $bool = 1 }
             when (/false/i) { $bool = 0 }
-            default { $bool = $opt->sunday_begins_week || 0 }
+            default { $bool = $opt->sunday_begins_week || 0 };
         }
         $bool = sunday_begins_week($bool);
         say "Sunday begins week is now " . ( $bool ? 'true' : 'false' );
@@ -129,13 +129,16 @@ sub options {
         ],
         [
             'length-pay-period=i',
-            'the length of the pay period in days; e.g., --length-pay-period 7; '
+'the length of the pay period in days; e.g., --length-pay-period 7; '
               . 'default is '
               . PERIOD
         ],
         [
             'day-length=f',
-            'length of workday; ' . 'e.g., --day-length 7.5; ' . 'default is: ' . HOURS
+            'length of workday; '
+              . 'e.g., --day-length 7.5; '
+              . 'default is: '
+              . HOURS
         ],
         [
             'workdays=s',

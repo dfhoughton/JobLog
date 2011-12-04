@@ -27,7 +27,7 @@ sub execute {
         $ll->tags = [ sort keys %tags ];
     }
     my $description = join ' ', @$args;
-    given ( $opt->desc || '' ) {
+    for ( $opt->desc || '' ) {
         when ('replace_description') {
             $ll->description = [$description];
         }

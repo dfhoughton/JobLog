@@ -59,7 +59,7 @@ sub execute {
       $opt->compression ? _pick_compression( $opt->compression ) : 'IO::File';
     my $suffix = '';
     my @args   = ();
-    given ($io) {
+    for ($io) {
         when ('IO::File') { push @args, 'w' }
         when ('IO::Compress::Zip') {
             $suffix = '.zip';
@@ -68,7 +68,7 @@ sub execute {
         when ('IO::Compress::Gzip')  { $suffix = '.gz' }
         when ('IO::Compress::Bzip2') { $suffix = '.bz2' }
         when ('IO::Compress::Lzma')  { $suffix = '.lzma' }
-        default { die "unprepared to handle $io; please report bug" }
+        default { die "unprepared to handle $io; please report bug" };
     }
     my $old_f = File::Spec->catfile( dir, $base . $suffix );
     my $old_fh     = $io->new( $old_f, @args );
@@ -181,7 +181,7 @@ END
 # converts chosen compression opt into appropriate IO:: algorithm
 sub _pick_compression {
     my $alg = shift;
-    given ($alg) {
+    for ($alg) {
         when ('zip')   { return 'IO::Compress::Zip' }
         when ('gzip')  { return 'IO::Compress::Gzip' }
         when ('bzip2') { return 'IO::Compress::Bzip2' }
