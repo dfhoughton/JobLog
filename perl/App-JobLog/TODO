@@ -7,3 +7,4 @@ add tag option to last command and resume command so you can see the last task w
 use Class::XSAccessor to speed things up (assuming the speedup is worth loading the module)
 use Carp throughout
 investigate display issue where tag column seems to vary in width
+make 'tomorrow through January 2' parsable
