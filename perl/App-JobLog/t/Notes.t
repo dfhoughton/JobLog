@@ -26,32 +26,34 @@ $ENV{ DIRECTORY() } = $dir;
 $App::JobLog::Config::tz =
   DateTime::TimeZone->new( name => 'America/New_York' );
 
-subtest 'empty log' => sub {
+subtest 'append and retrieve last note' => sub {
     my $log = App::JobLog::Log->new;
+    is(
+        exception {
+            $log->append_note( description => 'foo' );
+        },
+        undef,
+        'no error thrown when appending note'
+    );
+    is(
+        exception {
+            my $ll = $log->last_note;
+            ok(defined $ll, 'retrieved note');
+            is(@{$ll->data->description}, 1, 'got single line in note description');
+            is($ll->data->description->[0], 'foo', 'got same description back that was put in');
+            $log->append_note(description=>'bar', tags=>['quux']);
+            $ll = $log->last_note;
+            is($ll->data->description->[0], 'bar', 'got correct description back for second note');
+            is($ll->data->tags->[0], 'quux', 'got tag back');
     my $date =
       DateTime->new( year => 2011, month => 1, day => 1, time_zone => tz );
-    my $end = $date->clone->add( days => 1 )->subtract( seconds => 1 );
-    is(
-        exception {
-            my $events = $log->find_events( $date, $end );
-            ok( @$events == 0, 'no events in empty log' );
+            $log->append_event( description => 'test event' );
+            $ll = $log->last_note;
+            is($ll->data->description->[0], 'bar', 'found last note correctly when there was an intervening event');
         },
         undef,
-        'no error thrown with empty log',
+        'no error thrown when retrieving last note'
     );
-    is(
-        exception {
-            $log->append_event( time => $date, description => 'test event' );
-            $log->close;
-            my $events = $log->find_events( $date, $end );
-            ok( @$events == 1, 'added event appears in empty log' );
-        },
-        undef,
-        'added event to empty log'
-    );
-    $log = App::JobLog::Log->new;
-    my $events = $log->find_events( $date, $end );
-    ok( @$events == 1, 'event preserved after closing log' );
 };
 
 done_testing();

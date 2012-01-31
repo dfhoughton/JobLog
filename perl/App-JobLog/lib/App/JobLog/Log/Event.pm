@@ -11,6 +11,8 @@ handle the properties of intervals of time as distinct from points.
 
 =cut
 
+use parent qw(App::JobLog::Log::Note);
+
 use Modern::Perl;
 use Class::Autouse qw{DateTime};
 use autouse 'App::JobLog::Time' => qw(now);
@@ -21,21 +23,6 @@ use overload '""' => sub {
     $_[0]->data->to_string . '-->'
       . ( $_[0]->is_closed ? $_[0]->end : 'ongoing' );
 };
-use overload 'bool' => sub { 1 };
-
-=method new
-
-Basic constructor. Expects single L<App::JobLog::Log::Line> argument. Can be called on
-instance or class.
-
-=cut
-
-sub new {
-    my ( $class, $logline ) = @_;
-    $class = ref $class || $class;
-    my $self = bless { log => $logline }, $class;
-    return $self;
-}
 
 =method clone
 
@@ -75,26 +62,6 @@ sub overlap {
     return $clone;
 }
 
-=method data
-
-Returns L<App::JobLog::Log::Line> object on which this event is based.
-
-=cut
-
-sub data {
-    $_[0]->{log};
-}
-
-=method start
-
-Start of event. Is lvalue method.
-
-=cut
-
-sub start : lvalue {
-    $_[0]->data->time;
-}
-
 =method end
 
 End of event. Is lvalue method.
@@ -103,38 +70,6 @@ End of event. Is lvalue method.
 
 sub end : lvalue {
     $_[0]->{end};
-}
-
-=method tags
-
-Tags of event (array reference). Is lvalue method.
-
-=cut
-
-sub tags : lvalue {
-    $_[0]->data->{tags};
-}
-
-=method exists_tag
-
-Expects a list of tags. Returns true if event contains any of them.
-
-=cut
-
-sub exists_tag {
-    my ( $self, @tags ) = @_;
-    $self->data->exists_tag(@tags);
-}
-
-=method all_tags
-
-Expects a list of tags. Returns whether event contains all of them.
-
-=cut
-
-sub all_tags {
-    my ( $self, @tags ) = @_;
-    $self->data->all_tags(@tags);
 }
 
 =method cmp
@@ -147,27 +82,23 @@ Used to sort events. E.g.,
 
 sub cmp {
     my ( $self, $other ) = @_;
-    carp 'argument must also be event' unless $other->isa(__PACKAGE__);
-
-    # defer to subclass sort order if other is a subclass and self isn't
-    return -$other->cmp($self)
-      if ref $self eq __PACKAGE__ && ref $other ne __PACKAGE__;
-
-    my $comparison = DateTime->compare( $self->start, $other->start );
+    my $comparison = $self->SUPER::cmp($other);
     unless ($comparison) {
-        if ( $self->is_closed ) {
-            if ( $other->is_closed ) {
-                return DateTime->compare( $self->end, $other->end );
+        if ( $other->isa(__PACKAGE__) ) {
+            if ( $self->is_closed ) {
+                if ( $other->is_closed ) {
+                    return DateTime->compare( $self->end, $other->end );
+                }
+                else {
+                    return 1;
+                }
+            }
+            elsif ( $other->is_closed ) {
+                return -1;
             }
             else {
-                return 1;
+                return 0;
             }
-        }
-        elsif ( $other->is_closed ) {
-            return -1;
-        }
-        else {
-            return 0;
         }
     }
     return $comparison;
@@ -211,7 +142,8 @@ sub split_days {
     my ($self) = @_;
     my $days_end =
       $self->start->clone->truncate( to => 'day' )->add( days => 1 );
-    if ( $days_end < ( $self->end || now ) ) {
+    my $e = $self->end || now;
+    if ( $days_end < $e ) {
         my @splits;
         my $s = $self->start;
         do {
@@ -221,7 +153,7 @@ sub split_days {
             $clone->end   = $s;
             push @splits, $clone;
             $days_end->add( days => 1 );
-        } while ( $days_end < $self->end );
+        } while ( $days_end < $e );
         my $clone = $self->clone;
         $clone->start = $s;
         $clone->end   = $self->end;
@@ -231,15 +163,6 @@ sub split_days {
     else {
         return $self;
     }
-}
-
-# unrolls a calendrical interval onto a timeline
-sub _interval {
-    my ( $self, $unit ) = @_;
-    my $d2 =
-      $self->end->subtract_datetime( $self->start )->in_units( $unit . 's' );
-    my $d1 = $self->start->$unit;
-    return $d1, $d1 + $d2;
 }
 
 =method intersects

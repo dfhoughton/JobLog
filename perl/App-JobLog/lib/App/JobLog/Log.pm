@@ -16,10 +16,14 @@ use Modern::Perl;
 use App::JobLog::Config qw(log init_file);
 use App::JobLog::Log::Line;
 use IO::All -utf8;
-use autouse 'Carp' => qw(carp);
-use Class::Autouse qw(DateTime);
-use Class::Autouse qw(FileHandle);
-use Class::Autouse qw(App::JobLog::Log::Event);
+use autouse 'Carp'              => qw(carp);
+use autouse 'App::JobLog::Time' => qw(now);
+use Class::Autouse qw(
+  App::JobLog::Log::Event
+  App::JobLog::Log::Note
+  DateTime
+  FileHandle
+);
 
 # some stuff useful for searching log
 use constant WINDOW   => 30;
@@ -213,6 +217,24 @@ sub last_event {
     $self->[LAST_EVENT] = $e;
     $self->[LAST_INDEX] = $i;
     return $e, $i;
+}
+
+=method last_note
+
+Returns most recent note in log, or C<undef> if none is found.
+
+=cut
+
+sub last_note {
+    my ($self) = @_;
+    my $io     = $self->[IO];
+    my $i      = $#$io;
+    for ( ; $i >= 0 ; $i-- ) {
+        my $line = $self->[IO][$i];
+        my $ll   = App::JobLog::Log::Line->parse($line);
+        return App::JobLog::Log::Note->new($ll) if $ll->is_note;
+    }
+    return undef;
 }
 
 =method reverse_iterator
@@ -587,6 +609,22 @@ sub append_event {
     $io->append($current)->append("\n");
     $io->close;    # flush contents
     return $duration;
+}
+
+=method append_note
+
+Takes a description and a set of tags and appends it to the log as a note with the
+current timestamp.
+
+=cut
+
+sub append_note {
+    my ( $self, @args ) = @_;
+    my $note = App::JobLog::Log::Line->new( @args, time => now );
+    $note->{note} = 1;    # force this to be marked as a note
+    my $io = $self->[IO];
+    $io->append($note)->append("\n");
+    $io->close;           # flush contents
 }
 
 # a test to determine whether two DateTime objects

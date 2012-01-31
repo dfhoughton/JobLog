@@ -5,7 +5,6 @@ package App::JobLog::Command::note;
 use App::JobLog -command;
 use Modern::Perl;
 use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
-use autouse 'App::JobLog::Time'         => qw(now);
 use Class::Autouse qw(App::JobLog::Log);
 
 sub execute {
@@ -19,7 +18,6 @@ sub execute {
     $log->append_note(
         $tags ? ( tags => $tags ) : (),
         description => [ join ' ', @$args ],
-        time        => now
     );
 }
 
