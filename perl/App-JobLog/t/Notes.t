@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use autodie;
 
+use File::Path qw(remove_tree);
 use File::Temp ();
 use App::JobLog::Config qw(log DIRECTORY);
 use App::JobLog::Log::Line;
@@ -100,6 +101,8 @@ END
     my $s = $e->start;
     ($e) = $log->last_event;
     is( $e->start->second, 17, 'correct start time for last event' );
+    my $events = $log->find_events( $s, $e->end );
+    is( scalar(@$events), 5, 'found correct number of events' );
 };
 
 subtest 'searching for notes' => sub {
@@ -108,3 +111,5 @@ subtest 'searching for notes' => sub {
 };
 
 done_testing();
+
+remove_tree $dir;

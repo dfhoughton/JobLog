@@ -79,7 +79,7 @@ sub all_events {
     my ( @events, $previous );
     while ( my $line = $self->[IO]->getline ) {
         my $ll = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_event ) {
+        if ( $ll->is_endpoint ) {
             $previous->end = $ll->time if $previous;
             if ( $ll->is_beginning ) {
                 $previous = App::JobLog::Log::Event->new($ll);
@@ -366,7 +366,7 @@ sub find_events {
         while ( my $line = $io->getline ) {
             chomp $line;
             my $ll = App::JobLog::Log::Line->parse($line);
-            if ( $ll->is_event ) {
+            if ( $ll->is_endpoint ) {
                 if ( DateTime->compare( $ll->time, $end ) >= 0 ) {
                     $previous->end = $end if $previous->is_open;
                     last;
@@ -393,7 +393,7 @@ sub find_events {
         while ( my $line = $io->getline ) {
             chomp $line;
             my $ll = App::JobLog::Log::Line->parse($line);
-            if ( $ll->is_event ) {
+            if ( $ll->is_endpoint ) {
                 my $e;
                 if ( $ll->is_beginning ) {
                     $e = App::JobLog::Log::Event->new($ll);
@@ -497,7 +497,7 @@ sub _scan_from {
     for my $index ( $i .. $#$io ) {
         my $line = $io->[$index];
         my $ll   = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_event ) {
+        if ( $ll->is_endpoint ) {
             if ($previous) {
                 $previous->end = $ll->time if $previous->is_open;
                 push @events, $previous
@@ -533,7 +533,7 @@ sub _scan_for_previous {
     for my $index ( $i .. $#$io ) {
         my $line = $io->[$index];
         my $ll   = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_event ) {
+        if ( $ll->is_endpoint ) {
             $previous->end = $ll->time if $previous && $previous->is_open;
             last if $ll->time > $e;
             if ( $ll->is_beginning ) {

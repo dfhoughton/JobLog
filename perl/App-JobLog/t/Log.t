@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use autodie;
 
+use File::Path qw(remove_tree);
 use File::Temp ();
 use App::JobLog::Config qw(log DIRECTORY);
 use App::JobLog::Log::Line;
@@ -195,3 +196,5 @@ subtest 'iterating over events in reverse' => sub {
 };
 
 done_testing();
+
+remove_tree $dir;
