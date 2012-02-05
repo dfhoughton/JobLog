@@ -57,7 +57,7 @@ subtest 'append and retrieve last note' => sub {
                             time_zone => tz
                         );
                         $log->append_event( description => 'test event' );
-                        ($ll)    = $log->last_note;
+                        ($ll) = $log->last_note;
                         is( $ll->data->description->[0], 'bar',
 'found last note correctly when there was an intervening event'
                         );
@@ -90,16 +90,16 @@ subtest 'parsing a log' => sub {
 END
 
     # count events
-    my $log   = App::JobLog::Log->new;
+    my $log = App::JobLog::Log->new;
     my ($note) = $log->last_note;
     note $note;
-    is($note->data->description->[0], 'last note', 'found last note');
+    is( $note->data->description->[0], 'last note', 'found last note' );
     my ($e) = $log->first_event;
-    is ($e->data->description->[0], 'foo', 'found first event');
-    is ($e->start->minute, 23, 'correct start time');
+    is( $e->data->description->[0], 'foo', 'found first event' );
+    is( $e->start->minute,          23,    'correct start time' );
     my $s = $e->start;
     ($e) = $log->last_event;
-    is ($e->start->second, 17, 'correct start time for last event');
+    is( $e->start->second, 17, 'correct start time for last event' );
 };
 
 subtest 'searching for notes' => sub {
