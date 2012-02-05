@@ -103,6 +103,16 @@ END
     is( $e->start->second, 17, 'correct start time for last event' );
     my $events = $log->find_events( $s, $e->end );
     is( scalar(@$events), 5, 'found correct number of events' );
+    $s = make_date(qw(2011  1  1  4 14 15));
+    $events = $log->find_events( $s, $e->end );
+    is( scalar(@$events), 4, 'found correct number of events' );
+    $e = make_date(qw(2011  1  1 18  6 17));
+    $events = $log->find_events( $s, $e );
+    is( scalar(@$events), 3, 'found correct number of events' );
+    $s      = $e;
+    $e      = make_date(qw(2011  1  1 22 10 49));
+    $events = $log->find_events( $s, $e );
+    is( scalar(@$events), 1, 'found correct number of events' );
 };
 
 subtest 'searching for notes' => sub {
@@ -113,3 +123,16 @@ subtest 'searching for notes' => sub {
 done_testing();
 
 remove_tree $dir;
+
+sub make_date {
+    my ( $year, $month, $day, $hour, $minute, $second ) = @_;
+    return DateTime->new(
+        year      => $year,
+        month     => $month,
+        day       => $day,
+        hour      => $hour,
+        minute    => $minute,
+        second    => $second,
+        time_zone => $App::JobLog::Config::tz,
+    );
+}
