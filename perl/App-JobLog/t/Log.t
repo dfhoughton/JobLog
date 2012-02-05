@@ -10,6 +10,7 @@ use App::JobLog::Config qw(log DIRECTORY);
 use App::JobLog::Log::Line;
 use App::JobLog::Log;
 use App::JobLog::Time qw(tz);
+use Capture::Tiny qw(capture);
 use DateTime;
 use File::Spec;
 use IO::All -utf8;
@@ -61,7 +62,10 @@ subtest 'log validation' => sub {
     my $io = io $file;
     $io > io log;
     my $log = App::JobLog::Log->new;
-    $log->validate;
+    my ( $stdout, $stderr ) = capture {
+        $log->validate;
+    };
+    note $stderr;
     my $text = io(log)->slurp;
     ok( index( $text, <<END) > -1, 'found misplaced "DONE"' );
 # ERROR; task end without corresponding beginning

@@ -171,7 +171,7 @@ sub first_event {
     my ( $i, $e ) = 0;
     while ( my $line = $self->[IO][$i] ) {
         my $ll = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_event ) {
+        if ( $ll->is_endpoint ) {
             if ($e) {
                 $e->end = $ll->time;
                 last;
@@ -185,6 +185,40 @@ sub first_event {
     }
     $self->[FIRST_EVENT] = $e;
     return $e, $self->[FIRST_INDEX];
+}
+
+=method last_ts
+
+Returns last L<DateTime> timestamp in log and the index of this timestamp.
+
+=cut
+
+sub last_ts {
+    my ($self) = @_;
+    my $io     = $self->[IO];
+    my $i      = $#$io;
+    for ( ; $i >= 0 ; $i-- ) {
+        my $ll = App::JobLog::Log::Line->parse( $io->[$i] );
+        return ( $ll->time, $i ) if $ll->is_event;
+    }
+    return undef;
+}
+
+=method first_ts
+
+Returns first L<DateTime> timestamp in log.
+
+=cut
+
+sub first_ts {
+    my ($self) = @_;
+    my $io     = $self->[IO];
+    my $i      = 0;
+    for ( my $lim = $#$io ; $i <= $lim ; $i++ ) {
+        my $ll = App::JobLog::Log::Line->parse( $io->[$i] );
+        return ( $ll->time, $i ) if $ll->is_event;
+    }
+    return undef;
 }
 
 =method last_event
@@ -206,7 +240,7 @@ sub last_event {
     for ( ; $i >= 0 ; $i-- ) {
         my $line = $self->[IO][$i];
         my $ll   = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_event ) {
+        if ( $ll->is_endpoint ) {
             push @lines, $ll;
             last if $ll->is_beginning;
         }
@@ -221,20 +255,19 @@ sub last_event {
 
 =method last_note
 
-Returns most recent note in log, or C<undef> if none is found.
+Returns most recent note in log and its index, or the empty list if none is found.
 
 =cut
 
 sub last_note {
     my ($self) = @_;
-    my $io     = $self->[IO];
-    my $i      = $#$io;
-    for ( ; $i >= 0 ; $i-- ) {
-        my $line = $self->[IO][$i];
+    my $io = $self->[IO];
+    for ( my $i = $#$io ; $i >= 0 ; $i-- ) {
+        my $line = $io->[$i];
         my $ll   = App::JobLog::Log::Line->parse($line);
-        return App::JobLog::Log::Note->new($ll) if $ll->is_note;
+        return (App::JobLog::Log::Note->new($ll), $i) if $ll->is_note;
     }
-    return undef;
+    return ();
 }
 
 =method reverse_iterator
@@ -301,7 +334,7 @@ portions are represented as L<App::JobLog::Log::Event> objects.
 =cut
 
 sub find_events {
-    my ( $self, $start, $end ) = @_;
+    my ( $self, $start, $end, $note ) = @_;
     my $io = $self->[IO];
     my ( $end_event, $bottom, $start_event, $top ) =
       ( $self->last_event, $self->first_event );
@@ -568,13 +601,10 @@ sub append_event {
 
             # apply default tags
             $current->tags = $previous->tags if $current->tags_unspecified;
-            if ( $previous->is_closed
-                && _different_day( $previous->end, $current->time )
-                || $previous->is_open
-                && _different_day( $previous->start, $current->time ) )
-            {
 
-                # day changed
+            # check for day change
+            my ($last_ts) = $self->last_ts;
+            if ( !$last_ts || _different_day( $last_ts, $current->time ) ) {
                 $io->append(
                     App::JobLog::Log::Line->new(
                         comment => $current->time->strftime(TS)
@@ -623,6 +653,14 @@ sub append_note {
     my $note = App::JobLog::Log::Line->new( @args, time => now );
     $note->{note} = 1;    # force this to be marked as a note
     my $io = $self->[IO];
+
+    # check for day change
+    my ($last_ts) = $self->last_ts;
+    if ( !$last_ts || _different_day( $last_ts, $note->time ) ) {
+        $io->append(
+            App::JobLog::Log::Line->new( comment => $note->time->strftime(TS) )
+        )->append("\n");
+    }
     $io->append($note)->append("\n");
     $io->close;           # flush contents
 }
