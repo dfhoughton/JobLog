@@ -88,6 +88,7 @@ __END__
  
    TOTAL HOURS 0.0
  houghton@NorthernSpy:~$ job d
+ houghton@NorthernSpy:~$ job note maybe I should take more notes
  houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
    9:02 - 9:03 am  0.0  messing around; messing around some more                                                                                            
@@ -111,6 +112,7 @@ __END__
  2011  3  6  9  3 18:DONE
  2011  3  6  9  3 48::messing around some more
  2011  3  6  9  6 30:DONE
+ 2011  3  6  9  6 35<NOTE>:maybe I should take more notes
  
 =head1 DESCRIPTION
 
@@ -181,6 +183,10 @@ Describes the last event in the log. See L<App::JobLog::Command::last>.
 =item L<modify|App::JobLog::Command::modify>
 
 Modifies the last event in the log. See L<App::JobLog::Command::modify>.
+
+=item L<note|App::JobLog::Command::note>
+
+Adds a note to the log -- text independent of any task. See L<App::JobLog::Command::note>.
 
 =item L<parse|App::JobLog::Command::parse>
 

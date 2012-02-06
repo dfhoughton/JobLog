@@ -89,6 +89,14 @@ __END__
 
 =head1 SYNOPSIS
 
+ houghton@NorthernSpy:~$ job tags --help
+ job <command>
+ 
+ job tags [-an] [long options...] [date or date range]
+ 	Use 'job help tags' to see full details.
+ 	-n --notes   only list tags used on notes
+ 	-a --all     list tags for both notes and tasks
+ 	--help       this usage screen
  houghton@NorthernSpy:~$ job tags this week
 
  foo
@@ -106,6 +114,8 @@ time range. This allows one to examine how tasks have been categorized (and perh
 been mis-typed).
 
 The time expressions understood are the same as are understood by L<App::JobLog::Command::summary>.
+
+By default note tags are not listed. Use the --notes or --all options if you wish to include these.
 
 =head1 SEE ALSO
 

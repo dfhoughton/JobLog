@@ -69,8 +69,32 @@ __END__
 
 =head1 SYNOPSIS
 
+ houghton@NorthernSpy:~$ job note --help
+ job <command>
+ 
+ job note <text of note>
+ 	-t --tag          tag the note; multiple tags are acceptable; e.g.,
+ 	                  -t foo -t bar -t quux
+ 	-T --clear-tags   inherit no tags from preceding note; this is
+ 	                  equivalent to -t ""; this option has no effect if
+ 	                  any tag is specified
+ 	--help            this usage screen
+ houghton@NorthernSpy:~$ job note taking a note
+ houghton@NorthernSpy:~$ job note -t money taking a note about money
+ houghton@NorthernSpy:~$ job n taking another note that will be tagged with 'money'
+ houghton@NorthernSpy:~$ job n -T taking a note without any tags
+
 =head1 DESCRIPTION
 
+Notes differ from tasks in several ways:
+
+ * they aren't "on the clock"
+ * they don't change the current task
+ * they have a timestamp but no duration
+
+They are like tasks in that it is nice to find them by time, tag, text, etc. and they
+are well suited to a log format. C<note> is the command that lets you log notes as you
+would tasks.
 
 =head2 TAGS
 
