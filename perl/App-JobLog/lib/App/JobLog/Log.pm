@@ -834,7 +834,7 @@ current timestamp.
 
 sub append_note {
     my ( $self, @args ) = @_;
-    my $note = App::JobLog::Log::Line->new( @args, time => now );
+    my $note = App::JobLog::Log::Line->new( time => now, @args );
     $note->{note} = 1;    # force this to be marked as a note
     my $io = $self->[IO];
 

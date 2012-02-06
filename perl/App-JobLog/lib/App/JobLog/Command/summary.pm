@@ -96,18 +96,23 @@ sub execute {
 
     # record hiding options in hash reference
     my $hidden = {
-        vacation => $opt->{no_vacation},
-        date     => $dateless || $opt->{no_date} || is_hidden('date'),
-        time        => $opt->{no_time}        || is_hidden('time'),
-        duration    => $opt->{no_duration}    || is_hidden('duration'),
+        vacation => $opt->{no_vacation} || $opt->{notes},
+        date => $dateless || $opt->{no_date} || is_hidden('date'),
+        time => $opt->{no_time} || is_hidden('time'),
+        duration => $opt->{notes}
+          || $opt->{no_duration}
+          || is_hidden('duration'),
         tags        => $opt->{no_tags}        || is_hidden('tags'),
         description => $opt->{no_description} || is_hidden('description'),
-        totals      => $opt->{no_totals},
+        totals      => $opt->{notes}          || $opt->{no_totals},
     };
 
     # parse time expression
     my ( $days, $show_year );
-    eval { ( $days, $show_year ) = summary join( ' ', @$args ), $test, $hidden };
+    eval {
+        ( $days, $show_year ) = summary join( ' ', @$args ), $test, $hidden,
+          $opt->{notes};
+    };
     $self->usage_error($@) if $@;
     unless ( $opt->{hidden} ) {
 
@@ -325,6 +330,7 @@ sub options {
               . '\' to see full details.'
         ],
         [],
+        [ 'notes|n', 'show notes instead of events' ],
         [
             'tag|t=s@',
             'filter events to include only those with given tags; '

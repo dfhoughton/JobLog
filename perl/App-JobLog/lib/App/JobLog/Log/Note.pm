@@ -115,5 +115,38 @@ sub cmp {
 
     return DateTime->compare( $self->start, $other->start );
 }
+
+=method split_days
+
+Returns note itself. This method is overridden by the event object and used in
+event summarization.
+
+=cut
+
+sub split_days {
+    return $_[0];
+}
+
+=method intersects
+
+Whether this note overlaps the given period.
+
+=cut
+
+sub intersects {
+    my ( $self, $other ) = @_;
+    if ($other->can('end')) {
+        return $self->start >= $other->start && $self->start < $other->end;
+    }
+    return $self->start == $other->start;
+}
+
+=method is_open
+
+Returns false: notes have no duration so they cannot be open.
+
+=cut
+
+sub is_open { 0 }
  
 1;

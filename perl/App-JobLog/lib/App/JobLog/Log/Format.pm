@@ -47,20 +47,22 @@ that returns the argument passed in unmodified.
 =cut
 
 sub summary {
-    my ( $phrase, $test, $hidden ) = @_;
+    my ( $phrase, $test, $hidden, $do_notes ) = @_;
 
     # we skip flex days if the events are at all filtered
-    my $skip_flex = $test || 0;
+    my $skip_flex = !$do_notes && ( $test || 0 );
     $test //= sub { $_[0] };
     my ( $start, $end ) = parse $phrase;
     my $show_year = $start->year < $end->year;
     unless ($skip_flex) {
 
      # if we are chopping off any of the first and last days we ignore flex time
-        $skip_flex = 1 unless _break_of_dawn($start) && _witching_hour($end);
+        $skip_flex = 1
+          unless $do_notes || _break_of_dawn($start) && _witching_hour($end);
     }
-    my $events = App::JobLog::Log->new->find_events( $start, $end );
-    my @days = @{ _days( $start, $end, $skip_flex ) };
+    my $method = $do_notes ? 'find_notes' : 'find_events';
+    my $events = App::JobLog::Log->new->$method( $start, $end );
+    my @days = @{ _days( $start, $end, $skip_flex, $do_notes ) };
     my @periods =
       $hidden->{vacation} ? () : App::JobLog::Vacation->new->periods;
 
@@ -90,7 +92,10 @@ sub summary {
                         push @{ $d->events }, $e;
                         last;
                     }
-                    last if $e->is_open || $d->start > $e->end;
+                    last if $e->is_open;
+                    unless ($do_notes) {
+                        last if $e->is_open || $d->start > $e->end;
+                    }
                 }
             }
         }
@@ -162,7 +167,7 @@ sub _witching_hour {
 
 # create a list of days about which we wish to collect information
 sub _days {
-    my ( $start, $end, $skip_flex ) = @_;
+    my ( $start, $end, $skip_flex, $doing_notes ) = @_;
     my @days;
     my $b1 = $start;
     my $b2 = $start->clone->add( days => 1 )->truncate( to => 'day' );
@@ -171,7 +176,8 @@ sub _days {
           App::JobLog::Log::Day->new(
             start     => $b1,
             end       => $b2,
-            skip_flex => $skip_flex
+            skip_flex => $skip_flex,
+            $doing_notes ? ( notes => 1 ) : (),
           );
         $b1 = $b2;
         $b2 = $b2->clone->add( days => 1 );
@@ -180,7 +186,8 @@ sub _days {
       App::JobLog::Log::Day->new(
         start     => $b1,
         end       => $end,
-        skip_flex => $skip_flex
+        skip_flex => $skip_flex,
+        $doing_notes ? ( notes => 1 ) : (),
       );
     return \@days;
 }

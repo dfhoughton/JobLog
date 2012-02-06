@@ -36,6 +36,14 @@ sub new {
     bless { events => [], vacation => [], synopses => [], %opts }, $class;
 }
 
+=method
+
+Whether this day summarizes notes rather than events.
+
+=cut
+
+sub concerns_notes { $_[0]->{notes} }
+
 sub start { $_[0]->{start} }
 
 sub end { $_[0]->{end} }
@@ -110,6 +118,7 @@ Count up the amount of time spent in various ways this day.
 
 sub times {
     my ( $self, $times ) = @_;
+    return if $self->concerns_notes;
 
     for my $e ( @{ $self->events }, @{ $self->vacation } ) {
         my @tags = @{ $e->tags };
