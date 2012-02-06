@@ -435,7 +435,6 @@ sub find_events {
             chomp $line;
             my $ll = App::JobLog::Log::Line->parse($line);
             if ( $ll->is_endpoint ) {
-                last if $ll->time < $start;
                 my $e;
                 if ( $ll->is_beginning ) {
                     $e = App::JobLog::Log::Event->new($ll);

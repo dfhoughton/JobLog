@@ -71,18 +71,19 @@ subtest 'tags' => sub {
 
     # make a big log
     '' > io log;
-    my $log   = App::JobLog::Log->new;
-    my $d = make_date(qw(2011  1  1 0  0 0));
-    $log->append_event(time=> $d, tags => ['description']);
-    $d->add(days => 1);
-    $log->append_note(time=> $d, tags => ['note']);
+    my $log = App::JobLog::Log->new;
+    my $d   = make_date(qw(2011  1  1 0  0 0));
+    $log->append_event( time => $d, tags => ['description'] );
+    $log->append_event( time => $d->clone->add( minutes => 1 ), done => 1 );
+    $d->add( days => 1 );
+    $log->append_note( time => $d, tags => ['note'] );
     my $result = test_app( 'App::JobLog' => [qw(tags)] );
     is( $result->error, undef, 'threw no exceptions' );
     like( $result->stdout, qr/description/, 'found description tag' );
     unlike( $result->stdout, qr/note/, 'did not find note tag' );
     $result = test_app( 'App::JobLog' => [qw(tags --all)] );
     like( $result->stdout, qr/description/, 'found description tag' );
-    like( $result->stdout, qr/note/, 'found note tag' );
+    like( $result->stdout, qr/note/,        'found note tag' );
     $result = test_app( 'App::JobLog' => [qw(tags --notes)] );
     unlike( $result->stdout, qr/description/, 'did not find description tag' );
     like( $result->stdout, qr/note/, 'found note tag' );
@@ -98,12 +99,12 @@ subtest 'tags' => sub {
     unlike( $result->stdout, qr/note/, 'did not find note tag' );
     $result = test_app( 'App::JobLog' => [qw(tags --notes 2011/1/1)] );
     unlike( $result->stdout, qr/description/, 'did not find description tag' );
-    unlike( $result->stdout, qr/note/, 'did not find note tag' );
+    unlike( $result->stdout, qr/note/,        'did not find note tag' );
     note 'searching within range of second date';
     $result = test_app( 'App::JobLog' => [qw(tags 2 January 2011)] );
     is( $result->error, undef, 'threw no exceptions' );
     unlike( $result->stdout, qr/description/, 'did not find description tag' );
-    unlike( $result->stdout, qr/note/, 'did not find note tag' );
+    unlike( $result->stdout, qr/note/,        'did not find note tag' );
     $result = test_app( 'App::JobLog' => [qw(tags --all 2 January 2011)] );
     unlike( $result->stdout, qr/description/, 'did not find description tag' );
     like( $result->stdout, qr/note/, 'found note tag' );
@@ -111,7 +112,6 @@ subtest 'tags' => sub {
     unlike( $result->stdout, qr/description/, 'did not find description tag' );
     like( $result->stdout, qr/note/, 'found note tag' );
 };
-
 
 done_testing();
 
