@@ -11,15 +11,26 @@ use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
 sub execute {
     my ( $self, $opt, $args ) = @_;
 
-    my $events;
+    my $events = [];
     eval {
         if (@$args)
         {
             my ( $start, $end ) = parse( join( ' ', @$args ) );
-            $events = App::JobLog::Log->new->find_events( $start, $end );
+            $events = App::JobLog::Log->new->find_events( $start, $end )
+              unless $opt->notes;
+            push @$events,
+              @{ App::JobLog::Log->new->find_notes( $start, $end ) }
+              unless !( $opt->notes || $opt->all );
         }
         else {
-            $events = App::JobLog::Log->new->all_events;
+            my $method = 'all_events';
+            if ( $opt->notes ) {
+                $method = 'all_notes';
+            }
+            elsif ( $opt->all ) {
+                $method = 'all_taglines';
+            }
+            $events = App::JobLog::Log->new->$method;
         }
     };
     $self->usage_error($@) if $@;
@@ -45,8 +56,8 @@ sub abstract {
 
 sub full_description {
     <<END
-List the tags used to categorize tasks in the log or in a specified range of dates. This allows one to
-explore the categorical structure of tasks.
+List the tags used to categorize tasks or notes in the log or in a specified range of dates. This allows one to
+explore the categorical structure of tasks and notes. By default only tags associated with notes are listed.
 
 The date expressions understood are the same as those understood by the C<summary> command.
 END
@@ -59,11 +70,15 @@ sub options {
               . __PACKAGE__->name
               . '\' to see full details.'
         ],
+        [ 'notes|n', 'only list tags used on notes' ],
+        [ 'all|a',   'list tags for both notes and tasks' ],
     );
 }
 
 sub validate {
     my ( $self, $opt, $args ) = @_;
+    $self->usage_error('--notes conflicts will --all')
+      if $opt->notes && $opt->all;
 }
 
 1;

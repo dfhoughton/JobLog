@@ -64,6 +64,25 @@ sub new {
     return $self;
 }
 
+=method all_taglines
+
+C<all_taglines> returns a list of all lines in the log that may have tags.
+
+=cut
+
+sub all_taglines {
+    my ($self) = @_;
+
+    # reopen log in sequential reading mode
+    $self->[IO] = io log;
+    my (@lines);
+    while ( my $line = $self->[IO]->getline ) {
+        my $ll = App::JobLog::Log::Line->parse($line);
+        push @lines, $ll if $ll->is_beginning;
+    }
+    return \@lines;
+}
+
 =method all_events
 
 C<all_events> processes the log as a stream, extracting all events and 
@@ -188,9 +207,11 @@ of its line. Its return object is an L<App::JobLog::Log::Event>.
 sub first_event {
     my ($self) = @_;
     return $self->[FIRST_EVENT], $self->[FIRST_INDEX] if $self->[FIRST_EVENT];
+    my $io = $self->[IO];
     my ( $i, $e ) = 0;
-    while ( my $line = $self->[IO][$i] ) {
-        my $ll = App::JobLog::Log::Line->parse($line);
+    while ( $i <= $#$io ) {
+        my $line = $io->[$i];
+        my $ll   = App::JobLog::Log::Line->parse($line);
         if ( $ll->is_endpoint ) {
             if ($e) {
                 $e->end = $ll->time;
@@ -414,6 +435,7 @@ sub find_events {
             chomp $line;
             my $ll = App::JobLog::Log::Line->parse($line);
             if ( $ll->is_endpoint ) {
+                last if $ll->time < $start;
                 my $e;
                 if ( $ll->is_beginning ) {
                     $e = App::JobLog::Log::Event->new($ll);
@@ -455,7 +477,7 @@ sub find_notes {
 
     # if the log concerns events before the time in question, return empty list
     return []
-      unless DateTime->compare( $start, $end_time ) < 0;
+      unless DateTime->compare( $start, $end_time ) <= 0;
 
     # likewise if it concerns events after
     return [] if DateTime->compare( $start_time, $end ) > 0;

@@ -24,8 +24,9 @@ __END__
         info: describe job log
         last: describe the last task recorded
       modify: add details to last event
+        note: take a note
        parse: parse a time expression
-      resume: resume last closed task
+      resume: resume last task
      summary: list tasks with certain properties in a particular time range
         tags: list tags employed in log or some subrange thereof
        today: what has happened today
