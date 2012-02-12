@@ -346,10 +346,14 @@ Returns a reference to an array of substrings wrapped to fit the columns.
 
 sub wrap {
     my ( $text, $columns ) = @_;
-    $Text::WrapI18N::columns = $columns;
-    my $s = Text::WrapI18N::wrap( '', '', $text );
-    my @ar = $s =~ /^.*$/mg;
-    return \@ar;
+    my @ar;
+    eval {
+        $Text::WrapI18N::columns = $columns;
+        my $s = Text::WrapI18N::wrap( '', '', $text );
+        @ar = $s =~ /^.*$/mg;
+    };
+    return \@ar unless $@;
+    return [$text];
 }
 
 =method
