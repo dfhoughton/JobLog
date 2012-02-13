@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * got rid of annoying "next from when" warning which was showing up under
+    OS X Perl
 
 1.024     2012-02-12 11:59:53 EST5EDT
   * put error handling into App::JobLog::Log::Format::wrap

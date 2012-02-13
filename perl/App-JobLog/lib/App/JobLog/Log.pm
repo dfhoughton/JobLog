@@ -580,24 +580,25 @@ sub find_previous {
             my $line = $io->[$i];
             my $ll   = App::JobLog::Log::Line->parse($line);
             if ( $ll->is_beginning ) {
+                my $do_next = 1;
                 for ( DateTime->compare( $ll->time, $e ) ) {
                     when ( $_ < 0 ) {
                         $top = $i;
                         $et  = $ll->time;
-                        next OUTER;
                     }
                     when ( $_ > 0 ) {
                         $bottom = $i;
                         $eb     = $ll->time;
-                        next OUTER;
                     }
                     default {
 
                         # found beginning!!
                         # this should happen essentially never
-                        return $self->_scan_for_previous( $i, $e );
+                        $do_next = 0;
                     }
                 }
+                next OUTER if $do_next;
+                return $self->_scan_for_previous( $i, $e );
             }
         }
     }
