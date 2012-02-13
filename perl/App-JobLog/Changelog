@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.025     2012-02-13 15:40:30 EST5EDT
   * got rid of annoying "next from when" warning which was showing up under
     OS X Perl
 
