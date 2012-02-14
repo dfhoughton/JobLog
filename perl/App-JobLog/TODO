@@ -13,5 +13,6 @@ Key
 . use Carp throughout
 . investigate display issue where tag column seems to vary in width
 . make 'tomorrow through January 2' parsable
-. make real notes test
-. finish note command synopsis and description
+* make real notes test
+* finish note command synopsis and description
+. make sure the long help from the info command reflects the latest changes
