@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.026     2012-02-14 20:17:51 EST5EDT
   * tinkered with app.t to get the test to pass on machines on which wrapping
     is busted
 
