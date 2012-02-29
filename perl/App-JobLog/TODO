@@ -16,3 +16,4 @@ Key
 * make real notes test
 * finish note command synopsis and description
 . make sure the long help from the info command reflects the latest changes
+. fix bug where job last misreports the last event if it spans a day boundary
