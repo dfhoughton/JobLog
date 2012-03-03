@@ -143,17 +143,30 @@ sub _basic_usage {
     
 ==head1 Usage
 
-B<Job Log> keeps a log of events. If you begin a new task you type
+B<Job Log> keeps a log of events and notes. If you begin a new task you type
 
    $executable @{[App::JobLog::Command::add->name]} what I am doing now
 
 and it appends the following, modulo changes in time, to @{[log]}:
 
    2011 2 1 15 19 12::what I am doing now
-
+   
 The portion before the first colon is a timestamp in year month day hour minute second format.
-The portion after the second colon is your description of the event. The portion between the
-colons, here blank, is a list of space-delimited tags one can use to categorize events. For
+The portion after the second colon is your description of the event. 
+
+If you wish to take a note, you type
+
+   $executable @{[App::JobLog::Command::note->name]} something I should remember
+
+and it appends the following to @{[log]}:
+
+   2011 2 1 15 19 12<NOTE>:something I should remember
+   
+Again, the portion before the first colon is a timestamp. The portion after the E<lt>NOTEE<gt> is 
+the body of the note.
+
+The text between the two colons, or between the first colon and the E<lt>NOTEE<gt> tag, which is blank in these
+examples, is a list of space-delimited tags one can use to categorize things. For
 instance, if you were performing this task for Acme Widgets you might have typed
 
    $executable @{[App::JobLog::Command::add->name]} -t "Acme Widgets" what I am doing now
@@ -176,7 +189,7 @@ producing
 For readability it is probably best to avoid spaces in tags.
 
 Since one usually works on a particular project for an extended period of time, if you specify no tags
-the event is given the same tags as the preceding event. For example,
+the event or note is given the same tags as the preceding event/note. For example,
 
    $executable @{[App::JobLog::Command::add->name]} -t foo what I am doing now
    $executable @{[App::JobLog::Command::add->name]} now something else
@@ -194,8 +207,8 @@ which adds something like
 
    2011 2 1 16 19 12:DONE
 
-to the log. Note the single colon. In this case I<DONE> is not a tag, though it is made
-to appear similar since it serves a similar function.
+to the log. Note the single colon. In this case I<DONE> is not a tag. Tags are always sandwiched between
+two delimiters. I<DONE> here just marks the line as the end of a task.
 
 When you come back to work you can type
 
