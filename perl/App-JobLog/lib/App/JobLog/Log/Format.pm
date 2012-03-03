@@ -92,9 +92,10 @@ sub summary {
                         push @{ $d->events }, $e;
                         last;
                     }
-                    last if $e->is_open;
+                    # I believe these is_open bits are mistaken
+                    # last if $e->is_open;
                     unless ($do_notes) {
-                        last if $e->is_open || $d->start > $e->end;
+                        last if $d->start > $e->end;
                     }
                 }
             }
