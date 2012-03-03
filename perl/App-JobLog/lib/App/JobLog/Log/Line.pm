@@ -89,6 +89,11 @@ sub new {
             $self->{description} = $description;
         }
         elsif ( defined $description ) {
+
+            # normalize whitespace; this is useful for testing
+            $description =~ s/^\s++|\s++$//g;
+            $description =~ s/\s++/ /g;
+            
             $description = [$description];
         }
         else {
