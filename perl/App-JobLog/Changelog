@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.027     2012-03-03 12:49:40 EST5EDT
   * made info command more up-to-date
   * made time grammar understand future expressions like tomorrow and next
     week
