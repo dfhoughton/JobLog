@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+#
+# some tests that collect the output of commands via App::Cmd::Tester
 
 use 5.006;
 use strict;

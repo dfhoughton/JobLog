@@ -409,7 +409,7 @@ sub _bnf {
   <modifiable_day_no_time> = [ <modifier> s ] <weekday>
         <modifiable_month> = [ <month_modifier> s ] <month>
        <modifiable_period> = [ <period_modifier> s ] <period>
-                <modifier> = "last" | "this" 
+                <modifier> = "last" | "this" | "next"
                    <month> = <full_month> | <short_month> 
                <month_day> = <at_time_on> <month_day_no_time> | <month_day_no_time> <at_time>
        <month_day_no_time> = <month_first> | <day_first>
@@ -424,7 +424,7 @@ sub _bnf {
                   <period> = "week" | "month" | "year" | <pay>
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
          <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time> | <now>
- <relative_period_no_time> = "yesterday" | "today"
+ <relative_period_no_time> = "yesterday" | "today" | "tomorrow"
              <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
            <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
             <span_divider> = s* ( "-"+ | ( "through" | "thru" | "to" | "til" [ "l" ] | "until" ) ) s*
