@@ -12,7 +12,7 @@ Key
 . use Class::XSAccessor to speed things up (assuming the speedup is worth loading the module)
 . use Carp throughout
 * investigate display issue where tag column seems to vary in width
-. make 'tomorrow through January 2' parsable
+* make 'tomorrow through January 2' parsable
 * make real notes test
 * finish note command synopsis and description
 * make sure the long help from the info command reflects the latest changes

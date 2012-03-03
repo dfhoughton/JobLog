@@ -226,7 +226,7 @@ my $re = qr{
      
      (?<now> now (?{ $buffer{day} = 'today' }))
 
-     (?<relative_period_no_time> ( yesterday | today ) (?{ $buffer{day} = $^N }))
+     (?<relative_period_no_time> ( yesterday | today | tomorrow ) (?{ $buffer{day} = $^N }))
 
      (?<month_day> (?&at_time_on) (?&month_day_no_time) | (?&month_day_no_time) (?&at_time))
 
@@ -645,6 +645,10 @@ sub fix_date {
                 $date->subtract( days => 1 );
                 return $date;
             }
+            elsif ( $day eq 'tom' ) {
+                $date->add( days => 1 );
+                return $date;
+            }
             init_day_abbr();
             my $day_num    = $day_abbr{$day};
             my $todays_num = $date->day_of_week;
@@ -905,7 +909,7 @@ sub is_fixed {
             return 1 if $h->{modifier} =~ /this|last/;
         }
         if ( exists $h->{day} ) {
-            return 1 if $h->{day} =~ /yes|tod/;
+            return 1 if $h->{day} =~ /yes|tod|tom/;
         }
     }
     return 0;
@@ -988,7 +992,7 @@ to facilitate finding them.
                   <period> = "week" | "month" | "year" | <pay>
          <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
          <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time> | <now>
- <relative_period_no_time> = "yesterday" | "today"
+ <relative_period_no_time> = "yesterday" | "today" | "tomorrow"
              <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
            <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
             <span_divider> = s* ( "-"+ | ( "through" | "thru" | "to" | "til" [ "l" ] | "until" ) ) s*
