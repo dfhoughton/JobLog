@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.028     2012-03-04 12:51:08 EST5EDT
   * fixed failure to reverse note list when scanning from end of log
   * fixed warning thrown by App::JobLog::Log::_scan_for_previous_note()
 
