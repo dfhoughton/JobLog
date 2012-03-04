@@ -320,8 +320,17 @@ sub time_fmt {
           if ref $se eq 'App::JobLog::Vacation::Period' && !$se->fixed;
         my $same_period = $start->hour < 12 && $end->hour < 12
           || $start->hour >= 12 && $end->hour >= 12;
-        my ( $f1, $f2 ) = ( $same_period ? '%l:%M' : '%l:%M %P', '%l:%M %P' );
-        $s = $start->strftime($f1) . ' - ' . $end->strftime($f2);
+        if (   $same_period
+            && $start->hour == $end->hour
+            && $start->minute == $end->minute )
+        {
+            $s = $start->strftime('%l:%M %P');
+        }
+        else {
+            my ( $f1, $f2 ) =
+              ( $same_period ? '%l:%M' : '%l:%M %P', '%l:%M %P' );
+            $s = $start->strftime($f1) . ' - ' . $end->strftime($f2);
+        }
     }
     else {
         $s = $start->strftime('%l:%M %P') . ' - ongoing';
