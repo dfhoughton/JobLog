@@ -195,7 +195,7 @@ sub parse {
     else {
         carp "malformed line in vacation file: '$text'";
     }
-    return undef;
+    return;
 }
 
 sub _parse_time {

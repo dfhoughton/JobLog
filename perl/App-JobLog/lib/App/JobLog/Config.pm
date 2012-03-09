@@ -294,7 +294,7 @@ sub start_pay_period {
             time_zone => _tz(),
         );
     }
-    return undef;
+    return;
 }
 
 # abstracts out code for maintaining config file

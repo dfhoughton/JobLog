@@ -50,6 +50,8 @@ an L<IO::All> object to read or modify the log with.
 =cut
 
 sub new {
+    my $class = shift;
+    $class = ref $class if ref $class;
 
     # touch log into existence
     unless ( -e log ) {
@@ -59,7 +61,7 @@ sub new {
     }
 
     # using an array to make things a little snappier
-    my $self = bless [];
+    my $self = bless [], $class;
     $self->[IO] = io log;
     return $self;
 }
@@ -242,7 +244,7 @@ sub last_ts {
         my $ll = App::JobLog::Log::Line->parse( $io->[$i] );
         return ( $ll->time, $i ) if $ll->is_event;
     }
-    return undef;
+    return;
 }
 
 =method first_ts
@@ -259,7 +261,7 @@ sub first_ts {
         my $ll = App::JobLog::Log::Line->parse( $io->[$i] );
         return ( $ll->time, $i ) if $ll->is_event;
     }
-    return undef;
+    return;
 }
 
 =method last_event
@@ -286,7 +288,7 @@ sub last_event {
             last if $ll->is_beginning;
         }
     }
-    return undef unless @lines;
+    return () unless @lines;
     my $e = App::JobLog::Log::Event->new( pop @lines );
     $e->end = $lines[0]->time if @lines;
     $self->[LAST_EVENT] = $e;
@@ -345,7 +347,7 @@ sub reverse_iterator {
     my ( undef, $index, $io ) =
       ( $self->find_previous( $event->start ), $self->[IO] );
     return sub {
-        return undef unless $event;
+        return () unless $event;
         my $e        = $event;
         my $end_time = $event->start;
         $event = undef;
@@ -517,7 +519,8 @@ sub find_notes {
             if ( $ll->is_event ) {
                 $c2 = DateTime->compare( $ll->time, $start );
                 last if $c2 < 0;
-                unshift @notes, App::JobLog::Log::Note->new($ll) if $ll->is_note;
+                unshift @notes, App::JobLog::Log::Note->new($ll)
+                  if $ll->is_note;
                 last unless $c2;
             }
         }
