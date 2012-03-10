@@ -24,7 +24,9 @@ Initializes C<App::JobLog::Vacation> object from file.
 =cut
 
 sub new {
-    my $self = bless { changed => 0 };
+    my $class = shift;
+    $class = ref $class if ref $class;
+    my $self = bless { changed => 0 }, $class;
     if ( -e vacation ) {
         my $fh = FileHandle->new(vacation);
         my @data;
