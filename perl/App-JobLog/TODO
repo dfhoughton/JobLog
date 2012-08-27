@@ -18,4 +18,4 @@ Key
 * make sure the long help from the info command reflects the latest changes
 * fix bug where job last misreports the last event if it spans a day boundary
 * fix up description of TimeGrammar so it properly describes the parsability of 'tomorrow'
-. make sure validation is catching misordered events
+* make sure validation is catching misordered events
