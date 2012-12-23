@@ -19,3 +19,4 @@ Key
 * fix bug where job last misreports the last event if it spans a day boundary
 * fix up description of TimeGrammar so it properly describes the parsability of 'tomorrow'
 * make sure validation is catching misordered events
+. investigate bug when summarizing day with open task
