@@ -1,0 +1,106 @@
+# 2012/12/03
+2012 12  3  8 31 37:cc:testing out new positive-negative training regime
+2012 12  3 12 20  0:DONE
+2012 12  3 12 51 50:cc:testing out new positive-negative training regime
+2012 12  3 14 55 25:DONE
+2012 12  3 15 14 55:cc:testing out new positive-negative training regime
+2012 12  3 17 27 48:DONE
+# 2012/12/04
+2012 12  4  9  0 10:cc:testing out new positive-negative training regime
+2012 12  4 14  0 47:DONE
+2012 12  4 14  4 57:cc:testing out new positive-negative training regime
+2012 12  4 14 14  5:DONE
+2012 12  4 14 34  7:cc:testing out new positive-negative training regime
+2012 12  4 14 34 18:cc:fixing glitch in training iterator
+2012 12  4 14 55  3:DONE
+2012 12  4 15 16 53:cc:fixing bimodal features
+2012 12  4 17 20 29:DONE
+# 2012/12/05
+2012 12  5  9  2 54:cc:fixing bimodal features
+2012 12  5 13 13  7:DONE
+2012 12  5 13 32 55:cc:creating a web app to facilitate editing match lists
+2012 12  5 14 51 22:DONE
+2012 12  5 15 25 43:cc:creating a web app to facilitate editing match lists
+2012 12  5 18  2 30:DONE
+# 2012/12/06
+2012 12  6  8 59  1:cc:creating a web app to facilitate editing match lists
+2012 12  6 12  6 22:DONE
+2012 12  6 12 37 19:cc:creating a web app to facilitate editing match lists
+2012 12  6 14 56 13:DONE
+2012 12  6 15 16 26:cc:creating a web app to facilitate editing match lists
+2012 12  6 18  0 38:DONE
+# 2012/12/07
+2012 12  7  9  4 12:cc:creating a web app to facilitate editing match lists
+2012 12  7 12 36  2:DONE
+2012 12  7 12 51 41:cc:creating a web app to facilitate editing match lists
+2012 12  7 14 55 28:DONE
+2012 12  7 15 16 42:cc:annotating matches
+2012 12  7 17 46 29:DONE
+# 2012/12/10
+2012 12 10  9 12 55:cc:annotating matches
+2012 12 10 12 38  2:DONE
+2012 12 10 12 59 41:cc:annotating matches
+2012 12 10 13 36 29:DONE
+2012 12 10 13 55 12:cc:annotating matches
+2012 12 10 14 55 38:DONE
+2012 12 10 15 38 47:cc:annotating matches
+2012 12 10 17 40  3:DONE
+# 2012/12/11
+2012 12 11  8 39 42:cc:adding sessions and login to annotation app
+2012 12 11 13 12 31:DONE
+2012 12 11 13 34 54:cc:adding sessions and login to annotation app
+2012 12 11 14 55 38:DONE
+2012 12 11 15 20 16:cc:adding sessions and login to annotation app
+2012 12 11 18 31 59:DONE
+# 2012/12/12
+2012 12 12  9  8 31:cc:adding sessions and login to annotation app
+2012 12 12 14 33 11:DONE
+2012 12 12 15 33 23:cc:adding sessions and login to annotation app
+2012 12 12 17 51  0:DONE
+# 2012/12/13
+2012 12 13  8 59 21:cc:adding sessions and login to annotation app
+2012 12 13 14 55 44:DONE
+2012 12 13 15 19 19:cc:adding sessions and login to annotation app
+2012 12 13 17 31  9:DONE
+# 2012/12/14
+2012 12 14  8 13 28:cc:adding sessions and login to annotation app
+2012 12 14 13 26 57:DONE
+2012 12 14 13 46 58:cc:making director grammar
+2012 12 14 17  4 54:DONE
+# 2012/12/17
+2012 12 17  9  8 34:cc:making director grammar
+2012 12 17 10  4 56:cc:waiting for VPN credentials to be restored
+2012 12 17 12 23 17:DONE
+2012 12 17 12 42 45:cc:waiting for VPN credentials to be restored
+2012 12 17 12 46  4:DONE
+2012 12 17 12 49 54:cc:waiting for VPN credentials to be restored
+2012 12 17 14 49 29:DONE
+2012 12 17 15 16 24:cc:rating matches
+2012 12 17 18  4  5:DONE
+# 2012/12/18
+2012 12 18  9 15 21:cc:rating matches
+2012 12 18 17 33 45:DONE
+# 2012/12/19
+2012 12 19  9 11 20:cc:rating matches
+2012 12 19 11 21 25:DONE
+2012 12 19 11 34 19:cc:rating matches
+2012 12 19 14  7 20:DONE
+2012 12 19 14 28 41:cc:rating matches
+2012 12 19 14 55 20:DONE
+2012 12 19 15 24 59:cc:rating matches
+2012 12 19 18 19 48:DONE
+# 2012/12/20
+2012 12 20  9 37 51:cc:rating matches
+2012 12 20 14  2 20:DONE
+2012 12 20 14 14 52:cc:rating matches
+2012 12 20 14 55 20:DONE
+2012 12 20 15 17 10:cc:rating matches
+2012 12 20 18  4 42:DONE
+# 2012/12/21
+2012 12 21  9  2 26:cc:rating matches
+2012 12 21 14 33 53:DONE
+2012 12 21 14 39 39:cc:rating matches
+2012 12 21 14 55 44:DONE
+2012 12 21 15 24 38:cc:rating matches
+2012 12 21 17  5  6:DONE
+2012 12 21 17 34 13:cc:rating matches
