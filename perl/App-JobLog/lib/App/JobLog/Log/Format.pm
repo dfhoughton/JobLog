@@ -86,12 +86,14 @@ sub summary {
     for my $big_e (@$events) {
         for my $e ( $big_e->split_days ) {
             if ( $e = $test->($e) ) {
-                push @gathered, shift @days while $days[0]->end < $e->start;
+                push @gathered, shift @days
+                  while @days && $days[0]->end < $e->start;
                 for my $d (@days) {
                     if ( $e->intersects( $d->pseudo_event ) ) {
                         push @{ $d->events }, $e;
                         last;
                     }
+
                     # I believe these is_open bits are mistaken
                     # last if $e->is_open;
                     unless ($do_notes) {

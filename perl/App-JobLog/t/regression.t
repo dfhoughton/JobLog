@@ -45,9 +45,9 @@ subtest 'summary with open task' => sub {
     $io > io log;
     my $result = test_app( 'App::JobLog' => [qw(summary last week)] );
     unlike(
-        $result->error,
+        $result->error // '',
         qr/Error: Can't call method "end" on an undefined value/,
-        'threw method on undefined value error'
+        'no method-called-on-undefined-value error'
     );
 };
 
