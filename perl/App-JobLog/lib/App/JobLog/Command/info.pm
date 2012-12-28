@@ -3,11 +3,10 @@ package App::JobLog::Command::info;
 # ABSTRACT: provides general App::JobLog information
 
 use App::JobLog -command;
-use autouse 'File::Temp'                => qw(tempfile);
-use autouse 'Pod::Usage'                => qw(pod2usage);
-use autouse 'Getopt::Long::Descriptive' => qw(prog_name);
-use autouse 'Carp'                      => qw(carp);
-use autouse 'App::JobLog::Config'       => qw(log DIRECTORY);
+use autouse 'File::Temp'          => qw(tempfile);
+use autouse 'Pod::Usage'          => qw(pod2usage);
+use autouse 'Carp'                => qw(carp);
+use autouse 'App::JobLog::Config' => qw(log DIRECTORY);
 use Class::Autouse qw(Config File::Spec);
 
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
@@ -19,7 +18,7 @@ use Modern::Perl;
 sub execute {
     my ( $self, $opt, $args ) = @_;
     my ( $fh, $fn ) = tempfile( UNLINK => 1 );
-    my $executable = prog_name($0);
+    my ($executable) = reverse File::Spec->splitpath($0);
     my $text;
     my @options = ( -verbose => 2, -exitval => 0, -input => $fn );
     for ( $opt->verbosity ) {
@@ -316,7 +315,7 @@ B<Job Log> is sensitive to a single environment variable:
 ==head2 @{[DIRECTORY()]}
 
 By default B<Job Log> keeps the log and all other files in a hidden directory called F<.joblog> in your home
-directory. If @{[DIRECTORY()]} is set, however, it will keep this files here. This is mostly useful for
+directory. If @{[DIRECTORY()]} is set, however, it will keep its files here. This is mostly useful for
 testing, though if you find F<.joblog> already is in use by some other application you can use this variable
 to prevent collisions. Collisions will only occur if the files F<log> or F<config.ini> exist in this
 directory, and B<Job Log> will only alter these files if you append an event to the log or modify some
