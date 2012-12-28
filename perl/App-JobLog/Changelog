@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.030     2012-12-27 20:05:35 EST5EDT
   * silenced some Perl::Critic warnings
   * fixed error when summarizing a period with an open task
 
