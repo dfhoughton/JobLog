@@ -721,15 +721,21 @@ sub _scan_for_previous {
 
     # collect events
     my ( $previous, $previous_index );
-    for my $index ( $i .. $#$io ) {
-        my $line = $io->[$index];
-        my $ll   = App::JobLog::Log::Line->parse($line);
-        if ( $ll->is_endpoint ) {
-            $previous->end = $ll->time if $previous && $previous->is_open;
-            last if $ll->time > $e;
-            if ( $ll->is_beginning ) {
-                $previous       = App::JobLog::Log::Event->new($ll);
-                $previous_index = $index;
+  OUTER: {
+        for my $index ( $i .. $#$io ) {
+            my $line = $io->[$index];
+            my $ll   = App::JobLog::Log::Line->parse($line);
+            if ( $ll->is_endpoint ) {
+                $previous->end = $ll->time if $previous && $previous->is_open;
+                if ( $ll->time > $e ) {
+                    last if $previous;
+                    $i--;
+                    redo OUTER;
+                }
+                if ( $ll->is_beginning ) {
+                    $previous       = App::JobLog::Log::Event->new($ll);
+                    $previous_index = $index;
+                }
             }
         }
     }
