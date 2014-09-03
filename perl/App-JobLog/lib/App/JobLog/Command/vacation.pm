@@ -12,6 +12,7 @@ use autouse 'App::JobLog::Vacation::Period' => qw(
   MONTHLY
 );
 use Class::Autouse qw(App::JobLog::Vacation);
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

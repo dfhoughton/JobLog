@@ -31,6 +31,7 @@ use autouse 'App::JobLog::Log::Synopsis' => qw(
   MERGE_NONE
 );
 use autouse 'App::JobLog::Time' => qw(today);
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

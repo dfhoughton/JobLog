@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * various fixes to silence warnings in Perls >= 5.18
 
 1.031     2013-05-09 21:59:59 America/New_York
   * small improvement to info output

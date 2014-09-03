@@ -24,6 +24,7 @@ use Class::Autouse qw(
   DateTime
   FileHandle
 );
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 # some stuff useful for searching log
 use constant WINDOW   => 30;

@@ -5,6 +5,7 @@ package App::JobLog::Command::modify;
 use App::JobLog -command;
 use Modern::Perl;
 use Class::Autouse qw(App::JobLog::Log);
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

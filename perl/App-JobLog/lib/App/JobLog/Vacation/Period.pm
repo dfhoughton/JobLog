@@ -153,7 +153,7 @@ my $re = qr{
     ^ (?&ts) : (?&non_ts) $
     (?(DEFINE)
      (?<ts> (?&date) : (?&date) )
-     (?<date> (\d{4}+\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{push @dates, $^N}) )
+     (?<date> (\d{4}\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{push @dates, $^N}) )
      (?<non_ts> (?&flex) : (?&tags) : (?&description))
      (?<flex> ([012]{2}) (?{$type = $^N}))
      (?<tags> (?:(?&tag)(\s++(?&tag))*+)?)

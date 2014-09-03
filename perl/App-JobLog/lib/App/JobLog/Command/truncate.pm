@@ -37,6 +37,7 @@ use autouse 'App::JobLog::Config' => qw(log dir);
 use autouse 'File::Copy'          => qw(move);
 
 use Modern::Perl;
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

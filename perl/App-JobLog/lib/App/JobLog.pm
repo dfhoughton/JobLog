@@ -1,4 +1,5 @@
 package App::JobLog;
+
 use App::Cmd::Setup -app;
 
 # ABSTRACT: base of work log application

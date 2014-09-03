@@ -55,6 +55,7 @@ use autouse 'App::JobLog::Time' => qw(
   today
   tz
 );
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 # some variables we need visible inside the date parsing regex
 # %matches holds a complete parsing

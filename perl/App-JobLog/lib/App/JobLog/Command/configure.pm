@@ -27,6 +27,7 @@ use App::JobLog::Config qw(
   WORKDAYS
 );
 use autouse 'App::JobLog::TimeGrammar' => qw(parse);
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;

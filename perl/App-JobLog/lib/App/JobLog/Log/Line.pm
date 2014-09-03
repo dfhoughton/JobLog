@@ -27,7 +27,7 @@ our ( $date, @tags, @description, $is_beginning, $is_note );
 our $re = qr{
     ^ (?&ts) (?&non_ts) $
     (?(DEFINE)
-     (?<ts> (\d{4}+\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{$date = $^N}) )
+     (?<ts> (\d{4}\s++\d++\s++\d++\s++\d++\s++\d++\s++\d++) (?{$date = $^N}) )
      (?<non_ts> (?&note) | (?&duration_mark) )
      (?<duration_mark> : (?: (?&done) | (?&event) ) )
      (?<done> DONE )

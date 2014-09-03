@@ -38,6 +38,7 @@ use Modern::Perl;
 use autouse 'Carp'              => qw(carp);
 use autouse 'App::JobLog::Time' => qw(now);
 use Class::Autouse qw(DateTime);
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 use constant MERGE_ALL                => 1;
 use constant MERGE_ADJACENT           => 2;

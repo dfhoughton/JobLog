@@ -12,6 +12,7 @@ use Class::Autouse qw(Config File::Spec);
 $App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
 
 use Modern::Perl;
+no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 # using quasi-pod -- == instead of = -- to make this work with Pod::Weaver
 
