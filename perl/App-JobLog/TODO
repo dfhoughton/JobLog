@@ -8,16 +8,7 @@ Key
 . refactor repeated code into methods
 . add CSV output
 . figure out 'job when' bug where the time you finished keeps advancing
-* add tag option to last command and resume command so you can see the last task with a particular tag or resume the last task with a particular tag
 . use Class::XSAccessor to speed things up (assuming the speedup is worth loading the module)
 . use Carp throughout
-* investigate display issue where tag column seems to vary in width
-* make 'tomorrow through January 2' parsable
-* make real notes test
-* finish note command synopsis and description
-* make sure the long help from the info command reflects the latest changes
-* fix bug where job last misreports the last event if it spans a day boundary
-* fix up description of TimeGrammar so it properly describes the parsability of 'tomorrow'
-* make sure validation is catching misordered events
-* investigate bug when summarizing day with open task
 . create import and export functions
+. improve error handling in edit functionality when an impossible hour has been added for a line
