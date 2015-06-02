@@ -13,3 +13,4 @@ Key
 . create import and export functions
 . improve error handling in edit functionality when an impossible hour has been added for a line
 . add "since" to temporal expressions understood
+. add mass-tagging/untagging functionality
