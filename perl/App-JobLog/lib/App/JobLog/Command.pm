@@ -36,7 +36,7 @@ sub description {
     return $desc;
 }
 
-# performs text wrapping while preserving the formatting of lines beginning which whitespace
+# performs text wrapping while preserving the formatting of lines beginning with whitespace
 sub _wrap {
     my $desc = shift;
     require Text::WrapI18N;
@@ -83,6 +83,12 @@ sub options { }
 
 # by default a command does no argument validation
 sub validate { }
+
+# add to simple commands after argument signature so they'll complain if given arguments
+sub simple_command_check {
+    my ( $self, $args ) = @_;
+    $self->usage_error("This command does not expect any arguments! No action taken.") if @$args;
+}
 
 1;
 

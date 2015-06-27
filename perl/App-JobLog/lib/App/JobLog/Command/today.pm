@@ -11,6 +11,7 @@ use constant FORMAT => '%l:%M:%S %p on %A, %B %d, %Y';
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
+    $self->simple_command_check($args);
 
     # display everything done today
     App::JobLog::Command::summary->execute( $opt, ['today'] );

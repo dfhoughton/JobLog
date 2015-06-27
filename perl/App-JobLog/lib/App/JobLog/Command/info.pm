@@ -18,6 +18,7 @@ no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
+    $self->simple_command_check($args);
     my ( $fh, $fn ) = tempfile( UNLINK => 1 );
     my ($executable) = reverse File::Spec->splitpath($0);
     my $text;

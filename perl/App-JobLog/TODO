@@ -14,4 +14,5 @@ Key
 . improve error handling in edit functionality when an impossible hour has been added for a line
 . add "since" to temporal expressions understood
 . add mass-tagging/untagging functionality
-. for commands like "done" which don't expect any arguments, get them to fail with diagnostic output when they receive arguments
+* for commands like "done" which don't expect any arguments, get them to fail with diagnostic output when they receive arguments
+. get resume to print out just what you've resumed

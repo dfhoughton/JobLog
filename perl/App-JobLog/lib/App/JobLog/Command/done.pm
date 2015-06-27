@@ -8,6 +8,7 @@ use Class::Autouse 'App::JobLog::Log';
 
 sub execute {
     my ( $self, $opt, $args ) = @_;
+    $self->simple_command_check($args);
 
     my $log = App::JobLog::Log->new;
     my ($last) = $log->last_event;
