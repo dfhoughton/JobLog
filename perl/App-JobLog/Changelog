@@ -2,6 +2,7 @@ Revision history for App::JobLog
 
 {{$NEXT}}
   * simple commands -- done, info, today -- fail verbosely if you give them arguments
+  * make resume announce what is being resumed
 
 1.032     2014-09-03 10:00:40-04:00 America/New_York
   * various fixes to silence warnings in Perls >= 5.18

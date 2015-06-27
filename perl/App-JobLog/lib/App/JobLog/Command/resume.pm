@@ -8,49 +8,52 @@ use Class::Autouse 'App::JobLog::Log';
 use autouse 'App::JobLog::Time' => qw(now);
 
 sub execute {
-    my ( $self, $opt, $args ) = @_;
+   my ( $self, $opt, $args ) = @_;
 
-    # construct event test
-    my %must   = map { $_ => 1 } @{ $opt->tag     || [] };
-    my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
-    my $test   = sub {
-        my $event = shift;
-        my $good  = 1;
-        if (%must) {
-            $good = 0;
-            for my $tag ( @{ $event->tags } ) {
-                if ( $must{$tag} ) {
-                    $good = 1;
-                    last;
-                }
+   # construct event test
+   my %must   = map { $_ => 1 } @{ $opt->tag     || [] };
+   my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
+   my $test   = sub {
+      my $event = shift;
+      my $good  = 1;
+      if (%must) {
+         $good = 0;
+         for my $tag ( @{ $event->tags } ) {
+            if ( $must{$tag} ) {
+               $good = 1;
+               last;
             }
-        }
-        if ( $good && %mustnt ) {
-            for my $tag ( @{ $event->tags } ) {
-                if ( $mustnt{$tag} ) {
-                    $good = 0;
-                    last;
-                }
+         }
+      }
+      if ( $good && %mustnt ) {
+         for my $tag ( @{ $event->tags } ) {
+            if ( $mustnt{$tag} ) {
+               $good = 0;
+               last;
             }
-        }
-        return $good;
-    };
+         }
+      }
+      return $good;
+   };
 
-    # find event
-    my $log = App::JobLog::Log->new;
-    my ( $i, $count, $e ) = ( $log->reverse_iterator, 0 );
-    while ( $e = $i->() ) {
-        $count++;
-        last if $test->($e);
-    }
+   # find event
+   my $log = App::JobLog::Log->new;
+   my ( $i, $count, $e ) = ( $log->reverse_iterator, 0 );
+   while ( $e = $i->() ) {
+      $count++;
+      last if $test->($e);
+   }
 
-    $self->usage_error('empty log')         unless $count;
-    $self->usage_error('no matching event') unless $e;
-    $self->usage_error('event ongoing')     unless $e->is_closed;
+   $self->usage_error('empty log')         unless $count;
+   $self->usage_error('no matching event') unless $e;
+   $self->usage_error('event ongoing')     unless $e->is_closed;
 
-    my $ll = $e->data->clone;
-    $ll->time = now;
-    $log->append_event($ll);
+   my $ll = $e->data->clone;
+   $ll->time = now;
+   $log->append_event($ll);
+   print "resuming " . $e->describe;
+   print ' (tags: ', join( ', ', sort $e->tag_list ), ')' if $e->tagged;
+   print "\n";
 }
 
 sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
@@ -58,7 +61,7 @@ sub usage_desc { '%c ' . __PACKAGE__->name . ' %o' }
 sub abstract { 'resume last task' }
 
 sub full_description {
-    <<END
+   <<END
 Starts a new task with an identical description and tags to the last
 task in the log. If some restriction by tag is specified, it is the last
 task with the given tags.
@@ -66,18 +69,18 @@ END
 }
 
 sub options {
-    return (
-        [
-            'tag|t=s@',
-            'resume the last event with one of these tags; '
-              . 'multiple tags may be specified'
-        ],
-        [
-            'without|w=s@',
-            'resume the last event which does not have any of these tags; '
-              . 'multiple tags may be specified'
-        ],
-    );
+   return (
+      [
+         'tag|t=s@',
+         'resume the last event with one of these tags; '
+           . 'multiple tags may be specified'
+      ],
+      [
+         'without|w=s@',
+         'resume the last event which does not have any of these tags; '
+           . 'multiple tags may be specified'
+      ],
+   );
 }
 
 1;

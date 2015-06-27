@@ -15,4 +15,4 @@ Key
 . add "since" to temporal expressions understood
 . add mass-tagging/untagging functionality
 * for commands like "done" which don't expect any arguments, get them to fail with diagnostic output when they receive arguments
-. get resume to print out just what you've resumed
+* get resume to print out just what you've resumed
