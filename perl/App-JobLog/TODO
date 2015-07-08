@@ -17,3 +17,4 @@ Key
 * for commands like "done" which don't expect any arguments, get them to fail with diagnostic output when they receive arguments
 * get resume to print out just what you've resumed
 . make it possible to supply date as option instead of argument string so you can do `job s -d fri -t o` as well as `job s -t o fri`
+. BUG: resume should only let you resume an activity, not a note
