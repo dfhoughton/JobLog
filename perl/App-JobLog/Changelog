@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.035     2015-07-30 17:03:50-04:00 America/New_York
   * added --date option to summary
 
 1.034     2015-07-30 16:34:23-04:00 America/New_York
