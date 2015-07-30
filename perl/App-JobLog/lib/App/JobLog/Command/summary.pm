@@ -34,193 +34,193 @@ use autouse 'App::JobLog::Time' => qw(today);
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
 sub execute {
-    my ( $self, $opt, $args ) = @_;
+   my ( $self, $opt, $args ) = @_;
 
-    my $tags          = $opt->{tag}         || [];
-    my $excluded_tags = $opt->{exclude_tag} || [];
-    my $match         = $opt->{match}       || [];
-    my $no_match      = $opt->{no_match}    || [];
-    my $time          = $opt->{time};
+   my $tags          = $opt->{tag}         || [];
+   my $excluded_tags = $opt->{exclude_tag} || [];
+   my $match         = $opt->{match}       || [];
+   my $no_match      = $opt->{no_match}    || [];
+   my $time_expr = join( ' ', @$args ) || $opt->{date};
+   my $time = $opt->{time};
 
-    # validate regexes, if any, while generating test
+   $time_expr ||= $opt->{date};
+
+   # validate regexes, if any, while generating test
 
  # NOTE: using $opt->{x} form rather than $opt->x to facilitate invoking summary
  # from today command
 
-    my $test = _make_test( $tags, $excluded_tags, $match, $no_match, $time );
-    my $merge_level;
-    for ( $opt->{merge} || '' ) {
-        when ('no_merge') {
-            $merge_level = MERGE_NONE
-        }
-        when ('merge_all') {
-            $merge_level = MERGE_ALL
-        }
-        when ('merge_adjacent') {
-            $merge_level = MERGE_ADJACENT
-        }
-        when ('merge_adjacent_same_tags') {
-            $merge_level = MERGE_ADJACENT_SAME_TAGS
-        }
-        when ('merge_same_tags') {
-            $merge_level = MERGE_SAME_TAGS
-        }
-        when ('merge_same_day') {
-            $merge_level = MERGE_SAME_DAY
-        }
-        when ('merge_same_day_same_tags') {
-            $merge_level = MERGE_SAME_DAY_SAME_TAGS
-        }
-        default {
+   my $test = _make_test( $tags, $excluded_tags, $match, $no_match, $time );
+   my $merge_level;
+   for ( $opt->{merge} || '' ) {
+      when ('no_merge') {
+         $merge_level = MERGE_NONE
+      }
+      when ('merge_all') {
+         $merge_level = MERGE_ALL
+      }
+      when ('merge_adjacent') {
+         $merge_level = MERGE_ADJACENT
+      }
+      when ('merge_adjacent_same_tags') {
+         $merge_level = MERGE_ADJACENT_SAME_TAGS
+      }
+      when ('merge_same_tags') {
+         $merge_level = MERGE_SAME_TAGS
+      }
+      when ('merge_same_day') {
+         $merge_level = MERGE_SAME_DAY
+      }
+      when ('merge_same_day_same_tags') {
+         $merge_level = MERGE_SAME_DAY_SAME_TAGS
+      }
+      default {
 
-            # some dark wizardry here
-            my $m = uc merge;
-            $m =~ s/ /_/g;
-            $m           = \&{"MERGE_$m"};
-            $merge_level = &$m;
-        }
-    }
-    my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
-    if (
-           $opt->{no_totals}
-        && ( $dateless || $opt->{no_date} || is_hidden('date') )
-        && (   !single_interval($merge_level)
-            || $opt->{no_time}
-            || is_hidden('time') )
-        && ( $opt->{no_duration}    || is_hidden('duration') )
-        && ( $opt->{no_tags}        || is_hidden('tags') )
-        && ( $opt->{no_description} || is_hidden('description') )
-      )
-    {
-        $self->usage_error('you have chosen not to display anything');
-    }
+         # some dark wizardry here
+         my $m = uc merge;
+         $m =~ s/ /_/g;
+         $m           = \&{"MERGE_$m"};
+         $merge_level = &$m;
+      }
+   }
+   my $dateless = $merge_level == MERGE_ALL || $merge_level == MERGE_SAME_TAGS;
+   if (
+         $opt->{no_totals}
+      && ( $dateless || $opt->{no_date} || is_hidden('date') )
+      && (  !single_interval($merge_level)
+         || $opt->{no_time}
+         || is_hidden('time') )
+      && ( $opt->{no_duration}    || is_hidden('duration') )
+      && ( $opt->{no_tags}        || is_hidden('tags') )
+      && ( $opt->{no_description} || is_hidden('description') )
+     )
+   {
+      $self->usage_error('you have chosen not to display anything');
+   }
 
-    # record hiding options in hash reference
-    my $hidden = {
-        vacation => $opt->{no_vacation} || $opt->{notes},
-        date => $dateless || $opt->{no_date} || is_hidden('date'),
-        time => $opt->{no_time} || is_hidden('time'),
-        duration => $opt->{notes}
-          || $opt->{no_duration}
-          || is_hidden('duration'),
-        tags        => $opt->{no_tags}        || is_hidden('tags'),
-        description => $opt->{no_description} || is_hidden('description'),
-        totals      => $opt->{notes}          || $opt->{no_totals},
-    };
+   # record hiding options in hash reference
+   my $hidden = {
+      vacation => $opt->{no_vacation} || $opt->{notes},
+      date => $dateless || $opt->{no_date} || is_hidden('date'),
+      time => $opt->{no_time} || is_hidden('time'),
+      duration => $opt->{notes} || $opt->{no_duration} || is_hidden('duration'),
+      tags        => $opt->{no_tags}        || is_hidden('tags'),
+      description => $opt->{no_description} || is_hidden('description'),
+      totals      => $opt->{notes}          || $opt->{no_totals},
+   };
 
-    # parse time expression
-    my ( $days, $show_year );
-    eval {
-        ( $days, $show_year ) = summary join( ' ', @$args ), $test, $hidden,
-          $opt->{notes};
-    };
-    $self->usage_error($@) if $@;
-    unless ( $opt->{hidden} ) {
+   # parse time expression
+   my ( $days, $show_year );
+   eval {
+      ( $days, $show_year ) = summary $time_expr, $test, $hidden, $opt->{notes};
+   };
+   $self->usage_error($@) if $@;
+   unless ( $opt->{hidden} ) {
 
-        # figure out how wide to make things
-        my $screen_width;
-        if ( $opt->{wrap} ) {
-            if ( $opt->{no_wrap} ) {
-                $screen_width = -1;
-            }
-            else {
-                $screen_width = $opt->columns;
-            }
-        }
-        else {
-            $screen_width = columns;
-        }
-        if ($dateless) {
+      # figure out how wide to make things
+      my $screen_width;
+      if ( $opt->{wrap} ) {
+         if ( $opt->{no_wrap} ) {
+            $screen_width = -1;
+         }
+         else {
+            $screen_width = $opt->columns;
+         }
+      }
+      else {
+         $screen_width = columns;
+      }
+      if ($dateless) {
 
-            # create "day" containing all events
-            my $duck_day = App::JobLog::Log::Day->new(
-                start   => $days->[0]->start->clone,
-                end     => $days->[$#$days]->end->clone,
-                no_date => 1,
-            );
-            for my $d (@$days) {
-                push @{ $duck_day->events },   @{ $d->events };
-                push @{ $duck_day->vacation }, @{ $d->vacation };
-            }
-            display [$duck_day], $merge_level, $hidden, $screen_width;
-        }
-        else {
-            display $days, $merge_level, $hidden, $screen_width, $show_year;
-        }
+         # create "day" containing all events
+         my $duck_day = App::JobLog::Log::Day->new(
+            start   => $days->[0]->start->clone,
+            end     => $days->[$#$days]->end->clone,
+            no_date => 1,
+         );
+         for my $d (@$days) {
+            push @{ $duck_day->events },   @{ $d->events };
+            push @{ $duck_day->vacation }, @{ $d->vacation };
+         }
+         display [$duck_day], $merge_level, $hidden, $screen_width;
+      }
+      else {
+         display $days, $merge_level, $hidden, $screen_width, $show_year;
+      }
 
-        # check for long task
-        my ($last_e) = App::JobLog::Log->new->last_event;
-        if ( $last_e && $last_e->is_open ) {
-            my ( $then, $today ) = ( $last_e->start, today );
-            if (
-                !(
-                       $then->year == $today->year
-                    && $then->month == $today->month
-                    && $then->day == $today->day
-                )
-              )
-            {
-                print <<END;
+      # check for long task
+      my ($last_e) = App::JobLog::Log->new->last_event;
+      if ( $last_e && $last_e->is_open ) {
+         my ( $then, $today ) = ( $last_e->start, today );
+         if (
+            !(
+                  $then->year == $today->year
+               && $then->month == $today->month
+               && $then->day == $today->day
+            )
+           )
+         {
+            print <<END;
 
 WARNING! The last event in the log has been open since before 12:00 am today!
 
 END
-            }
-        }
-    }
+         }
+      }
+   }
 }
 
 # Construct a test from the tags, excluded-tags, match, no-match, and time options.
 # The test determines what portion of what events are included in synopses.
 sub _make_test {
-    my ( $tags, $excluded_tags, $match, $no_match, $time ) = @_;
+   my ( $tags, $excluded_tags, $match, $no_match, $time ) = @_;
 
-    my %tags          = map { $_ => 1 } @$tags;
-    my %excluded_tags = map { $_ => 1 } @$excluded_tags;
-    my @no_match = map { _re_test($_); qr/$_/ } @$no_match;
-    my @match    = map { _re_test($_); qr/$_/ } @$match;
-    $time = _parse_time($time);
-    return unless %tags || %excluded_tags || @no_match || @match || $time;
+   my %tags          = map { $_ => 1 } @$tags;
+   my %excluded_tags = map { $_ => 1 } @$excluded_tags;
+   my @no_match = map { _re_test($_); qr/$_/ } @$no_match;
+   my @match    = map { _re_test($_); qr/$_/ } @$match;
+   $time = _parse_time($time);
+   return unless %tags || %excluded_tags || @no_match || @match || $time;
 
-    my $test = sub {
-        my ($e) = @_;
-        if ( %tags || %excluded_tags ) {
-            my $good = !%tags;
-            for my $t ( @{ $e->tags } ) {
-                return if $excluded_tags{$t};
-                $good ||= $tags{$t};
+   my $test = sub {
+      my ($e) = @_;
+      if ( %tags || %excluded_tags ) {
+         my $good = !%tags;
+         for my $t ( @{ $e->tags } ) {
+            return if $excluded_tags{$t};
+            $good ||= $tags{$t};
+         }
+         return unless $good;
+      }
+      if ( @no_match || @match ) {
+         my $good = !@match;
+         for my $d ( @{ $e->data->description } ) {
+            for my $re (@no_match) {
+               return if $d =~ $re;
             }
-            return unless $good;
-        }
-        if ( @no_match || @match ) {
-            my $good = !@match;
-            for my $d ( @{ $e->data->description } ) {
-                for my $re (@no_match) {
-                    return if $d =~ $re;
-                }
-                unless ($good) {
-                    for my $re (@match) {
-                        $good = $d =~ $re;
-                        last if $good;
-                    }
-                }
+            unless ($good) {
+               for my $re (@match) {
+                  $good = $d =~ $re;
+                  last if $good;
+               }
             }
-            return unless $good;
-        }
-        if ($time) {
-            my $start = $e->start->clone->set( %{ $time->{start} } );
-            my $end   = $e->end->clone->set( %{ $time->{end} } );
-            return $e->overlap( $start, $end );
-        }
-        return $e;
-    };
-    return $test;
+         }
+         return unless $good;
+      }
+      if ($time) {
+         my $start = $e->start->clone->set( %{ $time->{start} } );
+         my $end   = $e->end->clone->set( %{ $time->{end} } );
+         return $e->overlap( $start, $end );
+      }
+      return $e;
+   };
+   return $test;
 }
 
 # look for regular expressions with side effects
 sub _re_test {
-    carp 'regex ' . $_[0] . '" appears to contain executable code'
-      if $_[0] =~ /\(\?{1,2}{/;
+   carp 'regex ' . $_[0] . '" appears to contain executable code'
+     if $_[0] =~ /\(\?{1,2}{/;
 }
 
 # parse time expressions
@@ -238,62 +238,58 @@ my $time_re = qr/
 /xi;
 
 sub _parse_time {
-    my ($time) = @_;
-    local ( $b1, $b2 );
-    return unless $time;
-    if ( $time =~ $time_re ) {
-        my ( $t1, $t2 );
-        for ($b1) {
-            when ('before') {
-                $t1 = {
-                    hour     => 0,
-                      minute => 0,
-                      second => 0
-                };
-                $t2 = { daytime $b2 };
-            }
-            when ('after') {
-                $t1 = {
-                    daytime $b2
-                };
-                $t2 = {
-                    hour   => 23,
-                    minute => 59,
-                    second => 59
-                };
-            }
-            default {
-                $t1 = {
-                    daytime $b1
-                };
-                $t2 = { daytime $b2 };
-            }
-        }
-        if (   $t2->{hour} < $t1->{hour}
-            || $t2->{minute} < $t1->{minute}
-            || $t2->{second} < $t1->{second} )
-        {
-            if ( $t2->{suffix} && $t2->{suffix} eq 'x' ) {
-                $t2->{hour} += 12;
-            }
-            else {
-                carp '"' . $time
-                  . '" invalid time expression: endpoints out of order';
-            }
-        }
-        delete $t1->{suffix}, delete $t2->{suffix};
-        return { start => $t1, end => $t2 };
-    }
+   my ($time) = @_;
+   local ( $b1, $b2 );
+   return unless $time;
+   if ( $time =~ $time_re ) {
+      my ( $t1, $t2 );
+      for ($b1) {
+         when ('before') {
+            $t1 = {
+               hour   => 0,
+               minute => 0,
+               second => 0
+            };
+            $t2 = { daytime $b2 };
+         }
+         when ('after') {
+            $t1 = { daytime $b2 };
+            $t2 = {
+               hour   => 23,
+               minute => 59,
+               second => 59
+            };
+         }
+         default {
+            $t1 = { daytime $b1 };
+            $t2 = { daytime $b2 };
+         }
+      }
+      if (  $t2->{hour} < $t1->{hour}
+         || $t2->{minute} < $t1->{minute}
+         || $t2->{second} < $t1->{second} )
+      {
+         if ( $t2->{suffix} && $t2->{suffix} eq 'x' ) {
+            $t2->{hour} += 12;
+         }
+         else {
+            carp '"' . $time
+              . '" invalid time expression: endpoints out of order';
+         }
+      }
+      delete $t1->{suffix}, delete $t2->{suffix};
+      return { start => $t1, end => $t2 };
+   }
 }
 
-sub usage_desc { '%c ' . __PACKAGE__->name . ' %o <date or date range>' }
+sub usage_desc { '%c ' . __PACKAGE__->name . ' %o [<date or date range>]' }
 
 sub abstract {
-    'list tasks with certain properties in a particular time range';
+   'list tasks with certain properties in a particular time range';
 }
 
 sub full_description {
-    <<END
+   <<END
 List events or notes with certain properties in a particular time range. Only the notes or
 portions of events falling within the range will be listed.
 
@@ -325,101 +321,107 @@ END
 }
 
 sub options {
-    return (
-        [
-                "Use '@{[prog_name]} help "
-              . __PACKAGE__->name
-              . '\' to see full details.'
-        ],
-        [],
-        [ 'notes|n', 'show notes instead of events' ],
-        [
-            'tag|t=s@',
-            'filter events/notes to include only those with given tags; '
-              . 'multiple tags may be specified'
-        ],
-        [
-            'exclude-tag|T=s@',
-            'filter events/notes to exclude those with given tags; '
-              . 'multiple tags may be specified'
-        ],
-        [
-            'match|m=s@',
+   return (
+      [
+             "Use '@{[prog_name]} help "
+           . __PACKAGE__->name
+           . '\' to see full details.'
+      ],
+      [],
+      [
+         'date|d=s',
+         'provide the time expression as an option instead of an argument'
+      ],
+      [ 'notes|n', 'show notes instead of events' ],
+      [
+         'tag|t=s@',
+         'filter events/notes to include only those with given tags; '
+           . 'multiple tags may be specified'
+      ],
+      [
+         'exclude-tag|T=s@',
+         'filter events/notes to exclude those with given tags; '
+           . 'multiple tags may be specified'
+      ],
+      [
+         'match|m=s@',
 'filter events/notes to include only those one of whose descriptions matches the given regex; '
-              . 'multiple regexes may be specified'
-        ],
-        [
-            'no-match|M=s@',
+           . 'multiple regexes may be specified'
+      ],
+      [
+         'no-match|M=s@',
 'filter events/notes to include only those one of whose descriptions do not match the given regex; '
-              . 'multiple regexes may be specified'
-        ],
-        [
-            'time|i=s',
+           . 'multiple regexes may be specified'
+      ],
+      [
+         'time|i=s',
 'consider only those portions of events/notes that overlap the given time range'
-        ],
-        [
-            "merge" => hidden => {
-                one_of => [
-                    [
-                        "merge-all|mall|ma" =>
-                          "glom all events/notes into one synopsis"
-                    ],
-                    [ "merge-adjacent|madj" => "merge contiguous events" ],
-                    [
-                        "merge-adjacent-same-tags|mast" =>
+      ],
+      [
+         "merge" => hidden => {
+            one_of => [
+               [
+                  "merge-all|mall|ma" =>
+                    "glom all events/notes into one synopsis"
+               ],
+               [ "merge-adjacent|madj" => "merge contiguous events" ],
+               [
+                  "merge-adjacent-same-tags|mast" =>
 "merge contiguous, identically-tagged events/notes (default)"
-                    ],
-                    [
-                        "merge-same-tags|mst" =>
-                          "merge all identically tagged events/notes"
-                    ],
-                    [
-                        "merge-same-day|msd" =>
-                          "merge all events/notes in a given day"
-                    ],
-                    [
-                        "merge-same-day-same-tags|msdst" =>
-                          "merge all events/notes in a given day"
-                    ],
-                    [ "no-merge|nm" => "keep all events/notes separate" ],
-                ]
-            }
-        ],
-        [ 'no-vacation|V', 'do not display vacation hours' ],
-        [ 'no-date',       'do not display a date before each distinct day' ],
-        [
-            'no-time',
-            'do not display event or note start times and event end times'
-        ],
-        [ 'no-duration',    'do not display event durations' ],
-        [ 'no-tags',        'do not display tags' ],
-        [ 'no-description', 'do not display event/note descriptions' ],
-        [
-            'no-totals',
-            'do not display the footer containing total hours worked, etc.'
-        ],
-        [
-            'wrap' => 'hidden' => {
-                one_of => [
-                    [
-                        'columns|c=i',
+               ],
+               [
+                  "merge-same-tags|mst" =>
+                    "merge all identically tagged events/notes"
+               ],
+               [
+                  "merge-same-day|msd" =>
+                    "merge all events/notes in a given day"
+               ],
+               [
+                  "merge-same-day-same-tags|msdst" =>
+                    "merge all events/notes in a given day"
+               ],
+               [ "no-merge|nm" => "keep all events/notes separate" ],
+            ]
+         }
+      ],
+      [ 'no-vacation|V', 'do not display vacation hours' ],
+      [ 'no-date',       'do not display a date before each distinct day' ],
+      [
+         'no-time',
+         'do not display event or note start times and event end times'
+      ],
+      [ 'no-duration',    'do not display event durations' ],
+      [ 'no-tags',        'do not display tags' ],
+      [ 'no-description', 'do not display event/note descriptions' ],
+      [
+         'no-totals',
+         'do not display the footer containing total hours worked, etc.'
+      ],
+      [
+         'wrap' => 'hidden' => {
+            one_of => [
+               [
+                  'columns|c=i',
 'limit the width of the report to the specified number of columns; '
-                          . ' by default the width of the terminal is automatically detected and, if that fails, a width of 76 is used'
-                    ],
-                    [ 'no-wrap|W', 'do not wrap the text to fit columns' ],
-                ]
-            }
-        ],
-        [ 'hidden', 'display nothing', { hidden => 1 } ],
-    );
+                    . ' by default the width of the terminal is automatically detected and, if that fails, a width of 76 is used'
+               ],
+               [ 'no-wrap|W', 'do not wrap the text to fit columns' ],
+            ]
+         }
+      ],
+      [ 'hidden', 'display nothing', { hidden => 1 } ],
+   );
 }
 
 sub validate {
-    my ( $self, $opt, $args ) = @_;
+   my ( $self, $opt, $args ) = @_;
 
-    $self->usage_error('no time expression provided') unless @$args;
-    $self->usage_error('columns must be positive')
-      if defined $opt->{columns} && $opt->columns < 1;
+   $self->usage_error('no time expression provided')
+     unless @$args || $opt->date;
+   $self->usage_error('two time expression provided') if @$args && $opt->date;
+   $self->usage_error('columns must be positive')
+     if defined $opt->{columns} && $opt->columns < 1;
 }
 
 1;
@@ -433,63 +435,65 @@ __END__
  houghton@NorthernSpy:~$ job summary --help
  job <command>
  
- job summary [-ciMmnTtVW] [long options...] <date or date range>
- 	Use 'job help summary' to see full details.
- 	                                  
- 	-n --notes                          show notes instead of events
- 	-t --tag                            filter events/notes to include
- 	                                    only those with given tags;
- 	                                    multiple tags may be specified
- 	-T --exclude-tag                    filter events/notes to exclude
- 	                                    those with given tags; multiple
- 	                                    tags may be specified
- 	-m --match                          filter events/notes to include
- 	                                    only those one of whose
- 	                                    descriptions matches the given
- 	                                    regex; multiple regexes may be
- 	                                    specified
- 	-M --no-match                       filter events/notes to include
- 	                                    only those one of whose
- 	                                    descriptions do not match the
- 	                                    given regex; multiple regexes may
- 	                                    be specified
- 	-i --time                           consider only those portions of
- 	                                    events/notes that overlap the
- 	                                    given time range
- 	--ma --mall --merge-all             glom all events/notes into one
- 	                                    synopsis
- 	--madj --merge-adjacent             merge contiguous events
- 	--mast --merge-adjacent-same-tags   merge contiguous,
- 	                                    identically-tagged events/notes
- 	                                    (default)
- 	--mst --merge-same-tags             merge all identically tagged
- 	                                    events/notes
- 	--msd --merge-same-day              merge all events/notes in a given
- 	                                    day
- 	--msdst --merge-same-day-same-tags  merge all events/notes in a given
- 	                                    day
- 	--nm --no-merge                     keep all events/notes separate
- 	-V --no-vacation                    do not display vacation hours
- 	--no-date                           do not display a date before each
- 	                                    distinct day
- 	--no-time                           do not display event or note
- 	                                    start times and event end times
- 	--no-duration                       do not display event durations
- 	--no-tags                           do not display tags
- 	--no-description                    do not display event/note
- 	                                    descriptions
- 	--no-totals                         do not display the footer
- 	                                    containing total hours worked,
- 	                                    etc.
- 	-c --columns                        limit the width of the report to
- 	                                    the specified number of columns; 
- 	                                    by default the width of the
- 	                                    terminal is automatically
- 	                                    detected and, if that fails, a
- 	                                    width of 76 is used
- 	-W --no-wrap                        do not wrap the text to fit
- 	                                    columns
- 	--help                              this usage screen
+ job summary [-cdiMmnTtVW] [long options...] [<date or date range>]
+     Use 'job help summary' to see full details.
+                                        
+     -d STR --date STR                    provide the time expression as
+                                          an option instead of an argument
+     -n --notes                           show notes instead of events
+     -t STR... --tag STR...               filter events/notes to include
+                                          only those with given tags;
+                                          multiple tags may be specified
+     -T STR... --exclude-tag STR...       filter events/notes to exclude
+                                          those with given tags; multiple
+                                          tags may be specified
+     -m STR... --match STR...             filter events/notes to include
+                                          only those one of whose
+                                          descriptions matches the given
+                                          regex; multiple regexes may be
+                                          specified
+     -M STR... --no-match STR...          filter events/notes to include
+                                          only those one of whose
+                                          descriptions do not match the
+                                          given regex; multiple regexes
+                                          may be specified
+     -i STR --time STR                    consider only those portions of
+                                          events/notes that overlap the
+                                          given time range
+     --ma --mall --merge-all              glom all events/notes into one
+                                          synopsis
+     --madj --merge-adjacent              merge contiguous events
+     --mast --merge-adjacent-same-tags    merge contiguous,
+                                          identically-tagged events/notes
+                                          (default)
+     --mst --merge-same-tags              merge all identically tagged
+                                          events/notes
+     --msd --merge-same-day               merge all events/notes in a
+                                          given day
+     --msdst --merge-same-day-same-tags   merge all events/notes in a
+                                          given day
+     --nm --no-merge                      keep all events/notes separate
+     -V --no-vacation                     do not display vacation hours
+     --no-date                            do not display a date before
+                                          each distinct day
+     --no-time                            do not display event or note
+                                          start times and event end times
+     --no-duration                        do not display event durations
+     --no-tags                            do not display tags
+     --no-description                     do not display event/note
+                                          descriptions
+     --no-totals                          do not display the footer
+                                          containing total hours worked,
+                                          etc.
+     -c INT --columns INT                 limit the width of the report to
+                                          the specified number of columns;
+                                           by default the width of the
+                                          terminal is automatically
+                                          detected and, if that fails, a
+                                          width of 76 is used
+     -W --no-wrap                         do not wrap the text to fit
+                                          columns
+     --help                               this usage screen
  houghton@NorthernSpy:~$ job s this week
  Sunday,  6 March, 2011
       7:36 - 7:37 pm  0.01  bar, foo  something to add; and still more                                                                                                  

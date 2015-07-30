@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * added --date option to summary
 
 1.034     2015-07-30 16:34:23-04:00 America/New_York
   * fixed "advancing when" bug

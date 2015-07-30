@@ -4,7 +4,7 @@ package App::JobLog::Log::Note;
 
 =head1 DESCRIPTION
 
-B<App::JobLog::Log::Time> fill this out.
+A wrapper for a log line that represents a timestamped and optionally tagged note.
 
 =cut
 
