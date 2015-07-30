@@ -2,6 +2,9 @@ Revision history for App::JobLog
 
 {{$NEXT}}
 
+1.034     2015-07-30 16:34:23-04:00 America/New_York
+  * fixed "advancing when" bug
+
 1.033     2015-06-27 19:24:44-04:00 America/New_York
   * simple commands -- done, info, today -- fail verbosely if you give them arguments
   * make resume announce what is being resumed
