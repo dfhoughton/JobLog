@@ -91,6 +91,7 @@ END
             $format = FULL_FORMAT;
         }
         if ( $then < now ) {
+            $then = $days->[-1]->last_event->end->add( seconds => $remaining );
             say "\nyou were finished at " . $then->strftime($format);
         }
         else {

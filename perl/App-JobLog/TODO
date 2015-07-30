@@ -7,7 +7,7 @@ Key
 . remove unused code
 . refactor repeated code into methods
 . add CSV output
-. figure out 'job when' bug where the time you finished keeps advancing
+* figure out 'job when' bug where the time you finished keeps advancing
 . use Class::XSAccessor to speed things up (assuming the speedup is worth loading the module)
 . use Carp throughout
 . create import and export functions

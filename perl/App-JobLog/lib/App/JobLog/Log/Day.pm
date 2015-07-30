@@ -79,6 +79,14 @@ events, not vacation.
 
 sub events { $_[0]->{events} }
 
+=method last_event
+
+Returns last event of the day, if any.
+
+=cut
+
+sub last_event { ( $_[0]->events || [] )->[-1] }
+
 =method vacation
 
 Returns reference to list of vacation events occurring in this day.
