@@ -41,6 +41,7 @@ sub execute {
    my ( $i, $count, $e ) = ( $log->reverse_iterator, 0 );
    while ( $e = $i->() ) {
       $count++;
+      next unless $e->isa('App::JobLog::Log::Event');
       last if $test->($e);
    }
 
