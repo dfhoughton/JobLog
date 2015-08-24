@@ -3,6 +3,9 @@ Revision history for App::JobLog
 {{$NEXT}}
   * swapped ReportVersions::Tiny for Test::ReportPrereqs to eliminate the
     deprecation warning
+  * fixed nil invocant bug for 'when' command when last event is open and when is
+    in past
+  * fixed resumable note bug
 
 1.035     2015-07-30 17:03:50-04:00 America/New_York
   * added --date option to summary
