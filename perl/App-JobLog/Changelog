@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.036     2015-08-23 20:18:19-04:00 America/New_York
   * swapped ReportVersions::Tiny for Test::ReportPrereqs to eliminate the
     deprecation warning
   * fixed nil invocant bug for 'when' command when last event is open and when is
