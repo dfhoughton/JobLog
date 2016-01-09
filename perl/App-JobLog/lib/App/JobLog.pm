@@ -6,6 +6,15 @@ use App::Cmd::Setup -app;
 
 sub allow_any_unambiguous_abbrev { 1 }
 
+sub command_groups {
+  'primary',
+  [qw( add done resume when summary edit )],
+  'secondary',
+  [qw( today last note modify truncate vacation configure )],
+  'informational',
+  [qw( help commands info tags parse )]
+}
+
 1;
 
 __END__
@@ -14,42 +23,46 @@ __END__
 
  houghton@NorthernSpy:~$ job
  Available commands:
- 
-    commands: list the application's commands
-        help: display a command's help screen
- 
+
+ primary:
          add: log an event
-   configure: set or display various parameters
         done: mark current task as done
-        edit: open a text editor to edit the log
-        info: describe job log
-        last: describe the last task recorded
-      modify: add details to last event
-        note: take a note
-       parse: parse a time expression
       resume: resume last task
+        when: report when work is done for the day
      summary: list tasks with certain properties in a particular time range
-        tags: list tags employed in log or some subrange thereof
+        edit: open a text editor to edit the log
+
+ secondary:
        today: what has happened today
+        last: describe the last task recorded
+        note: take a note
+      modify: add details to last event
     truncate: shorten the log to contain only those moments after a given date
     vacation: list or define days off
-        when: report when work is done for the day
+   configure: set or display various parameters
+
+ informational:
+        help: display a command's help screen
+    commands: list the application's commands
+        info: describe job log
+        tags: list tags employed in log or some subrange thereof
+       parse: parse a time expression
 
  houghton@NorthernSpy:~$ job summary this week
  Sunday, 27 February, 2011
-    8:00 - 9:39 am  1.65  widgets  improving debugging rig to handle batches of files and to print all output to files for later comparison; checking code changes   
-                                   into github                                                                                                                       
- 
+    8:00 - 9:39 am  1.65  widgets  improving debugging rig to handle batches of files and to print all output to files for later comparison; checking code changes
+                                   into github
+
  Monday, 28 February
-   8:00 - 10:47 am  2.79  widgets  gussying up pdf conversion                                                                                                        
- 
+   8:00 - 10:47 am  2.79  widgets  gussying up pdf conversion
+
  Tuesday,  1 March
-    8:00 - 9:23 am  1.39  widgets  adding handling of simplified pdf docs                                                                                            
- 
+    8:00 - 9:23 am  1.39  widgets  adding handling of simplified pdf docs
+
  Friday,  4 March
-    1:48 - 2:55 pm  1.11  widgets  trying to get Eclipse working properly again                                                                                      
-    3:50 - 5:30 pm  1.66  widgets  figuring out why some files are really, really slow                                                                               
- 
+    1:48 - 2:55 pm  1.11  widgets  trying to get Eclipse working properly again
+    3:50 - 5:30 pm  1.66  widgets  figuring out why some files are really, really slow
+
    TOTAL HOURS 8.60
    widgets     8.60
  houghton@NorthernSpy:~$ job today
@@ -59,15 +72,15 @@ __END__
  houghton@NorthernSpy:~$ job done
  houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
-   9:02 - 9:03 am  0.01  messing around; messing around some more                                                                                            
- 
+   9:02 - 9:03 am  0.01  messing around; messing around some more
+
    TOTAL HOURS 0.01
  houghton@NorthernSpy:~$ job resume
  houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
-      9:02 - 9:03 am  0.01  messing around; messing around some more                                                                                            
-   9:03 am - ongoing  0.00  messing around some more                                                                                                            
- 
+      9:02 - 9:03 am  0.01  messing around; messing around some more
+   9:03 am - ongoing  0.00  messing around some more
+
    TOTAL HOURS 0.01
  houghton@NorthernSpy:~$ job configure --list
  day length                          8
@@ -84,17 +97,17 @@ __END__
  precision set to 1
  houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
-      9:02 - 9:03 am  0.0  messing around; messing around some more                                                                                            
-   9:03 am - ongoing  0.0  messing around some more                                                                                                            
- 
+      9:02 - 9:03 am  0.0  messing around; messing around some more
+   9:03 am - ongoing  0.0  messing around some more
+
    TOTAL HOURS 0.0
  houghton@NorthernSpy:~$ job d
  houghton@NorthernSpy:~$ job note maybe I should take more notes
  houghton@NorthernSpy:~$ job to
  Sunday,  6 March, 2011
-   9:02 - 9:03 am  0.0  messing around; messing around some more                                                                                            
-   9:03 - 9:06 am  0.0  messing around some more                                                                                                            
- 
+   9:02 - 9:03 am  0.0  messing around; messing around some more
+   9:03 - 9:06 am  0.0  messing around some more
+
    TOTAL HOURS 0.1
  houghton@NorthernSpy:~$ cat ~/.joblog/log
 
@@ -114,7 +127,7 @@ __END__
  2011  3  6  9  3 48::messing around some more
  2011  3  6  9  6 30:DONE
  2011  3  6  9  6 35<NOTE>:maybe I should take more notes
- 
+
 =head1 DESCRIPTION
 
 B<App::JobLog> provides a simple command line utility for keeping track of what you do when. The underlying
@@ -146,10 +159,10 @@ Provides extended help information for a particular command. E.g.
 
  houghton@NorthernSpy:~$ job help summary
  job summary [-iMmTtV] [long options...] <date or date range>
- 
+
  List events with certain properties in a particular time range. Only the portions
  of events falling within the range will be listed.
- 
+
  Events may be filtered in numerous ways: by tag, time of day, or terms used in descriptions.
  ...
 
@@ -191,7 +204,7 @@ Adds a note to the log -- text independent of any task. See L<App::JobLog::Comma
 
 =item L<parse|App::JobLog::Command::parse>
 
-Parse a time expression to discover what the application understands it to mean. 
+Parse a time expression to discover what the application understands it to mean.
 See L<App::JobLog::Command::parse>.
 
 =item L<resume|App::JobLog::Command::resume>

@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * more sensible grouping of commands
 
 1.037     2016-01-09 16:48:36-05:00 America/New_York
   * removed code that was confusing Dist::Zilla's automatic version injection
