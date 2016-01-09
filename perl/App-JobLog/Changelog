@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.038     2016-01-09 17:15:52-05:00 America/New_York
   * more sensible grouping of commands
 
 1.037     2016-01-09 16:48:36-05:00 America/New_York
