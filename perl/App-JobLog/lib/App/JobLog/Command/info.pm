@@ -9,8 +9,6 @@ use autouse 'Carp'                => qw(carp);
 use autouse 'App::JobLog::Config' => qw(log DIRECTORY);
 use Class::Autouse qw(Config File::Spec);
 
-$App::JobLog::Command::info::VERSION ||= .001; # Dist::Zilla will automatically update this
-
 use Modern::Perl;
 no if $] >= 5.018, warnings => "experimental::smartmatch";
 
@@ -125,7 +123,7 @@ sub _header {
 
 work log management
 
-version $App::JobLog::Command::info::VERSION
+version @${[ $App::JobLog::Command::info::VERSION // 'DEVELOPMENT' ]}
 
 This application allows one to keep a simple, human readable log
 of one's activities. B<Job Log> also facilitates searching, summarizing,
@@ -141,7 +139,7 @@ sub _body {
 sub _basic_usage {
     my ( $self, $executable ) = (@_);
     return <<END;
-    
+
 ==head1 Usage
 
 B<Job Log> keeps a log of events and notes. If you begin a new task you type
@@ -151,9 +149,9 @@ B<Job Log> keeps a log of events and notes. If you begin a new task you type
 and it appends the following, modulo changes in time, to @{[log]}:
 
    2011 2 1 15 19 12::what I am doing now
-   
+
 The portion before the first colon is a timestamp in year month day hour minute second format.
-The portion after the second colon is your description of the event. 
+The portion after the second colon is your description of the event.
 
 If you wish to take a note, you type
 
@@ -162,8 +160,8 @@ If you wish to take a note, you type
 and it appends the following to @{[log]}:
 
    2011 2 1 15 19 12<NOTE>:something I should remember
-   
-Again, the portion before the first colon is a timestamp. The portion after the E<lt>NOTEE<gt> is 
+
+Again, the portion before the first colon is a timestamp. The portion after the E<lt>NOTEE<gt> is
 the body of the note.
 
 The text between the two colons, or between the first colon and the E<lt>NOTEE<gt> tag, which is blank in these
@@ -175,7 +173,7 @@ instance, if you were performing this task for Acme Widgets you might have typed
 producing
 
    2011 2 1 15 19 12:Acme\\ Widgets:what I am doing now
-   
+
 Note the I<\\> character. This is the escape character which neutralizes any special value of
 the character after it -- I<\\>, I<:>, or a whitespace character.
 
@@ -186,7 +184,7 @@ You may tag an event multiple times. E.g.,
 producing
 
    2011 2 1 15 19 12:Acme\\ Widgets foo bar:what I am doing now
-   
+
 For readability it is probably best to avoid spaces in tags.
 
 Since one usually works on a particular project for an extended period of time, if you specify no tags
@@ -230,10 +228,10 @@ The most extensive and featureful log report command. Example:
 
  \$ job summary yesterday
  Monday, 14 March
-    9:46 - 10:11 am  0.41  widgets  modifying name normalization code to use dates                                                                                
-   10:17 - 10:55 am  0.62  widgets  modifying name normalization code to use dates                                                                                
-     1:49 - 2:08 pm  0.32  widgets  testing PGA file to see whether Felix Frankfurter is still there                                                              
- 
+    9:46 - 10:11 am  0.41  widgets  modifying name normalization code to use dates
+   10:17 - 10:55 am  0.62  widgets  modifying name normalization code to use dates
+     1:49 - 2:08 pm  0.32  widgets  testing PGA file to see whether Felix Frankfurter is still there
+
    TOTAL HOURS 1.35
     widgets    1.35
 
@@ -243,7 +241,7 @@ The last event recorded. Example:
 
  \$ job last
  Tuesday, 15 March
-   5:07 pm - ongoing  0.00  foo  muttering                                                                                                                         
+   5:07 pm - ongoing  0.00  foo  muttering
 
    TOTAL HOURS 0.00
    foo         0.00
@@ -254,9 +252,9 @@ Everything you've done today. Example:
 
  \$ job today
  Tuesday, 15 March
-   11:33 - 11:35 am  0.04  widgets  checking up on Lem's issue with pipeline                                                                                     
-   11:38 - 11:46 am  0.12  widgets  checking up on Lem's issue with pipeline; figuring out null pointer in multi-threaded code                                   
-    12:40 - 1:11 pm  0.52  widgets  debugging null pointers                                                                                                       
+   11:33 - 11:35 am  0.04  widgets  checking up on Lem's issue with pipeline
+   11:38 - 11:46 am  0.12  widgets  checking up on Lem's issue with pipeline; figuring out null pointer in multi-threaded code
+    12:40 - 1:11 pm  0.52  widgets  debugging null pointers
 
    TOTAL HOURS 0.68
     widgets    0.68
@@ -309,7 +307,7 @@ END
 sub _advanced_usage {
     my ( $self, $executable ) = (@_);
     return <<END;
-    
+
 ==head1 Environment Variables
 
 B<Job Log> is sensitive to a single environment variable:
@@ -362,7 +360,7 @@ represents a back reference to the corresponding matched group in the same rule.
 rules the remainder are alphabetized to facilitate finding them in the list. All expressions must match the
 first rule.
 
-If you find this system of rules opaque or unwieldy, you can use the B<@{[App::JobLog::Command::parse->name]}> 
+If you find this system of rules opaque or unwieldy, you can use the B<@{[App::JobLog::Command::parse->name]}>
 command to test an expression and see what time interval it is interpreted as.
 
 @{[_bnf()]}
@@ -372,7 +370,7 @@ END
 sub _footer {
     my ( $self, $executable ) = (@_);
     return <<END;
-    
+
 ==head1 License etc.
 
  Author        David Houghton
@@ -389,7 +387,7 @@ sub _bnf {
               <expression> = s* ( <ever> | <span> ) s*
                     <ever> = "all" | "always" | "ever" | [ [ "the" s ] ( "entire" | "whole" ) s ] "log"
                     <span> = <date> [ <span_divider> <date> ]
- 
+
                       <at> = "at" | "@"
                  <at_time> = [ ( s | s* <at> s* ) <time> ]
               <at_time_on> = [ <at> s ] <time> s "on" s
@@ -400,7 +398,7 @@ sub _bnf {
                  <dm_full> = d{1,2} s <month> [ "," ] s d{4}
                      <dom> = d{1,2}
                     <full> = <at_time_on> <full_no_time> | <full_no_time> <at_time>
-              <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december" 
+              <full_month> = "january" | "february" | "march" | "april" | "may" | "june" | "july" | "august" | "september" | "october" | "november" | "december"
             <full_no_time> = <dm_full> | <md_full>
             <full_weekday> = "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday"
                      <iso> = d{4} ( <divider> ) d{1,2} \\1 d{1,2}
@@ -411,29 +409,29 @@ sub _bnf {
         <modifiable_month> = [ <month_modifier> s ] <month>
        <modifiable_period> = [ <period_modifier> s ] <period>
                 <modifier> = "last" | "this" | "next"
-                   <month> = <full_month> | <short_month> 
+                   <month> = <full_month> | <short_month>
                <month_day> = <at_time_on> <month_day_no_time> | <month_day_no_time> <at_time>
        <month_day_no_time> = <month_first> | <day_first>
              <month_first> = <month> s d{1,2}
           <month_modifier> = <modifier> | <termini> [ s "of" ]
                       <my> = <month> [","] s <year>
-            <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period> 
+            <named_period> = <modifiable_day> | <modifiable_month> | <modifiable_period>
                      <now> = "now"
                  <numeric> = <year> | <ym> |<at_time_on> <numeric_no_time> | <numeric_no_time> <at_time>
          <numeric_no_time> = <us> | <iso> | <md> | <dom>
                      <pay> = "pay" | "pp" | "pay" s* "period"
                   <period> = "week" | "month" | "year" | <pay>
-         <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ] 
+         <period_modifier> = <modifier> | <termini> [ s "of" [ s "the" ] ]
          <relative_period> = [ <at> s* ] <time> s <relative_period_no_time> | <relative_period_no_time> <at_time> | <now>
  <relative_period_no_time> = "yesterday" | "today" | "tomorrow"
              <short_month> = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"
-           <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat" 
+           <short_weekday> = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat"
             <span_divider> = s* ( "-"+ | ( "through" | "thru" | "to" | "til" [ "l" ] | "until" ) ) s*
                  <termini> = [ "the" s ] ( <beginning> | "end" )
                     <time> = d{1,2} [ ":" d{2} [ ":" d{2} ] ] [ s* <time_suffix> ]
              <time_suffix> = ( "a" | "p" ) ( "m" | ".m." )
                       <us> = d{1,2} ( <divider> ) d{1,2} \\1 d{4}
-                  <verbal> = <my> | <named_period> | <relative_period> | <month_day> | <full>  
+                  <verbal> = <my> | <named_period> | <relative_period> | <month_day> | <full>
                  <weekday> = <full_weekday> | <short_weekday>
                     <year> = d{4}
                       <ym> = <year> <divider> d{1,2}
@@ -450,10 +448,10 @@ __END__
 
  houghton@NorthernSpy:~$ job help info
  job info
- 
+
  Describes application and provides usage information.
- 
- 
+
+
  	-q --quiet         minimal documentation
  	-v --man --verbose  extensive documentation in pager
  	--help             this usage screen
@@ -465,14 +463,14 @@ The synopsis says it all. For command specific help you should try the help comm
 
  houghton@NorthernSpy:~$ job help summary
  job summary [-iMmTtV] [long options...] <date or date range>
- 
+
  List events with certain properties in a particular time range. Only the portions
  of events falling within the range will be listed.
- 
+
  Events may be filtered in numerous ways: by tag, time of day, or terms used in descriptions.
  If tags to match are provided, only those events that contain at least one such tag will be shown. If
  tags not to match are provided, only those events that contain none of these tags will be shown.
- 
+
  if you provide description filters to match or avoid, these will be interpreted as regexes. try 'perldoc perlre'
 
 This module is basically a number of globs of POD munged a bit, concatenated in various ways, and passed

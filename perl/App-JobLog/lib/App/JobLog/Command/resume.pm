@@ -15,21 +15,44 @@ sub execute {
    my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
    my $test   = sub {
       my $event = shift;
+      my @tags  = @{ $event->tags };
+      my %tags  = map { $_ => 1 } @tags;
       my $good  = 1;
       if (%must) {
-         $good = 0;
-         for my $tag ( @{ $event->tags } ) {
-            if ( $must{$tag} ) {
-               $good = 1;
-               last;
+         if ( $opt->all ) {
+            for my $tag ( keys %must ) {
+               unless ( $tags{$tag} ) {
+                  $good = 0;
+                  last;
+               }
+            }
+         }
+         else {
+            $good = 0;
+            for my $tag (@tags) {
+               if ( $must{$tag} ) {
+                  $good = 1;
+                  last;
+               }
             }
          }
       }
       if ( $good && %mustnt ) {
-         for my $tag ( @{ $event->tags } ) {
-            if ( $mustnt{$tag} ) {
-               $good = 0;
-               last;
+         if ( $opt->some ) {
+            $good = 0;
+            for my $tag ( keys %mustnt ) {
+               unless ( $tags{$tag} ) {
+                  $good = 1;
+                  last;
+               }
+            }
+         }
+         else {
+            for my $tag (@tags) {
+               if ( $mustnt{$tag} ) {
+                  $good = 0;
+                  last;
+               }
             }
          }
       }
@@ -76,10 +99,14 @@ sub options {
          'resume the last event with one of these tags; '
            . 'multiple tags may be specified'
       ],
+      [ 'all|a', 'require that all of the --tag tags be present' ],
       [
          'without|w=s@',
          'resume the last event which does not have any of these tags; '
            . 'multiple tags may be specified'
+      ],
+      [
+         'some|s', 'require only that some one of the --without tags be absent'
       ],
    );
 }
@@ -94,23 +121,23 @@ __END__
 
  houghton@NorthernSpy:~$ job last
  Sunday,  6 March, 2011
-   7:36 - 7:37 pm  0.01  bar, foo  something to add; and still more                                                                                                  
- 
+   7:36 - 7:37 pm  0.01  bar, foo  something to add; and still more
+
    TOTAL HOURS 0.01
    bar         0.01
    foo         0.01
  houghton@NorthernSpy:~$ job resume
  houghton@NorthernSpy:~$ job today
  Monday,  7 March, 2011
-   8:01 am - ongoing  0.00  bar, foo  something to add; and still more                                                                                                  
- 
+   8:01 am - ongoing  0.00  bar, foo  something to add; and still more
+
    TOTAL HOURS 0.00
    bar         0.00
    foo         0.00
 
 =head1 DESCRIPTION
 
-Without options specified B<App::JobLog::Command::resume> lets you begin a new event identical in 
+Without options specified B<App::JobLog::Command::resume> lets you begin a new event identical in
 tags and description to the last one. If the most recent task is ongoing an error message is emitted.
 
 You may specify tags to look for or avoid, in which case a new event is added to the log identical

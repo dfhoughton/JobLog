@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * removed code that was confusing Dist::Zilla's automatic version injection
+  * added --some and --all to last and resume commands
 
 1.036     2015-08-23 20:18:19-04:00 America/New_York
   * swapped ReportVersions::Tiny for Test::ReportPrereqs to eliminate the

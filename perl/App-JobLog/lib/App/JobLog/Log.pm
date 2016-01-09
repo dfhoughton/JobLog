@@ -67,6 +67,17 @@ sub new {
     return $self;
 }
 
+=method lines
+
+A reference to the list of lines in the current log. This is useful chiefly
+for debugging.
+
+=cut
+
+sub lines {
+  [ shift->[IO]->getlines ];
+}
+
 =method all_taglines
 
 C<all_taglines> returns a list of all lines in the log that may have tags.
@@ -88,7 +99,7 @@ sub all_taglines {
 
 =method all_events
 
-C<all_events> processes the log as a stream, extracting all events and 
+C<all_events> processes the log as a stream, extracting all events and
 returning them as an array reference.
 
 =cut
@@ -117,7 +128,7 @@ sub all_events {
 
 =method all_notes
 
-C<all_notes> processes the log as a stream, extracting all notes and 
+C<all_notes> processes the log as a stream, extracting all notes and
 returning them as an array reference.
 
 =cut
@@ -137,7 +148,7 @@ sub all_notes {
 
 =method validate
 
-C<validate> makes sure the log contains only valid lines, all events are 
+C<validate> makes sure the log contains only valid lines, all events are
 in chronological order, and every ending follows a beginning. Invalid lines
 are commented out and a warning is emitted. The number of errors found is
 returned.
@@ -320,7 +331,7 @@ C<reverse_iterator> returns a closure that allows you to iterate
 over the events in the log in reverse. Every time you call the closure
 it returns the next unvisited event.
 
-If you pass this method an optional argument, either a L<DateTime> or a 
+If you pass this method an optional argument, either a L<DateTime> or a
 L<App::JobLog::Log::Event>, it will iterate from the event beginning at or
 after this event or time.
 
