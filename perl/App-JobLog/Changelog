@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * changed --all for last and resume to --any and reversed the default behavior
+    of the commands
 
 1.038     2016-01-09 17:15:52-05:00 America/New_York
   * more sensible grouping of commands

@@ -21,19 +21,19 @@ sub execute {
       my %tags  = map { $_ => 1 } @tags;
       my $good  = 1;
       if (%must) {
-         if ( $opt->all ) {
-            for my $tag ( keys %must ) {
-               unless ( $tags{$tag} ) {
-                  $good = 0;
+         if ( $opt->any ) {
+            $good = 0;
+            for my $tag (@tags) {
+               if ( $must{$tag} ) {
+                  $good = 1;
                   last;
                }
             }
          }
          else {
-            $good = 0;
-            for my $tag (@tags) {
-               if ( $must{$tag} ) {
-                  $good = 1;
+            for my $tag ( keys %must ) {
+               unless ( $tags{$tag} ) {
+                  $good = 0;
                   last;
                }
             }
@@ -87,10 +87,10 @@ sub options {
    return (
       [
          'tag|t=s@',
-         'find the last event with one of these tags; '
+         'find the last event with all of these tags; '
            . 'multiple tags may be specified'
       ],
-      [ 'all|a', 'require that all of the --tag tags be present' ],
+      [ 'any|a', 'require only that one of the --tag tags be present' ],
       [
          'without|w=s@',
          'find the last event which does not have any of these tags; '
