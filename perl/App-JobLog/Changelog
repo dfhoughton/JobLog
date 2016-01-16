@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * resume and last now properly skip notes
 
 1.039     2016-01-09 19:27:22-05:00 America/New_York
   * changed --all for last and resume to --any and reversed the default behavior

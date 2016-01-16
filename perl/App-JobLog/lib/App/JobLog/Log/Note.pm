@@ -168,6 +168,16 @@ sub intersects {
    return $self->start == $other->start;
 }
 
+=method is_note
+
+Whether this "note" (events are a subclass of note) is just a note.
+
+=cut
+
+sub is_note {
+  shift->{log}->is_note
+}
+
 =method is_open
 
 Returns false: notes have no duration so they cannot be open.

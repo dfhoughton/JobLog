@@ -17,6 +17,7 @@ sub execute {
    my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
    my $test   = sub {
       my $event = shift;
+      return if $event->is_note;
       my @tags  = @{ $event->tags };
       my %tags  = map { $_ => 1 } @tags;
       my $good  = 1;

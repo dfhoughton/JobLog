@@ -15,6 +15,7 @@ sub execute {
    my %mustnt = map { $_ => 1 } @{ $opt->without || [] };
    my $test   = sub {
       my $event = shift;
+      return if $event->is_note;
       my @tags  = @{ $event->tags };
       my %tags  = map { $_ => 1 } @tags;
       my $good  = 1;
@@ -64,7 +65,6 @@ sub execute {
    my ( $i, $count, $e ) = ( $log->reverse_iterator, 0 );
    while ( $e = $i->() ) {
       $count++;
-      next unless $e->isa('App::JobLog::Log::Event');
       last if $test->($e);
    }
 
