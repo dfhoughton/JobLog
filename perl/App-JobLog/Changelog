@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.040     2016-01-17 09:52:13-05:00 America/New_York
   * resume and last now properly skip notes
 
 1.039     2016-01-09 19:27:22-05:00 America/New_York
