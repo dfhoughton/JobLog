@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * improve app.t to make more certain a constant timezone is being used
 
 1.040     2016-01-17 09:52:13-05:00 America/New_York
   * resume and last now properly skip notes
