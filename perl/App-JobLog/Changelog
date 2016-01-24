@@ -1,6 +1,8 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+
+1.042     2016-01-24 16:17:35-05:00 America/New_York
   * same fix for regression.t
 
 1.041     2016-01-23 12:42:19-05:00 America/New_York
