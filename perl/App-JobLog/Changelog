@@ -1,6 +1,7 @@
 Revision history for App::JobLog
 
 {{$NEXT}}
+  * same fix for regression.t
 
 1.041     2016-01-23 12:42:19-05:00 America/New_York
   * improve app.t to make more certain a constant timezone is being used

@@ -19,6 +19,7 @@ use File::Spec;
 use IO::All -utf8;
 use FileHandle;
 use DateTime::TimeZone;
+use POSIX qw(tzset);
 
 use Test::More;
 use App::Cmd::Tester;
@@ -29,6 +30,8 @@ my $dir = File::Temp->newdir();
 $ENV{ DIRECTORY() } = $dir;
 
 # use a constant time zone so as to avoid crafting data to fit various datelight savings time adjustments
+$ENV{'TZ'} = 'America/New_York';
+tzset();
 $App::JobLog::Config::tz =
   DateTime::TimeZone->new( name => 'America/New_York' );
 
